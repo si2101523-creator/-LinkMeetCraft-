@@ -151,7 +151,7 @@ border-top: 4px solid #ff8c00; /* Оранжевый спиннер */
         // ======================================================
         // ВАШИ НАСТРОЙКИ FIREBASE И TELEGRAM
         // ======================================================
-        // Эти значения были настроены ранее и используются для подключения к вашей базе данных.
+        // Конфигурация Firebase
         const firebaseConfig = {
           apiKey: "AIzaSyA7EumEru2qfYcAyxAWLL4TY_dWfcU3Dfg",
           authDomain: "linkmeetcraft.firebaseapp.com",
@@ -161,7 +161,7 @@ border-top: 4px solid #ff8c00; /* Оранжевый спиннер */
           appId: "1:373052253470:web:a66afc67876f76dc1a550f"
         };
 
-        const TG_CHAT_ID = "-1003295508709";
+        const TG_CHAT_ID = "-1003295508709"; // Ваш Telegram Chat ID
         // ======================================================
         
         const app = initializeApp(firebaseConfig);
@@ -182,29 +182,43 @@ border-top: 4px solid #ff8c00; /* Оранжевый спиннер */
             setTimeout(() => box.classList.remove('show'), 3000);
         };
 
-        // Загрузка токена Telegram из вашей коллекции 'settings'
+        // Функция для загрузки токена
         async function getTelegramToken() {
             try {
                 // Анонимный вход для доступа к публичным настройкам
                 await signInAnonymously(auth);
-                const docSnap = await getDoc(doc(db, "settings", "telegram"));
+                
+                // Исправленный путь: ищем документ "telegram" в коллекции "settings"
+                const tokenRef = doc(db, "settings", "telegram");
+                const docSnap = await getDoc(tokenRef);
+                
                 if (docSnap.exists() && docSnap.data().token) {
                     TELEGRAM_BOT_TOKEN = docSnap.data().token;
-                    console.log("Token loaded.");
+                    // Вывод в консоль для успешной проверки
+                    console.log("Token loaded successfully.");
+
+return true;
                 } else {
-                    showMessage("Ошибка: Токен Telegram не найден в базе.", 'error');
+                    showMessage("Ошибка: Токен Telegram не найден в базе. Проверьте коллекцию 'settings'.", 'error');
+                    console.error("Token lookup failed: Document or 'token' field missing.");
+                    return false;
                 }
             } catch (error) {
-                console.error(error);
-                showMessage("Ошибка подключения к базе.", 'error');
+                // Если ошибка связана с правилами безопасности или сетью
+                console.error("Error during token fetch:", error);
+                showMessage("Ошибка подключения к базе. Проверьте Правила Firestore.", 'error');
+                return false;
             }
         }
-// Отправка формы (в Firebase и в Telegram)
+
+        // Отправка формы (в Firebase и в Telegram)
         async function submitForm(event) {
             event.preventDefault();
+
+            // Если токен еще не загружен, пытаемся его загрузить
             if (!TELEGRAM_BOT_TOKEN) {
-                await getTelegramToken();
-                if (!TELEGRAM_BOT_TOKEN) return;
+                const tokenLoaded = await getTelegramToken();
+                if (!tokenLoaded) return; // Останавливаем отправку, если токен не найден
             }
 
             const name = document.getElementById('name').value;
@@ -221,7 +235,7 @@ border-top: 4px solid #ff8c00; /* Оранжевый спиннер */
             showLoading(true);
 
             // Сообщение для Telegram в формате Markdown
-            const tgMessage = 🔥 *НОВЫЙ ПОИСК ТИММЕЙТА!* 🔥\n\n*Имя:* ${name}\n*Ищу команду в:* ${role}\n*Опыт/Роль:* ${experience}\n*Связаться:* ${contact}\n*Детали:* ${about};
+            const tgMessage = 🔥 *НОВЫЙ ПОИСК ТИММЕЙТА!* 🔥\n\n*Имя:* ${name}\n*Ищу команду в:* ${role}\n*Опыт/Роль:* ${experience || 'Не указан'}\n*Связаться:* ${contact}\n*Детали:* ${about || 'Нет описания.'};
             
             try {
                 // 1. Сохранение в коллекцию 'teammates'
@@ -239,8 +253,8 @@ border-top: 4px solid #ff8c00; /* Оранжевый спиннер */
                 showMessage("Анкета успешно опубликована!", 'success');
                 document.getElementById('teammate-form').reset();
             } catch (error) {
-                console.error(error);
-                showMessage("Ошибка отправки.", 'error');
+                console.error("Submission error:", error);
+                showMessage("Ошибка отправки. Проверьте Telegram ID или Токен.", 'error');
             } finally {
                 showLoading(false);
             }
@@ -264,15 +278,16 @@ border-top: 4px solid #ff8c00; /* Оранжевый спиннер */
             ;
         }
 
-        // Настройка слушателя для отображения анкет в реальном времени
+// Настройка слушателя для отображения анкет в реальном времени
         function setupListener() {
-            // Запрашиваем последние 50 анкет
+            // Запрашиваем последние 50 анкет, сортируя по времени (новые сверху)
             const q = query(collection(db, "teammates"), limit(50));
             // onSnapshot слушает изменения в базе в реальном времени
             onSnapshot(q, (snapshot) => {
                 const list = [];
                 snapshot.forEach((doc) => list.push(doc.data()));
-                // Сортировка по времени (новые сверху)
+                
+                // Сортировка по времени в JS (чтобы избежать проблем с индексами Firestore)
                 list.sort((a, b) => b.timestamp - a.timestamp);
                 
                 const container = document.getElementById('teammates-list');
@@ -281,11 +296,15 @@ border-top: 4px solid #ff8c00; /* Оранжевый спиннер */
             });
         }
 
-// Инициализация приложения
+        // Инициализация приложения
         window.onload = async () => {
-            await getTelegramToken(); // Сначала получаем токен
             document.getElementById('teammate-form').addEventListener('submit', submitForm); // Вешаем обработчик на форму
-            setupListener(); // Запускаем слушатель анкет
+            
+            // Сначала пытаемся загрузить токен и только потом настраиваем слушателя
+            const tokenLoaded = await getTelegramToken(); 
+            if(tokenLoaded) {
+                 setupListener(); // Запускаем слушатель анкет, только если токен загружен
+            }
         };
     </script>
 </head>
@@ -328,7 +347,8 @@ border-top: 4px solid #ff8c00; /* Оранжевый спиннер */
 
         <div class="panel">
             <h2 class="text-2xl font-semibold mb-4 text-orange-400 border-b border-gray-600 pb-2">📜 Активные Заявки на Поиск</h2>
-            <div id="teammates-list">
+
+<div id="teammates-list">
                 <p class="text-center text-gray-400 p-8">Загрузка...</p>
             </div>
         </div>
