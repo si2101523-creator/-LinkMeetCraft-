@@ -3,48 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LinkMeetCraft | Найди Свою Команду</title>
+    <title>Поиск Тиммейтов для любых игр | LinkMeetCraft</title>
     
-    <!-- Подключение стилей Tailwind CSS (для красоты) -->
+    <!-- Подключение стилей Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Шрифт Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
+            background: #1a202c; /* Темный фон для неонового эффекта */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #e2e8f0; /* Светлый текст */
         }
-        /* Анимация загрузки */
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3b82f6;
+        .container {
+            max-width: 900px;
+            width: 95%;
+            margin: 20px auto;
+            display: grid;
+            gap: 20px;
+            grid-template-columns: 1fr;
+        }
+        @media (min-width: 768px) {
+            .container {
+                grid-template-columns: 1fr 2fr;
+            }
+        }
+        .panel {
+            background-color: #2d3748; /* Темнее для контраста */
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            border: 1px solid #4a5568; /* Мягкая рамка */
+        }
+        /* Неоновый эффект для заголовка */
+        .neon-text {
+            color: #fff;
+            text-shadow:
+                0 0 7px #ffa500, /* оранжевый */
+                0 0 10px #ffa500,
+                0 0 21px #ffa500,
+                0 0 42px #ff7f00, /* более яркий оранжевый */
+                0 0 82px #ff7f00,
+                0 0 92px #ff7f00,
+                0 0 102px #ff7f00,
+                0 0 151px #ff7f00;
+        }
+        /* Неоновый эффект для кнопок и инпутов */
+        .form-input, .form-textarea, .btn-primary {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #4a5568;
+            border-radius: 8px;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background-color: #2d3748; /* Темный фон */
+            color: #e2e8f0; /* Светлый текст */
+        }
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #ff8c00; /* оранжевая подсветка при фокусе */
+            box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.5); /* оранжевое свечение */
+        }
+        .btn-primary {
+            background-color: #ff8c00; /* оранжевая кнопка */
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 0 10px rgba(255, 140, 0, 0.5); /* Неоновый эффект */
+        }
+        .btn-primary:hover {
+            background-color: #ff7f00; /* Чуть темнее при наведении */
+            box-shadow: 0 0 15px rgba(255, 140, 0, 0.7);
+        }
+        .btn-primary:active {
+            transform: scale(0.99);
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7); /* Более темный фон для загрузки */
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .loading-spinner {
+            border: 4px solid #4a5568;
+
+border-top: 4px solid #ff8c00; /* Оранжевый спиннер */
             border-radius: 50%;
             width: 40px;
             height: 40px;
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        /* Стили карточек */
-        .card-hover:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        .message-box {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #ff8c00; /* Оранжевый фон для сообщений */
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 0 15px rgba(255, 140, 0, 0.5); /* Неоновый эффект */
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 0.5s, transform 0.5s;
+            z-index: 1100;
+        }
+        .message-box.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .teammate-card {
+            border-left: 4px solid #ff8c00; /* Оранжевая полоска */
+            background-color: #2d3748;
+            color: #e2e8f0;
+        }
+        .teammate-card:hover {
+            background-color: #2a3342;
+            box-shadow: 0 0 10px rgba(255, 140, 0, 0.3); /* Легкое свечение при наведении */
         }
     </style>
-
-    <!-- 🔥 ГЛАВНЫЙ СКРИПТ (FIREBASE + TELEGRAM) 🔥 -->
+    
+    <!-- Подключение Firebase SDK -->
     <script type="module">
-        // Импорт функций Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, limit, getDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         // ======================================================
-        // 👇 ВАШИ НАСТРОЙКИ (УЖЕ ЗАПОЛНЕНЫ) 👇
+        // ВАШИ НАСТРОЙКИ FIREBASE И TELEGRAM
         // ======================================================
-
+        // Эти значения были настроены ранее и используются для подключения к вашей базе данных.
         const firebaseConfig = {
           apiKey: "AIzaSyA7EumEru2qfYcAyxAWLL4TY_dWfcU3Dfg",
           authDomain: "linkmeetcraft.firebaseapp.com",
@@ -55,243 +162,180 @@
         };
 
         const TG_CHAT_ID = "-1003295508709";
-
         // ======================================================
-
-        // Инициализация
+        
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
         
         let TELEGRAM_BOT_TOKEN = null;
+        
+        const showLoading = (show) => {
+            document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
+        };
 
-        // --- 1. ПОЛУЧЕНИЕ ТОКЕНА ИЗ БАЗЫ ---
-        async function initApp() {
+        const showMessage = (text, type = 'success') => {
+            const box = document.getElementById('message-box');
+            box.textContent = text;
+            box.style.backgroundColor = type === 'success' ? '#ff8c00' : '#f56565';
+            box.classList.add('show');
+            setTimeout(() => box.classList.remove('show'), 3000);
+        };
+
+        // Загрузка токена Telegram из вашей коллекции 'settings'
+        async function getTelegramToken() {
             try {
-                // Анонимный вход (для доступа к базе)
+                // Анонимный вход для доступа к публичным настройкам
                 await signInAnonymously(auth);
-                
-                // Чтение токена из settings/telegram
                 const docSnap = await getDoc(doc(db, "settings", "telegram"));
-                if (docSnap.exists()) {
+                if (docSnap.exists() && docSnap.data().token) {
                     TELEGRAM_BOT_TOKEN = docSnap.data().token;
-                    console.log("Система готова к работе.");
+                    console.log("Token loaded.");
                 } else {
-                    console.error("Токен бота не найден в базе (settings/telegram)");
-                    alert("Ошибка настройки: Токен бота не найден в базе данных!");
+                    showMessage("Ошибка: Токен Telegram не найден в базе.", 'error');
                 }
             } catch (error) {
-                console.error("Ошибка инициализации:", error);
+                console.error(error);
+                showMessage("Ошибка подключения к базе.", 'error');
+            }
+        }
+// Отправка формы (в Firebase и в Telegram)
+        async function submitForm(event) {
+            event.preventDefault();
+            if (!TELEGRAM_BOT_TOKEN) {
+                await getTelegramToken();
+                if (!TELEGRAM_BOT_TOKEN) return;
+            }
+
+            const name = document.getElementById('name').value;
+            const role = document.getElementById('role').value;
+            const experience = document.getElementById('experience').value;
+            const contact = document.getElementById('contact').value;
+            const about = document.getElementById('about').value;
+
+            if (!name  !role  !contact) {
+                showMessage("Заполните обязательные поля!", 'error');
+                return;
+            }
+
+            showLoading(true);
+
+            // Сообщение для Telegram в формате Markdown
+            const tgMessage = 🔥 *НОВЫЙ ПОИСК ТИММЕЙТА!* 🔥\n\n*Имя:* ${name}\n*Ищу команду в:* ${role}\n*Опыт/Роль:* ${experience}\n*Связаться:* ${contact}\n*Детали:* ${about};
+            
+            try {
+                // 1. Сохранение в коллекцию 'teammates'
+                await addDoc(collection(db, "teammates"), {
+                    name, role, experience, contact, about, timestamp: Date.now()
+                });
+                
+                // 2. Отправка в Telegram
+                await fetch(https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: TG_CHAT_ID, text: tgMessage, parse_mode: 'Markdown' })
+                });
+
+                showMessage("Анкета успешно опубликована!", 'success');
+                document.getElementById('teammate-form').reset();
+            } catch (error) {
+                console.error(error);
+                showMessage("Ошибка отправки.", 'error');
+            } finally {
+                showLoading(false);
             }
         }
 
-        // --- 2. ОТПРАВКА АНКЕТЫ ---
-        window.sendForm = async (e) => {
-            e.preventDefault(); // Остановить перезагрузку страницы
-            
-            if (!TELEGRAM_BOT_TOKEN) {
-                alert("Подождите секунду, система загружается...");
-                await initApp();
-                return;
-            }
+        // Рендеринг одной карточки тиммейта
+        function renderTeammate(data) {
+            const date = new Date(data.timestamp).toLocaleDateString();
+            return 
+                <div class="teammate-card panel mb-4 p-4">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-xl font-bold text-gray-100">${data.name}</h3>
+                        <span class="text-sm text-gray-400">${date}</span>
+                    </div>
+                    <p class="text-lg font-semibold text-orange-400 mb-1">🎮 ${data.role}</p>
+                    <p class="text-gray-300">${data.about || 'Нет описания.'}</p>
+                    <div class="mt-3 pt-3 border-t border-gray-600">
+                        <a href="https://t.me/${data.contact.replace('@', '')}" target="_blank" class="text-orange-300 hover:underline font-bold">📞 ${data.contact}</a>
+                    </div>
+                </div>
+            ;
+        }
 
-            // Получаем данные из полей
-            const name = document.getElementById('name').value;
-            const game = document.getElementById('game').value; 
-            const contact = document.getElementById('contact').value;
-            const desc = document.getElementById('desc').value;
-
-if(!name  !game  !contact) {
-                alert("Пожалуйста, заполните Имя, Игру и Контакты.");
-                return;
-            }
-
-            // Показываем загрузку
-            document.getElementById('loading').style.display = 'flex';
-
-            try {
-                // А. Сохраняем в Базу Данных (чтобы было на сайте)
-                await addDoc(collection(db, "teammates"), {
-                    name: name,
-                    role: game,
-                    contact: contact,
-                    about: desc,
-                    timestamp: Date.now()
-                });
-
-                // Б. Отправляем в Telegram (чтобы пришло уведомление)
-                const text = 
-🎮 <b>НОВАЯ АНКЕТА!</b>
-
-👤 <b>Игрок:</b> ${name}
-🕹 <b>Игра/Роль:</b> ${game}
-📞 <b>Связь:</b> ${contact}
-📝 <b>Описание:</b> ${desc}
-                ;
-
-                await fetch(https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        chat_id: TG_CHAT_ID,
-                        text: text,
-                        parse_mode: 'HTML'
-                    })
-                });
-
-                alert("✅ Анкета опубликована!");
-                document.getElementById('form').reset(); // Очистить форму
-
-            } catch (error) {
-                console.error(error);
-                alert("Ошибка отправки: " + error.message);
-            } finally {
-                document.getElementById('loading').style.display = 'none';
-            }
-        };
-
-        // --- 3. ЗАГРУЗКА СПИСКА АНКЕТ (REALTIME) ---
-        function loadTeammates() {
-            const listDiv = document.getElementById('teammates-list');
-            
-            // Слушаем базу данных (берем 50 последних)
+        // Настройка слушателя для отображения анкет в реальном времени
+        function setupListener() {
+            // Запрашиваем последние 50 анкет
             const q = query(collection(db, "teammates"), limit(50));
-
+            // onSnapshot слушает изменения в базе в реальном времени
             onSnapshot(q, (snapshot) => {
-                const items = [];
-                snapshot.forEach(doc => items.push(doc.data()));
+                const list = [];
+                snapshot.forEach((doc) => list.push(doc.data()));
+                // Сортировка по времени (новые сверху)
+                list.sort((a, b) => b.timestamp - a.timestamp);
                 
-                // Сортируем: новые сверху
-                items.sort((a, b) => b.timestamp - a.timestamp);
-
-                listDiv.innerHTML = ""; // Очистить список
-
-                if (items.length === 0) {
-                    listDiv.innerHTML = "<p class='text-center text-gray-500'>Анкет пока нет. Станьте первым!</p>";
-                    return;
-                }
-
-                items.forEach(item => {
-                    // Создаем карточку для каждой анкеты
-                    const date = new Date(item.timestamp).toLocaleDateString();
-                    // Безопасная ссылка
-                    let link = item.contact;
-                    if (!link.startsWith('http') && !link.startsWith('@')) {
-                        link = '#'; 
-                    }
-                    
-                    const card = 
-                        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 mb-4 card-hover transition duration-300">
-                            <div class="flex justify-between items-start">
-                                <h3 class="font-bold text-lg text-gray-800">${item.name}</h3>
-                                <span class="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">${date}</span>
-                            </div>
-                            <div class="mt-2 text-blue-600 font-medium">🎮 ${item.role}</div>
-                            <p class="text-gray-600 mt-2 text-sm whitespace-pre-wrap">${item.about}</p>
-                            <div class="mt-4 pt-3 border-t border-gray-100">
-                                <span class="text-gray-500 text-sm font-bold">📞 Связь: </span>
-                                <span class="text-blue-500 text-sm">${item.contact}</span>
-                            </div>
-                        </div>
-                    ;
-                    listDiv.innerHTML += card;
-                });
+                const container = document.getElementById('teammates-list');
+                container.innerHTML = list.length ? '' : '<p class="text-center text-gray-400 p-8">Тут пока пусто. Будьте первым!</p>';
+                list.forEach(t => container.innerHTML += renderTeammate(t));
             });
         }
 
-// Запуск при загрузке страницы
-        window.onload = () => {
-            initApp();
-            loadTeammates();
+// Инициализация приложения
+        window.onload = async () => {
+            await getTelegramToken(); // Сначала получаем токен
+            document.getElementById('teammate-form').addEventListener('submit', submitForm); // Вешаем обработчик на форму
+            setupListener(); // Запускаем слушатель анкет
         };
     </script>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="bg-gray-900 text-gray-100"> 
 
-    <!-- Заголовок -->
-    <header class="bg-white shadow-sm sticky top-0 z-10">
+<header class="bg-gray-800 shadow-lg sticky top-0 z-10">
         <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
             <div class="flex items-center gap-2">
-                <span class="text-2xl">👾</span>
-                <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
-                    LinkMeetCraft
-                </h1>
+                <span class="text-2xl neon-text">🔥</span> 
+                <h1 class="text-3xl font-bold neon-text">Поиск Тиммейтов</h1> 
             </div>
-            <a href="https://t.me/LinkMeetCraft" target="_blank" class="text-sm text-blue-500 font-medium hover:underline">
-                Наш Telegram канал
+            <a href="https://t.me/LinkMeetCraft" target="_blank" class="text-orange-400 font-medium hover:underline">
+                Telegram Канал
             </a>
         </div>
     </header>
 
-    <main class="max-w-4xl mx-auto px-4 py-8 grid md:grid-cols-3 gap-6">
-        
-        <!-- ЛЕВАЯ КОЛОНКА: ФОРМА -->
-        <div class="md:col-span-1">
-            <div class="bg-white p-6 rounded-2xl shadow-lg border border-blue-100 sticky top-24">
-                <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
-                    <span>📝</span> Подать анкету
-                </h2>
-                <form id="form" onsubmit="sendForm(event)">
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Ваш Никнейм</label>
-                            <input type="text" id="name" placeholder="Steve_Pro" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition" required>
-                        </div>
+    <main class="container">
+        <div class="panel h-fit sticky top-5">
+            <h2 class="text-2xl font-semibold mb-4 text-orange-400 border-b border-gray-600 pb-2">📝 Заявить о себе (Ваша Анкета)</h2>
+            <form id="teammate-form">
+                <label class="block text-sm font-medium text-gray-300 mb-1">Никнейм:</label>
+                <input type="text" id="name" class="form-input" required>
 
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Игра / Роль</label>
-                            <input type="text" id="game" placeholder="Minecraft / Строитель" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition" required>
-                        </div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">В какую игру ищете команду:</label>
+                <input type="text" id="role" class="form-input" placeholder="Например: Minecraft, CS2, Genshin Impact" required>
+                
+                <label class="block text-sm font-medium text-gray-300 mb-1">Ваша роль / Опыт:</label>
+                <input type="text" id="experience" class="form-input" placeholder="Например: Опытный строитель / Снайпер, звание LEM">
+                
+                <label class="block text-sm font-medium text-gray-300 mb-1">Контакт для связи (Telegram/Discord):</label>
+                <input type="text" id="contact" class="form-input" placeholder="@ваш_юзернейм" required>
+                
+                <label class="block text-sm font-medium text-gray-300 mb-1">Опишите, кого ищете/что умеете:</label>
+                <textarea id="about" class="form-textarea" rows="4" placeholder="Например: Ищу адекватную команду для ММ, играю вечерами."></textarea>
 
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Связь (Telegram/Discord)</label>
-                            <input type="text" id="contact" placeholder="@username" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition" required>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Описание</label>
-                            <textarea id="desc" rows="3" placeholder="Ищу команду для выживания..." class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition"></textarea>
-                        </div>
-
-                        <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 rounded-lg shadow-md transition transform active:scale-95 flex justify-center items-center gap-2">
-                            <span>🚀</span> Опубликовать
-                        </button>
-                    </div>
-                </form>
-            </div>
+                <button type="submit" class="btn-primary">Опубликовать Анкету</button>
+            </form>
         </div>
 
-        <!-- ПРАВАЯ КОЛОНКА: СПИСОК АНКЕТ -->
-        <div class="md:col-span-2">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold text-gray-800">Активные анкеты</h2>
-                <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full animate-pulse">Live</span>
-            </div>
-
-            <!-- Сюда будут загружаться анкеты -->
-
-<div id="teammates-list" class="space-y-4">
-                <!-- Заглушка загрузки -->
-                <div class="text-center py-10">
-                    <div class="inline-block loader mb-4"></div>
-                    <p class="text-gray-400">Загрузка базы данных...</p>
-                </div>
+        <div class="panel">
+            <h2 class="text-2xl font-semibold mb-4 text-orange-400 border-b border-gray-600 pb-2">📜 Активные Заявки на Поиск</h2>
+            <div id="teammates-list">
+                <p class="text-center text-gray-400 p-8">Загрузка...</p>
             </div>
         </div>
-
     </main>
-
-    <!-- Оверлей загрузки при отправке -->
-    <div id="loading" class="fixed inset-0 bg-white/80 backdrop-blur-sm hidden justify-center items-center z-50">
-        <div class="text-center">
-            <div class="loader mx-auto mb-4"></div>
-            <p class="font-bold text-gray-600">Отправляем данные...</p>
-        </div>
-    </div>
-
-    <footer class="text-center py-8 text-gray-400 text-sm">
-        &copy; 2025 LinkMeetCraft. Powered by Firebase & Telegram.
-    </footer>
-
+    
+    <!-- Всплывающие сообщения и экран загрузки -->
+    <div id="message-box" class="message-box"></div>
+    <div id="loading-overlay" class="loading-overlay"><div class="loading-spinner"></div></div>
 </body>
 </html>
