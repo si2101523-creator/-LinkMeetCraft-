@@ -227,7 +227,7 @@ return true;
             const contact = document.getElementById('contact').value;
             const about = document.getElementById('about').value;
 
-            if (!name  !role  !contact) {
+            if (!name || !role || !contact) {
                 showMessage("Заполните обязательные поля!", 'error');
                 return;
             }
