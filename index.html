@@ -3,721 +3,342 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LinkMeetCraft - Поиск команды и чат</title>
+    <title>LinkMeetCraft - Поиск команды</title>
     <!-- Подключение Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Установка шрифта Inter и общего чёрного фона */
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0d1117; /* Тёмный, почти чёрный фон */
-            color: #e6edf3; /* Светлый текст */
-            min-height: 100vh;
+            font-family: sans-serif;
+            background-color: #0d1117; /* Черный фон */
+            color: #e6edf3;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
         }
-        /* Стили для скроллбаров, чтобы они соответствовали тёмной теме */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background-color: #384252; /* Более тёмный ползунок */
-            border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background-color: #1a1f26; /* Очень тёмный трек */
-        }
-
-        /* Анимация загрузки */
+        /* Скроллбары */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #161b22; }
+        ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+        
         .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.2);
-            border-top: 4px solid #3b82f6; /* Синий цвет */
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top: 3px solid #3b82f6;
             border-radius: 50%;
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             animation: spin 1s linear infinite;
         }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Стиль для блокировки контента во время загрузки, но не всего UI */
-        .content-disabled {
-            opacity: 0.5;
-            pointer-events: none;
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="p-4 sm:p-6">
+<body class="flex flex-col md:flex-row h-full">
 
-    <!-- Основной контейнер приложения -->
-    <div id="app" class="flex flex-col md:flex-row h-[calc(100vh-3rem)] rounded-xl shadow-2xl overflow-hidden bg-[#161b22]">
+    <!-- БЛОК ОТОБРАЖЕНИЯ ОШИБОК (Чтобы вы видели, если что-то сломалось) -->
+    <div id="error-display" class="hidden fixed top-0 left-0 w-full bg-red-600 text-white p-4 z-[9999] font-bold text-center"></div>
+
+    <!-- Левая панель -->
+    <aside class="w-full md:w-64 bg-[#161b22] border-r border-[#30363d] flex flex-col p-4 z-20">
+        <h1 class="text-2xl font-bold text-orange-500 mb-6 tracking-wider">LinkMeetCraft</h1>
+
+        <!-- Панель входа -->
+        <div id="auth-box" class="bg-[#0d1117] p-4 rounded-xl border border-[#30363d] mb-4 shadow-lg">
+            <!-- Если не вошел -->
+            <div id="login-view">
+                <input type="text" id="nickname-input" placeholder="Ваш никнейм" class="w-full bg-[#21262d] border border-[#30363d] rounded p-2 text-white mb-2 focus:border-blue-500 outline-none">
+                <button id="login-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition">Войти</button>
+            </div>
+            <!-- Если вошел -->
+            <div id="user-view" class="hidden">
+                <div class="text-gray-400 text-xs">Вы вошли как:</div>
+                <div id="current-nickname" class="text-blue-400 font-bold text-lg truncate">User</div>
+                <button id="logout-btn" class="mt-2 text-xs text-red-400 hover:text-red-300 underline">Сменить ник</button>
+            </div>
+        </div>
+
+        <!-- Навигация -->
+        <nav class="flex-1 space-y-2">
+            <button onclick="app.setView('profiles')" class="nav-btn w-full text-left p-3 rounded hover:bg-[#21262d] text-gray-300 hover:text-white transition flex items-center border border-transparent focus:border-blue-500">
+                📄 Анкеты
+            </button>
+            <button onclick="app.setView('chat')" class="nav-btn w-full text-left p-3 rounded hover:bg-[#21262d] text-gray-300 hover:text-white transition flex items-center border border-transparent focus:border-blue-500">
+                💬 Общий чат
+            </button>
+            <button onclick="app.setView('create')" class="nav-btn w-full text-left p-3 rounded bg-orange-900/20 text-orange-400 hover:bg-orange-900/40 hover:text-orange-300 transition flex items-center border border-orange-900/50 mt-4">
+                ➕ Создать анкету
+            </button>
+        </nav>
+    </aside>
+
+    <!-- Правая панель (Контент) -->
+    <main class="flex-1 relative bg-[#0d1117] overflow-hidden flex flex-col">
         
-        <!-- Левая панель навигации/профиля (Синий/Оранжевый акцент) -->
-        <aside class="w-full md:w-64 p-4 flex flex-col space-y-4 bg-[#1f242d] border-r border-gray-700">
-            
-            <h1 class="text-2xl font-bold text-orange-400 mb-4">LinkMeetCraft</h1>
+        <!-- Уведомления -->
+        <div id="toast" class="absolute top-4 right-4 bg-blue-600 text-white px-6 py-3 rounded shadow-xl transform translate-x-full transition-transform duration-300 z-50"></div>
 
-            <!-- Блок профиля и аутентификации -->
-            <div id="auth-panel" class="bg-gray-800 p-3 rounded-lg shadow-inner">
-                <div id="user-info" class="hidden">
-                    <p class="text-sm text-gray-400">Привет, <span id="display-nickname" class="text-blue-400 font-semibold"></span>!</p>
-                    <p class="text-xs text-gray-500 mt-1">ID: <span id="display-user-id" class="text-gray-400 text-xs"></span></p>
-                    <button id="change-nickname-btn" class="mt-2 w-full py-1 text-xs bg-orange-500 hover:bg-orange-600 rounded-md transition duration-150">Сменить ник</button>
-                </div>
-                <div id="login-form-container">
-                    <input type="text" id="login-nickname" placeholder="Придумайте никнейм" class="w-full p-2 text-sm bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400">
-                    <button id="login-btn" class="mt-2 w-full py-2 text-sm bg-blue-500 hover:bg-blue-600 rounded-md transition duration-150 font-semibold">Войти</button>
-                </div>
+<!-- Экран: Анкеты -->
+        <div id="view-profiles" class="view-section h-full overflow-y-auto p-6 hidden">
+            <h2 class="text-2xl font-bold text-white mb-4 border-b border-[#30363d] pb-2">Активные анкеты</h2>
+            <div id="profiles-container" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div class="text-gray-500">Загрузка анкет...</div>
             </div>
+        </div>
 
-            <!-- Навигация -->
-            <nav id="nav-menu" class="flex flex-col space-y-2 flex-grow">
-                <!-- Класс bg-blue-600 по умолчанию, чтобы кнопки выглядели активными -->
-                <button data-view="profiles" class="nav-btn bg-blue-600 hover:bg-blue-700 p-3 rounded-lg text-lg font-semibold transition duration-150 shadow-md">
-                    <span class="mr-2">📝</span> Анкеты
-                </button>
-                <button data-view="chat" class="nav-btn bg-gray-700 hover:bg-gray-600 p-3 rounded-lg text-lg font-semibold transition duration-150">
-
-<span class="mr-2">💬</span> Общий чат
-                </button>
-                <button data-view="new-profile" class="nav-btn bg-orange-500 hover:bg-orange-600 p-3 rounded-lg text-lg font-semibold transition duration-150">
-                    <span class="mr-2">✨</span> Создать анкету
-                </button>
-            </nav>
-
-        </aside>
-
-        <!-- Правая панель контента -->
-        <main id="main-content-area" class="flex-grow p-4 md:p-6 overflow-y-auto custom-scrollbar">
-
-            <!-- Область для сообщений -->
-            <div id="message-area" class="mb-4 hidden p-3 rounded-lg text-center font-medium transition duration-300"></div>
-            
-            <!-- Индикатор загрузки -->
-            <div id="loading-indicator" class="absolute top-0 left-0 w-full h-full bg-[#161b22]/70 flex justify-center items-center z-50 hidden">
-                <div class="flex items-center">
-                    <div class="spinner"></div>
-                    <p class="ml-3 text-gray-200 font-semibold">Загрузка данных...</p>
-                </div>
+        <!-- Экран: Чат -->
+        <div id="view-chat" class="view-section h-full flex flex-col p-4 hidden">
+            <h2 class="text-xl font-bold text-white mb-2 border-b border-[#30363d] pb-2">Общий чат</h2>
+            <div id="chat-container" class="flex-1 overflow-y-auto space-y-3 mb-4 pr-2">
+                <div class="text-center text-gray-600 mt-10">Загрузка сообщений...</div>
             </div>
+            <div class="flex gap-2">
+                <input type="text" id="chat-input" placeholder="Напишите сообщение..." class="flex-1 bg-[#21262d] border border-[#30363d] rounded p-3 text-white focus:border-blue-500 outline-none">
+                <button id="send-msg-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 rounded font-bold">></button>
+            </div>
+        </div>
 
-            <!-- 1. Список анкет (Profiles View) -->
-            <section id="profiles-view" class="view-content">
-                <h2 class="text-3xl font-bold mb-6 text-blue-400">Все анкеты</h2>
-                <div id="profiles-list" class="grid gap-6 grid-cols-1 lg:grid-cols-2">
-                    <!-- Здесь будут карточки анкет -->
-                    <p class="text-gray-500 text-center col-span-full" id="no-profiles-message">Анкет пока нет. Будьте первым!</p>
+        <!-- Экран: Создание анкеты -->
+        <div id="view-create" class="view-section h-full overflow-y-auto p-6 hidden">
+            <h2 class="text-2xl font-bold text-orange-500 mb-6">Новая анкета</h2>
+            <form id="create-form" class="max-w-2xl bg-[#161b22] p-6 rounded-xl border border-[#30363d] space-y-4">
+                <div>
+                    <label class="block text-gray-400 text-sm mb-1">Название проекта / Цель</label>
+                    <input type="text" id="f-title" required class="w-full bg-[#0d1117] border border-[#30363d] rounded p-2 text-white focus:border-orange-500 outline-none">
                 </div>
-            </section>
-
-            <!-- 2. Форма создания анкеты (New Profile View) -->
-            <section id="new-profile-view" class="view-content hidden">
-                <h2 class="text-3xl font-bold mb-6 text-orange-400">Создать анкету</h2>
-                <form id="profile-form" class="space-y-4 bg-[#1f242d] p-6 rounded-xl shadow-lg border border-gray-700">
-                    
-                    <label class="block">
-                        <span class="text-gray-300">Название проекта / Ваша цель (Обязательно)</span>
-                        <input type="text" id="profile-title" required class="mt-1 block w-full p-3 bg-gray-700 border border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500">
-                    </label>
-
-                    <label class="block">
-                        <span class="text-gray-300">Роль, которую вы ищете / предлагаете (Обязательно)</span>
-                        <input type="text" id="profile-role" required class="mt-1 block w-full p-3 bg-gray-700 border border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500">
-                    </label>
-
-                    <label class="block">
-                        <span class="text-gray-300">Ваш опыт / Стек технологий</span>
-                        <textarea id="profile-experience" rows="3" class="mt-1 block w-full p-3 bg-gray-700 border border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500"></textarea>
-                    </label>
-                    
-                    <label class="block">
-                        <span class="text-gray-300">Контакт для связи (Telegram, Discord и т.д.) (Обязательно)</span>
-                        <input type="text" id="profile-contact" required class="mt-1 block w-full p-3 bg-gray-700 border border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500">
-                    </label>
-
-                    <label class="block">
-                        <span class="text-gray-300">Подробнее о проекте / О себе</span>
-                        <textarea id="profile-about" rows="5" class="mt-1 block w-full p-3 bg-gray-700 border border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500"></textarea>
-                    </label>
-
-<button type="submit" class="w-full py-3 bg-orange-500 hover:bg-orange-600 rounded-md text-lg font-bold transition duration-150">
-                        Опубликовать анкету
-                    </button>
-                </form>
-            </section>
-
-            <!-- 3. Общий чат (Chat View) -->
-            <section id="chat-view" class="view-content hidden flex flex-col h-full">
-                <h2 class="text-3xl font-bold mb-4 text-blue-400">Общий чат</h2>
-                <div id="chat-messages" class="flex-grow p-4 space-y-4 overflow-y-auto custom-scrollbar bg-[#1f242d] rounded-xl mb-4 h-96">
-                    <!-- Здесь будут сообщения чата -->
-                    <p class="text-gray-500 text-center" id="no-chat-message">Начните общение первым!</p>
+                <div>
+                    <label class="block text-gray-400 text-sm mb-1">Кого ищете (Роль)</label>
+                    <input type="text" id="f-role" required class="w-full bg-[#0d1117] border border-[#30363d] rounded p-2 text-white focus:border-orange-500 outline-none">
                 </div>
-                <div id="chat-input-area" class="flex">
-                    <input type="text" id="chat-message-input" placeholder="Введите сообщение..." class="flex-grow p-3 bg-gray-700 border border-gray-600 rounded-l-lg focus:outline-none focus:ring-1 focus:ring-blue-500 text-white">
-                    <button id="send-message-btn" class="bg-blue-500 hover:bg-blue-600 px-6 py-3 rounded-r-lg font-semibold transition duration-150">
-                        Отправить
-                    </button>
+                <div>
+                    <label class="block text-gray-400 text-sm mb-1">Описание / Стек</label>
+                    <textarea id="f-desc" required rows="4" class="w-full bg-[#0d1117] border border-[#30363d] rounded p-2 text-white focus:border-orange-500 outline-none"></textarea>
                 </div>
-            </section>
+                <div>
+                    <label class="block text-gray-400 text-sm mb-1">Ваш контакт (Telegram/Discord)</label>
+                    <input type="text" id="f-contact" required class="w-full bg-[#0d1117] border border-[#30363d] rounded p-2 text-white focus:border-orange-500 outline-none">
+                </div>
+                <button type="submit" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded mt-4 transition">Опубликовать</button>
+            </form>
+        </div>
 
-        </main>
-    </div>
+    </main>
 
-    <!-- Firebase SDK Imports -->
+    <!-- ЛОВЕЦ ОШИБОК СКРИПТА -->
+    <script>
+        window.addEventListener('error', function(e) {
+            const display = document.getElementById('error-display');
+            display.innerText = "КРИТИЧЕСКАЯ ОШИБКА: " + e.message;
+            display.classList.remove('hidden');
+        });
+    </script>
+
+    <!-- СКРИПТ ПРИЛОЖЕНИЯ -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, onSnapshot, collection, query, serverTimestamp, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        
-        // --- 1. ИНИЦИАЛИЗАЦИЯ И ГЛОБАЛЬНЫЕ КОНСТАНТЫ ---
-        
-        // Получение глобальных переменных из среды Canvas
+        import { getAuth, signInAnonymously, updateProfile, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+// Глобальный объект приложения
+        window.app = {
+            setView: (viewId) => {
+                document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+                document.getElementById('view-' + viewId).classList.remove('hidden');
+                
+                // Автоскролл чата при открытии
+                if(viewId === 'chat') {
+                    const container = document.getElementById('chat-container');
+                    setTimeout(() => container.scrollTop = container.scrollHeight, 100);
+                }
+            }
+        };
+
+        // --- КОНФИГУРАЦИЯ ---
         const appId = typeof app_id !== 'undefined' ? app_id : 'default-app-id';
         const firebaseConfig = JSON.parse(typeof firebase_config !== 'undefined' ? firebase_config : '{}');
-        const initialAuthToken = typeof initial_auth_token !== 'undefined' ? initial_auth_token : null;
-
-        let app;
-        let db;
-        let auth;
-        let userId = null;
-        let nickname = null;
-        let isAuthReady = false;
-
-        // Пути к коллекциям Firestore
-        const USERS_COLLECTION = /artifacts/${appId}/users;
-        const PUBLIC_PROFILES_COLLECTION = /artifacts/${appId}/public/data/profiles;
-        const PUBLIC_CHAT_COLLECTION = /artifacts/${appId}/public/data/chat;
         
-        // Элементы DOM
-        const appContainer = document.getElementById('app');
-        const messageArea = document.getElementById('message-area');
-        const loadingIndicator = document.getElementById('loading-indicator');
-        const loginNicknameInput = document.getElementById('login-nickname');
-        const loginBtn = document.getElementById('login-btn');
-        const profileForm = document.getElementById('profile-form');
-        const profilesList = document.getElementById('profiles-list');
-        const chatMessages = document.getElementById('chat-messages');
-        const chatInput = document.getElementById('chat-message-input');
-        const sendBtn = document.getElementById('send-message-btn');
-        const navButtons = document.querySelectorAll('.nav-btn');
-        const mainContentArea = document.getElementById('main-content-area'); // Главная область контента
-        
-        // --- 2. УТИЛИТЫ ---
-        
-        /**
-         * Показывает или скрывает индикатор загрузки и блокирует главный контент.
+        // --- ВНИМАНИЕ: ЗДЕСЬ БЫЛА ОШИБКА. НЕ УДАЛЯЙТЕ ОБРАТНЫЕ КАВЫЧКИ () ВОКРУГ ПУТЕЙ! ---
+        const PATH_PROFILES = /artifacts/${appId}/public/data/profiles;
+        const PATH_CHAT = /artifacts/${appId}/public/data/chat;
+        const PATH_USERS = /artifacts/${appId}/users`;
+        // -------------------------------------------------------------------------------------
 
-* @param {boolean} show
-         */
-        function showLoading(show) {
-            // Показываем/скрываем глобальный индикатор загрузки
-            loadingIndicator.classList.toggle('hidden', !show);
-            
-            // Блокируем только основную область контента (Main), но не боковую панель (Aside), 
-            // чтобы можно было войти в систему даже во время загрузки.
-            mainContentArea.classList.toggle('content-disabled', show);
-            
-            // Блокируем кнопки навигации, пока нет авторизации
-            document.getElementById('nav-menu').classList.toggle('content-disabled', show && !isAuthReady);
+        // Инициализация
+        const firebaseApp = initializeApp(firebaseConfig);
+        const auth = getAuth(firebaseApp);
+        const db = getFirestore(firebaseApp);
+
+        let currentUser = null;
+
+        // --- ФУНКЦИИ ИНТЕРФЕЙСА ---
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.style.transform = 'translateX(0)';
+            setTimeout(() => toast.style.transform = 'translateX(120%)', 3000);
         }
 
-        /**
-         * Отображает сообщение пользователю.
-         * @param {string} text Текст сообщения.
-         * @param {string} type Тип: 'успех', 'ошибка', 'инфо'.
-         */
-        function showMessage(text, type = 'инфо') {
-            messageArea.textContent = text;
-            messageArea.classList.remove('hidden', 'bg-green-700', 'bg-red-700', 'bg-blue-700');
-            
-            let bgColor = 'bg-blue-700';
-            if (type === 'успех') bgColor = 'bg-green-700';
-            if (type === 'ошибка') bgColor = 'bg-red-700';
-
-            messageArea.classList.add(bgColor);
-            
-            setTimeout(() => {
-                messageArea.classList.add('hidden');
-            }, 5000);
-        }
-
-        /**
-         * Переключает отображение контента между разделами.
-         * @param {string} viewName Имя раздела ('profiles', 'chat', 'new-profile').
-         */
-        function switchView(viewName) {
-            document.querySelectorAll('.view-content').forEach(section => {
-                section.classList.add('hidden');
-            });
-            document.getElementById(${viewName}-view).classList.remove('hidden');
-
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                const isSelected = btn.dataset.view === viewName;
-                btn.classList.toggle('bg-blue-600', isSelected);
-                btn.classList.toggle('hover:bg-blue-700', isSelected);
-                btn.classList.toggle('bg-gray-700', !isSelected);
-                btn.classList.toggle('hover:bg-gray-600', !isSelected);
-            });
-            
-            // Если переключаемся в чат, прокручиваем вниз
-            if (viewName === 'chat') {
-                setTimeout(() => chatMessages.scrollTop = chatMessages.scrollHeight, 100);
-            }
-        }
-
-        /**
-         * Форматирует временную метку
-         * @param {number} timestamp
-         * @returns {string}
-         */
-        function formatTimestamp(timestamp) {
-            if (!timestamp) return '';
-            const date = new Date(timestamp.seconds * 1000);
-            return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-        }
-
-
-        // --- 3. АУТЕНТИФИКАЦИЯ И УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЕМ ---
-
-        /**
-         * Завершает процесс аутентификации и устанавливает никнейм.
-         * @param {string} newNickname Никнейм, выбранный пользователем.
-         */
-        async function completeLogin(newNickname) {
-            if (!newNickname || newNickname.length < 3) {
-                showMessage("Никнейм должен содержать не менее 3 символов.", "ошибка");
-                return;
-            }
-            showLoading(true);
-            
-            try {
-                // Обновление профиля Firebase Auth
-                await updateProfile(auth.currentUser, { displayName: newNickname });
-
-                // Проверяем и обновляем документ пользователя в Firestore
-                const userDocRef = doc(db, USERS_COLLECTION, auth.currentUser.uid);
-                const userDocSnap = await getDoc(userDocRef);
-                
-                const now = Date.now();
-                const userPublicData = {
-                    nickname: newNickname,
-                    lastNicknameChange: now,
-                    createdAt: now
-                };
-
-if (userDocSnap.exists()) {
-                    // Если документ существует, просто обновляем никнейм
-                    await updateDoc(userDocRef, { 
-                        nickname: newNickname, 
-                        lastNicknameChange: now 
-                    });
-                } else {
-                    // Если новый пользователь, создаем документ
-                    await setDoc(userDocRef, userPublicData);
-                }
-
-                // Перезагрузка UI
-                nickname = newNickname;
-                updateUserInfoUI(auth.currentUser);
-                showMessage(Добро пожаловать, ${nickname}!, "успех");
-
-            } catch (error) {
-                console.error("Ошибка установки никнейма:", error);
-                showMessage("Ошибка при установке никнейма.", "ошибка");
-            } finally {
-                showLoading(false);
-            }
-        }
-
-        /**
-         * Обработчик входа (если токен пустой или анонимный пользователь).
-         */
-        loginBtn.addEventListener('click', async () => {
-            const desiredNickname = loginNicknameInput.value.trim();
-            if (!desiredNickname) {
-                showMessage("Введите желаемый никнейм.", "инфо");
-                return;
-            }
-            
-            showLoading(true);
-            try {
-                // Сначала выполняем анонимный вход
-                if (!auth.currentUser || auth.currentUser.isAnonymous) {
-                    await signInAnonymously(auth);
-                }
-                // Затем завершаем вход, устанавливая никнейм
-                await completeLogin(desiredNickname);
-            } catch (error) {
-                console.error("Ошибка входа:", error);
-                showMessage("Не удалось войти.", "ошибка");
-            } finally {
-                showLoading(false);
-            }
-        });
-
-        /**
-         * Обновляет UI после аутентификации.
-         * @param {Object} user Объект пользователя Firebase.
-         */
-        function updateUserInfoUI(user) {
-            const loginFormContainer = document.getElementById('login-form-container');
-            const userInfo = document.getElementById('user-info');
+        function updateAuthUI(user) {
+            const loginView = document.getElementById('login-view');
+            const userView = document.getElementById('user-view');
             
             if (user && user.displayName) {
-                nickname = user.displayName;
-                userId = user.uid;
-                document.getElementById('display-nickname').textContent = nickname;
-                document.getElementById('display-user-id').textContent = userId;
-                loginFormContainer.classList.add('hidden');
-                userInfo.classList.remove('hidden');
-                
-                // Пользователь готов
-                isAuthReady = true; 
-                document.getElementById('nav-menu').classList.remove('content-disabled');
-
+                currentUser = user;
+                loginView.classList.add('hidden');
+                userView.classList.remove('hidden');
+                document.getElementById('current-nickname').innerText = user.displayName;
             } else {
-                loginFormContainer.classList.remove('hidden');
-                userInfo.classList.add('hidden');
-                
-                // Если никнейма нет, блокируем навигацию, кроме логина
-                isAuthReady = false; 
-                document.getElementById('nav-menu').classList.add('content-disabled');
+                currentUser = null;
+                loginView.classList.remove('hidden');
+                userView.classList.add('hidden');
             }
         }
 
-        /**
-         * Обработчик смены никнейма с проверкой на 1 месяц.
-         */
-        document.getElementById('change-nickname-btn').addEventListener('click', async () => {
-            if (!userId) return;
+        // --- ЛОГИКА АУТЕНТИФИКАЦИИ ---
 
-            showLoading(true);
+        document.getElementById('login-btn').addEventListener('click', async () => {
+            const nick = document.getElementById('nickname-input').value.trim();
+            if(nick.length < 3) return showToast("Ник слишком короткий!");
+            
             try {
-                const userDocRef = doc(db, USERS_COLLECTION, userId);
-                const userDocSnap = await getDoc(userDocRef);
-                
-                if (!userDocSnap.exists()) {
-                    showMessage("Не удалось найти данные пользователя.", "ошибка");
-                    return;
-                }
-
-                const userData = userDocSnap.data();
-                const lastChange = userData.lastNicknameChange || 0;
-                const thirtyDays = 30 * 24 * 60 * 60 * 1000;
-                const timeSinceLastChange = Date.now() - lastChange;
-
-if (timeSinceLastChange < thirtyDays) {
-                    const remainingDays = Math.ceil((thirtyDays - timeSinceLastChange) / (1000 * 60 * 60 * 24));
-                    showMessage(Никнейм можно менять только раз в 30 дней. Осталось дней: ${remainingDays}., "инфо");
-                    return;
+                if (!auth.currentUser) {
+                    await signInAnonymously(auth);
                 }
                 
-                const newNickname = prompt("Введите новый никнейм (мин 3 символа):");
-                if (newNickname && newNickname.trim().length >= 3) {
-                    await completeLogin(newNickname.trim());
-                } else if (newNickname !== null) {
-                    showMessage("Никнейм отменен или слишком короткий.", "инфо");
+                // Проверка на смену ника (1 месяц)
+                const uid = auth.currentUser.uid;
+                const userRef = doc(db, PATH_USERS, uid);
+                const userSnap = await getDoc(userRef);
+                const now = Date.now();
+
+                if (userSnap.exists()) {
+                    const lastChange = userSnap.data().lastChange || 0;
+                    if (now - lastChange < 2592000000) { // 30 дней в мс
+                        showToast("Менять ник можно раз в месяц!");
+                        // Если уже есть имя, просто обновляем интерфейс
+                        if(auth.currentUser.displayName) {
+                            updateAuthUI(auth.currentUser);
+                            return; 
+                        }
+                    }
                 }
 
-            } catch (error) {
-                console.error("Ошибка при смене никнейма:", error);
-                showMessage("Ошибка при попытке сменить никнейм.", "ошибка");
-            } finally {
-                showLoading(false);
+                await updateProfile(auth.currentUser, { displayName: nick });
+                await setDoc(userRef, { nickname: nick, lastChange: now }, { merge: true });
+                updateAuthUI(auth.currentUser);
+                showToast("Добро пожаловать, " + nick);
+
+            } catch (e) {
+                console.error(e);
+                showToast("Ошибка входа: " + e.message);
             }
         });
 
+document.getElementById('logout-btn').addEventListener('click', () => {
+             // Просто показываем форму входа снова для смены (с проверкой внутри логина)
+             document.getElementById('user-view').classList.add('hidden');
+             document.getElementById('login-view').classList.remove('hidden');
+        });
 
-        // --- 4. УПРАВЛЕНИЕ АНКЕТАМИ (PROFILES) ---
+        // Слушатель состояния входа
+        onAuthStateChanged(auth, (user) => {
+            if (user && user.displayName) {
+                updateAuthUI(user);
+            }
+        });
 
-        /**
-         * Отображает список анкет в DOM.
-         * @param {Array<Object>} profiles Массив объектов анкет.
-         */
-        function renderProfiles(profiles) {
-            profilesList.innerHTML = '';
-            
-            if (profiles.length === 0) {
-                document.getElementById('no-profiles-message').classList.remove('hidden');
+        // --- ЧАТ ---
+
+        const chatContainer = document.getElementById('chat-container');
+        const qChat = query(collection(db, PATH_CHAT), orderBy('createdAt', 'desc'), limit(50));
+
+        onSnapshot(qChat, (snapshot) => {
+            chatContainer.innerHTML = '';
+            const msgs = [];
+            snapshot.forEach(d => msgs.push(d.data()));
+            msgs.reverse(); // Чтобы старые были сверху
+
+            msgs.forEach(msg => {
+                const div = document.createElement('div');
+                div.className = "bg-[#161b22] p-2 rounded border border-[#30363d] max-w-[80%]";
+                div.innerHTML = <span class="text-blue-400 font-bold text-xs">${msg.author}</span>: <span class="text-gray-300">${msg.text}</span>;
+                chatContainer.appendChild(div);
+            });
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        });
+
+        document.getElementById('send-msg-btn').addEventListener('click', async () => {
+            if (!currentUser) return showToast("Сначала войдите!");
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            try {
+                await addDoc(collection(db, PATH_CHAT), {
+                    text: text,
+                    author: currentUser.displayName,
+                    uid: currentUser.uid,
+                    createdAt: serverTimestamp()
+                });
+                input.value = '';
+            } catch (e) {
+                showToast("Ошибка отправки");
+            }
+        });
+
+        // --- АНКЕТЫ ---
+
+        const profilesContainer = document.getElementById('profiles-container');
+        const qProfiles = query(collection(db, PATH_PROFILES), orderBy('createdAt', 'desc'), limit(20));
+
+        onSnapshot(qProfiles, (snapshot) => {
+            profilesContainer.innerHTML = '';
+            if (snapshot.empty) {
+                profilesContainer.innerHTML = '<div class="text-gray-500">Анкет пока нет.</div>';
                 return;
             }
-            document.getElementById('no-profiles-message').classList.add('hidden');
-
-
-            profiles.forEach(profile => {
-                const profileCard = document.createElement('div');
-                profileCard.className = 'bg-[#1f242d] p-5 rounded-xl shadow-xl border border-blue-800/50 hover:border-blue-500 transition duration-300';
-                
-                profileCard.innerHTML = 
-                    <h3 class="text-xl font-bold mb-2 text-orange-400">${profile.title}</h3>
-                    <p class="text-blue-400 font-semibold mb-3 border-b border-gray-700 pb-2">Роль: ${profile.role}</p>
-                    
-                    <p class="text-sm text-gray-300 mb-2">Опыт/Стек: <span class="text-gray-400">${profile.experience || 'Не указан'}</span></p>
-                    <p class="text-sm text-gray-300 mb-4">Описание: <span class="text-gray-400">${profile.about || 'Нет описания'}</span></p>
-
-                    <div class="pt-3 border-t border-gray-700">
-                        <p class="text-xs text-gray-500">Автор: <span class="text-blue-300">${profile.userNickname || 'Аноним'}</span></p>
-                        <p class="text-xs text-gray-500 mt-1">Контакт: <span class="text-orange-300 font-medium break-all">${profile.contact}</span></p>
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const card = document.createElement('div');
+                card.className = "bg-[#161b22] p-4 rounded-xl border border-[#30363d] hover:border-blue-500 transition";
+                card.innerHTML = 
+                    <div class="font-bold text-orange-400 text-lg">${data.title}</div>
+                    <div class="text-sm text-blue-300 mb-2">${data.role}</div>
+                    <div class="text-gray-300 text-sm mb-3 whitespace-pre-wrap">${data.desc}</div>
+                    <div class="text-xs text-gray-500 border-t border-[#30363d] pt-2 flex justify-between">
+                        <span>Автор: ${data.author}</span>
+                        <span class="text-white bg-blue-900 px-2 rounded">${data.contact}</span>
                     </div>
                 ;
-                profilesList.appendChild(profileCard);
+                profilesContainer.appendChild(card);
             });
-        }
-        
-        /**
-         * Обработчик отправки формы анкеты.
-         */
-        profileForm.addEventListener('submit', async (e) => {
+        });
+
+        // Отправка анкеты
+        document.getElementById('create-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!currentUser) return showToast("Сначала войдите!");
 
-            if (!nickname) {
-                showMessage("Пожалуйста, сначала установите свой никнейм.", "инфо");
-                return;
-            }
-
-            const title = document.getElementById('profile-title').value.trim();
-            const role = document.getElementById('profile-role').value.trim();
-            const experience = document.getElementById('profile-experience').value.trim();
-            const contact = document.getElementById('profile-contact').value.trim();
-            const about = document.getElementById('profile-about').value.trim();
-
-            if (!title  !role  !contact) {
-                showMessage("Заполните обязательные поля: Название, Роль и Контакт.", "ошибка");
-                return;
-            }
-
-            showLoading(true);
+            const title = document.getElementById('f-title').value;
+            const role = document.getElementById('f-role').value;
+            const desc = document.getElementById('f-desc').value;
+            const contact = document.getElementById('f-contact').value;
 
 try {
-                const profileData = {
-                    title: title,
-                    role: role,
-                    experience: experience,
-                    contact: contact,
-                    about: about,
-                    userId: userId,
-                    userNickname: nickname,
+                await addDoc(collection(db, PATH_PROFILES), {
+                    title, role, desc, contact,
+                    author: currentUser.displayName,
+                    uid: currentUser.uid,
                     createdAt: serverTimestamp()
-                };
-
-                await addDoc(collection(db, PUBLIC_PROFILES_COLLECTION), profileData);
-
-                showMessage("Анкета успешно опубликована!", "успех");
-                profileForm.reset();
-                switchView('profiles'); // Переключаемся на просмотр анкет
-
-            } catch (error) {
-                console.error("Ошибка сохранения анкеты:", error);
-                showMessage("Произошла ошибка при сохранении анкеты. Попробуйте снова.", "ошибка");
-            } finally {
-                showLoading(false);
+                });
+                showToast("Анкета создана!");
+                e.target.reset();
+                app.setView('profiles');
+            } catch (err) {
+                showToast("Ошибка создания: " + err.message);
             }
         });
 
-        // --- 5. УПРАВЛЕНИЕ ЧАТОМ (CHAT) ---
-
-        /**
-         * Отображает сообщение чата в DOM.
-         * @param {Object} message Сообщение Firestore.
-         */
-        function renderMessage(message) {
-            const messageElement = document.createElement('div');
-            messageElement.className = 'flex items-start space-x-3';
-            
-            const timestamp = formatTimestamp(message.createdAt);
-            
-            messageElement.innerHTML = 
-                <div>
-                    <span class="text-blue-400 font-semibold">${message.userNickname || 'Аноним'}</span>
-                    <span class="text-gray-500 text-xs ml-2">${timestamp}</span>
-                    <p class="text-gray-200 break-words mt-1">${message.text}</p>
-                </div>
-            ;
-            chatMessages.appendChild(messageElement);
-        }
-
-        /**
-         * Обработчик отправки сообщения.
-         */
-        sendBtn.addEventListener('click', sendMessage);
-        chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
-
-        async function sendMessage() {
-            const text = chatInput.value.trim();
-            
-            if (!nickname) {
-                showMessage("Пожалуйста, сначала установите свой никнейм, чтобы писать в чат.", "инфо");
-                return;
-            }
-            
-            if (text.length === 0) return;
-
-            chatInput.value = ''; // Очистка поля ввода
-            
-            try {
-                const messageData = {
-                    userId: userId,
-                    userNickname: nickname,
-                    text: text,
-                    createdAt: serverTimestamp()
-                };
-
-                await addDoc(collection(db, PUBLIC_CHAT_COLLECTION), messageData);
-
-            } catch (error) {
-                console.error("Ошибка отправки сообщения:", error);
-                showMessage("Не удалось отправить сообщение.", "ошибка");
-                chatInput.value = text; // Возвращаем текст, если отправка не удалась
-            }
-        }
-
-        // --- 6. ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ И СЛУШАТЕЛИ FIRESTORE ---
-
-        /**
-         * Инициализирует Firebase и устанавливает слушатели.
-         */
-        async function initApp() {
-            try {
-                showLoading(true);
-
-                // Инициализация
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                
-                // Слушатель состояния аутентификации
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        // Если есть токен, но нет displayName (обычно при первом анонимном входе)
-                        if (!user.displayName && !initialAuthToken) {
-
-// Просим пользователя установить никнейм
-                            updateUserInfoUI(user); 
-                        } else {
-                            // Пользователь аутентифицирован и имеет никнейм (или токен был предоставлен)
-                            updateUserInfoUI(user);
-                            isAuthReady = true;
-                            // Начинаем прослушивание данных
-                            setupFirestoreListeners();
-                        }
-                    } else {
-                        // Если нет пользователя (или выход), пытаемся войти анонимно
-                        await handleInitialAuth();
-                    }
-                    
-                    // ГАРАНТИЯ ДОСТУПНОСТИ UI (даже если данные не загружены)
-                    showLoading(false); 
-                });
-
-                // Если уже есть токен, используем его для входа
-                if (initialAuthToken) {
-                    await handleInitialAuth();
-                } 
-
-                // Устанавливаем начальное представление
-                switchView('profiles'); 
-                
-            } catch (error) {
-                console.error("Критическая ошибка инициализации Firebase:", error);
-                showMessage("Не удалось подключиться к сервису данных.", "ошибка");
-                showLoading(false);
-            }
-        }
-
-        /**
-         * Обрабатывает первоначальную аутентификацию (Custom Token или Анонимно).
-         */
-        async function handleInitialAuth() {
-            try {
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (error) {
-                 // Если signInWithCustomToken не удался, пробуем анонимный
-                console.warn("Ошибка входа с токеном. Попытка анонимного входа.", error);
-                try {
-                    await signInAnonymously(auth);
-                } catch (anonError) {
-                    console.error("Не удалось войти анонимно:", anonError);
-                }
-            }
-        }
-
-        /**
-         * Настраивает слушателей Firestore для чата и анкет.
-         */
-        function setupFirestoreListeners() {
-            if (!isAuthReady) return;
-
-            // 1. Слушатель для анкет
-            const profilesQuery = query(collection(db, PUBLIC_PROFILES_COLLECTION));
-            onSnapshot(profilesQuery, (snapshot) => {
-                const profiles = [];
-                snapshot.forEach(doc => {
-                    profiles.push({ id: doc.id, ...doc.data() });
-                });
-                // Сортируем в памяти по дате (самые новые сверху)
-                profiles.sort((a, b) => b.createdAt?.seconds - a.createdAt?.seconds);
-                renderProfiles(profiles);
-            }, (error) => {
-                console.error("Ошибка прослушивания анкет:", error);
-                showMessage("Не удалось загрузить анкеты.", "ошибка");
-            });
-
-            // 2. Слушатель для чата
-            // Получаем последние 50 сообщений
-            const chatQuery = query(collection(db, PUBLIC_CHAT_COLLECTION), 
-                                    // orderBy('createdAt'), // Firestore требует индекс для этого, сортируем в памяти
-                                    limit(50)); 
-            
-            onSnapshot(chatQuery, (snapshot) => {
-                chatMessages.innerHTML = '';
-                const messages = [];
-                snapshot.forEach(doc => {
-                    messages.push({ id: doc.id, ...doc.data() });
-                });
-                
-                // Сортируем в памяти по дате (самые старые сверху для правильного порядка в чате)
-                messages.sort((a, b) => a.createdAt?.seconds - b.createdAt?.seconds);
-
-messages.forEach(message => renderMessage(message));
-                
-                // Автопрокрутка вниз
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-                
-                document.getElementById('no-chat-message').classList.toggle('hidden', messages.length > 0);
-
-            }, (error) => {
-                console.error("Ошибка прослушивания чата:", error);
-                showMessage("Не удалось загрузить сообщения чата.", "ошибка");
-            });
-        }
-
-        // --- 7. СЛУШАТЕЛИ DOM-СОБЫТИЙ ---
-
-        navButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                // Разрешаем переключение только если пользователь авторизован
-                if (isAuthReady) {
-                    switchView(btn.dataset.view);
-                } else {
-                    showMessage("Пожалуйста, войдите в систему, чтобы использовать навигацию.", "инфо");
-                }
-            });
-        });
-
-        // Запуск приложения
-        window.onload = initApp;
-
+        // Старт: По умолчанию открываем анкеты
+        app.setView('profiles');
     </script>
 </body>
 </html>
