@@ -1,3 +1,4 @@
+Собаки под кайфом, [24.11.2025 15:41]
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -106,6 +107,7 @@
         .loading-spinner {
             border: 4px solid #4a5568;
 
+Собаки под кайфом, [24.11.2025 15:41]
 border-top: 4px solid #ff8c00; /* Оранжевый спиннер */
             border-radius: 50%;
             width: 40px;
@@ -188,23 +190,22 @@ border-top: 4px solid #ff8c00; /* Оранжевый спиннер */
                 // Анонимный вход для доступа к публичным настройкам
                 await signInAnonymously(auth);
                 
-                // Исправленный путь: ищем документ "telegram" в коллекции "settings"
-                const tokenRef = doc(db, "settings", "telegram");
+                // Используем ID "telegram", как в базе
+                const tokenRef = doc(db, "settings", "telegram"); 
                 const docSnap = await getDoc(tokenRef);
                 
                 if (docSnap.exists() && docSnap.data().token) {
                     TELEGRAM_BOT_TOKEN = docSnap.data().token;
-                    // Вывод в консоль для успешной проверки
                     console.log("Token loaded successfully.");
+                    return true;
 
-return true;
-                } else {
+Собаки под кайфом, [24.11.2025 15:41]
+} else {
                     showMessage("Ошибка: Токен Telegram не найден в базе. Проверьте коллекцию 'settings'.", 'error');
                     console.error("Token lookup failed: Document or 'token' field missing.");
                     return false;
                 }
             } catch (error) {
-                // Если ошибка связана с правилами безопасности или сетью
                 console.error("Error during token fetch:", error);
                 showMessage("Ошибка подключения к базе. Проверьте Правила Firestore.", 'error');
                 return false;
@@ -220,22 +221,26 @@ return true;
                 const tokenLoaded = await getTelegramToken();
                 if (!tokenLoaded) return; // Останавливаем отправку, если токен не найден
             }
-
-            const name = document.getElementById('name').value;
-            const role = document.getElementById('role').value;
-            const experience = document.getElementById('experience').value;
-            const contact = document.getElementById('contact').value;
-            const about = document.getElementById('about').value;
-
-            if (!name || !role || !contact) {
+            
+            // Получение и очистка значений от пробелов
+            const name = document.getElementById('name').value.trim();
+            const role = document.getElementById('role').value.trim();
+            const experience = document.getElementById('experience').value.trim();
+            const contact = document.getElementById('contact').value.trim();
+            const about = document.getElementById('about').value.trim();
+            
+            
+            // ПРОВЕРКА ОБЯЗАТЕЛЬНЫХ ПОЛЕЙ (ЯВНАЯ ПРОВЕРКА ДЛИНЫ)
+            // Используем .length === 0, чтобы обойти неверную булевую логику в среде исполнения
+            if (name.length === 0  role.length === 0  contact.length === 0) {
                 showMessage("Заполните обязательные поля!", 'error');
                 return;
             }
-
+            
             showLoading(true);
 
-            // Сообщение для Telegram в формате Markdown
-            const tgMessage = 🔥 *НОВЫЙ ПОИСК ТИММЕЙТА!* 🔥\n\n*Имя:* ${name}\n*Ищу команду в:* ${role}\n*Опыт/Роль:* ${experience || 'Не указан'}\n*Связаться:* ${contact}\n*Детали:* ${about || 'Нет описания.'};
+            // Шаблон для Telegram
+            const tgMessage = 🔥 *НОВЫЙ ПОИСК ТИММЕЙТА!* 🔥\n\n*Имя:* ${name}\n*Ищу команду в:* ${role}\n*Опыт/Роль:* ${experience || '—'}\n*Связаться:* ${contact}\n*Детали:* ${about || '—'};
             
             try {
                 // 1. Сохранение в коллекцию 'teammates'
@@ -278,6 +283,7 @@ return true;
             ;
         }
 
+Собаки под кайфом, [24.11.2025 15:41]
 // Настройка слушателя для отображения анкет в реальном времени
         function setupListener() {
             // Запрашиваем последние 50 анкет, сортируя по времени (новые сверху)
@@ -348,6 +354,7 @@ return true;
         <div class="panel">
             <h2 class="text-2xl font-semibold mb-4 text-orange-400 border-b border-gray-600 pb-2">📜 Активные Заявки на Поиск</h2>
 
+Собаки под кайфом, [24.11.2025 15:41]
 <div id="teammates-list">
                 <p class="text-center text-gray-400 p-8">Загрузка...</p>
             </div>
