@@ -29,11 +29,18 @@
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Класс для активной кнопки навигации */
+        .nav-btn.active {
+            background-color: #1f242d; /* Темно-серый фон */
+            color: #ffffff;
+            border-color: #3b82f6; /* Синяя рамка */
+        }
     </style>
 </head>
 <body class="flex flex-col md:flex-row h-full">
 
-    <!-- БЛОК ОТОБРАЖЕНИЯ ОШИБОК (Чтобы вы видели, если что-то сломалось) -->
+    <!-- БЛОК ОТОБРАЖЕНИЯ КРИТИЧЕСКИХ ОШИБОК -->
     <div id="error-display" class="hidden fixed top-0 left-0 w-full bg-red-600 text-white p-4 z-[9999] font-bold text-center"></div>
 
     <!-- Левая панель -->
@@ -45,25 +52,25 @@
             <!-- Если не вошел -->
             <div id="login-view">
                 <input type="text" id="nickname-input" placeholder="Ваш никнейм" class="w-full bg-[#21262d] border border-[#30363d] rounded p-2 text-white mb-2 focus:border-blue-500 outline-none">
-                <button id="login-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition">Войти</button>
+                <button data-action="login" id="login-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition">Войти</button>
             </div>
             <!-- Если вошел -->
             <div id="user-view" class="hidden">
                 <div class="text-gray-400 text-xs">Вы вошли как:</div>
-                <div id="current-nickname" class="text-blue-400 font-bold text-lg truncate">User</div>
-                <button id="logout-btn" class="mt-2 text-xs text-red-400 hover:text-red-300 underline">Сменить ник</button>
+                <div id="current-nickname" class="text-blue-400 font-bold text-lg truncate"></div>
+                <button data-action="logout" id="logout-btn" class="mt-2 text-xs text-red-400 hover:text-red-300 underline">Сменить ник</button>
             </div>
         </div>
 
         <!-- Навигация -->
-        <nav class="flex-1 space-y-2">
-            <button onclick="app.setView('profiles')" class="nav-btn w-full text-left p-3 rounded hover:bg-[#21262d] text-gray-300 hover:text-white transition flex items-center border border-transparent focus:border-blue-500">
+        <nav id="main-nav" class="flex-1 space-y-2">
+            <button data-view="profiles" class="nav-btn active w-full text-left p-3 rounded hover:bg-[#21262d] text-gray-300 hover:text-white transition flex items-center border border-transparent focus:border-blue-500">
                 📄 Анкеты
             </button>
-            <button onclick="app.setView('chat')" class="nav-btn w-full text-left p-3 rounded hover:bg-[#21262d] text-gray-300 hover:text-white transition flex items-center border border-transparent focus:border-blue-500">
+            <button data-view="chat" class="nav-btn w-full text-left p-3 rounded hover:bg-[#21262d] text-gray-300 hover:text-white transition flex items-center border border-transparent focus:border-blue-500">
                 💬 Общий чат
             </button>
-            <button onclick="app.setView('create')" class="nav-btn w-full text-left p-3 rounded bg-orange-900/20 text-orange-400 hover:bg-orange-900/40 hover:text-orange-300 transition flex items-center border border-orange-900/50 mt-4">
+            <button data-view="create" class="nav-btn w-full text-left p-3 rounded bg-orange-900/20 text-orange-400 hover:bg-orange-900/40 hover:text-orange-300 transition flex items-center border border-orange-900/50 mt-4">
                 ➕ Создать анкету
             </button>
         </nav>
@@ -73,10 +80,9 @@
     <main class="flex-1 relative bg-[#0d1117] overflow-hidden flex flex-col">
         
         <!-- Уведомления -->
-        <div id="toast" class="absolute top-4 right-4 bg-blue-600 text-white px-6 py-3 rounded shadow-xl transform translate-x-full transition-transform duration-300 z-50"></div>
-
+        <div id="toast" class="absolute top-4 right-4 bg-blue-600 text-white px-6 py-3 rounded shadow-xl transform translate-x-full transition-transform duration-300 z-50"></d
 <!-- Экран: Анкеты -->
-        <div id="view-profiles" class="view-section h-full overflow-y-auto p-6 hidden">
+        <div id="view-profiles" class="view-section h-full overflow-y-auto p-6">
             <h2 class="text-2xl font-bold text-white mb-4 border-b border-[#30363d] pb-2">Активные анкеты</h2>
             <div id="profiles-container" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div class="text-gray-500">Загрузка анкет...</div>
@@ -91,14 +97,14 @@
             </div>
             <div class="flex gap-2">
                 <input type="text" id="chat-input" placeholder="Напишите сообщение..." class="flex-1 bg-[#21262d] border border-[#30363d] rounded p-3 text-white focus:border-blue-500 outline-none">
-                <button id="send-msg-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 rounded font-bold">></button>
+                <button data-action="send-msg" id="send-msg-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 rounded font-bold">></button>
             </div>
         </div>
 
         <!-- Экран: Создание анкеты -->
         <div id="view-create" class="view-section h-full overflow-y-auto p-6 hidden">
             <h2 class="text-2xl font-bold text-orange-500 mb-6">Новая анкета</h2>
-            <form id="create-form" class="max-w-2xl bg-[#161b22] p-6 rounded-xl border border-[#30363d] space-y-4">
+            <form data-action="create-profile" id="create-form" class="max-w-2xl bg-[#161b22] p-6 rounded-xl border border-[#30363d] space-y-4">
                 <div>
                     <label class="block text-gray-400 text-sm mb-1">Название проекта / Цель</label>
                     <input type="text" id="f-title" required class="w-full bg-[#0d1117] border border-[#30363d] rounded p-2 text-white focus:border-orange-500 outline-none">
@@ -123,26 +129,20 @@
 
     <!-- ЛОВЕЦ ОШИБОК СКРИПТА -->
     <script>
-        window.addEventListener('error', function(e) {
-            const display = document.getElementById('error-display');
-            display.innerText = "КРИТИЧЕСКАЯ ОШИБКА: " + e.message;
-            display.classList.remove('hidden');
-        });
-    </script>
-
-    <!-- СКРИПТ ПРИЛОЖЕНИЯ -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, updateProfile, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-// Глобальный объект приложения
+        // Глобальная функция для переключения вида, чтобы HTML-кнопки могли работать
         window.app = {
             setView: (viewId) => {
                 document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-                document.getElementById('view-' + viewId).classList.remove('hidden');
-                
-                // Автоскролл чата при открытии
+                const activeView = document.getElementById('view-' + viewId);
+                if (activeView) activeView.classList.remove('hidden');
+
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                const selectedBtn = document.querySelector(.nav-btn[data-view="${viewId}"]);
+                if (selectedBtn) selectedBtn.classList.add('active');
+
+// Автоскролл чата при открытии
                 if(viewId === 'chat') {
                     const container = document.getElementById('chat-container');
                     setTimeout(() => container.scrollTop = container.scrollHeight, 100);
@@ -150,15 +150,29 @@
             }
         };
 
+        // Ловец ошибок, чтобы вы видели, если что-то пошло не так
+        window.addEventListener('error', function(e) {
+            const display = document.getElementById('error-display');
+            display.innerText = "КРИТИЧЕСКАЯ ОШИБКА: " + e.message + " (см. консоль для деталей)";
+            display.classList.remove('hidden');
+            // Если ошибка происходит до загрузки модуля, эта функция помогает ее поймать.
+        });
+    </script>
+
+    <!-- СКРИПТ ПРИЛОЖЕНИЯ (Модуль) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
         // --- КОНФИГУРАЦИЯ ---
         const appId = typeof app_id !== 'undefined' ? app_id : 'default-app-id';
         const firebaseConfig = JSON.parse(typeof firebase_config !== 'undefined' ? firebase_config : '{}');
         
-        // --- ВНИМАНИЕ: ЗДЕСЬ БЫЛА ОШИБКА. НЕ УДАЛЯЙТЕ ОБРАТНЫЕ КАВЫЧКИ () ВОКРУГ ПУТЕЙ! ---
+        // --- ПУТИ К FIRESTORE (ОБЯЗАТЕЛЬНО С ОБРАТНЫМИ КАВЫЧКАМИ) ---
         const PATH_PROFILES = /artifacts/${appId}/public/data/profiles;
         const PATH_CHAT = /artifacts/${appId}/public/data/chat;
-        const PATH_USERS = /artifacts/${appId}/users`;
-        // -------------------------------------------------------------------------------------
+        const PATH_USERS = /artifacts/${appId}/users;
 
         // Инициализация
         const firebaseApp = initializeApp(firebaseConfig);
@@ -194,11 +208,12 @@
 
         // --- ЛОГИКА АУТЕНТИФИКАЦИИ ---
 
-        document.getElementById('login-btn').addEventListener('click', async () => {
+        async function handleLogin() {
             const nick = document.getElementById('nickname-input').value.trim();
             if(nick.length < 3) return showToast("Ник слишком короткий!");
             
             try {
+                // Если не авторизован (или аноним), авторизуемся
                 if (!auth.currentUser) {
                     await signInAnonymously(auth);
                 }
@@ -209,120 +224,148 @@
                 const userSnap = await getDoc(userRef);
                 const now = Date.now();
 
+                let canChange = true;
                 if (userSnap.exists()) {
                     const lastChange = userSnap.data().lastChange || 0;
-                    if (now - lastChange < 2592000000) { // 30 дней в мс
-                        showToast("Менять ник можно раз в месяц!");
-                        // Если уже есть имя, просто обновляем интерфейс
-                        if(auth.currentUser.displayName) {
-                            updateAuthUI(auth.currentUser);
-                            return; 
-                        }
+
+// 2592000000 мс = 30 дней
+                    if (now - lastChange < 2592000000) { 
+                        const daysLeft = Math.ceil((2592000000 - (now - lastChange)) / (1000 * 60 * 60 * 24));
+                        showToast(Менять ник можно раз в месяц! Осталось: ${daysLeft} дней.);
+                        canChange = false;
                     }
                 }
 
-                await updateProfile(auth.currentUser, { displayName: nick });
-                await setDoc(userRef, { nickname: nick, lastChange: now }, { merge: true });
+                if (canChange || !auth.currentUser.displayName) {
+                    await updateProfile(auth.currentUser, { displayName: nick });
+                    await setDoc(userRef, { nickname: nick, lastChange: now }, { merge: true });
+                }
+                
                 updateAuthUI(auth.currentUser);
-                showToast("Добро пожаловать, " + nick);
+                showToast("Добро пожаловать, " + auth.currentUser.displayName);
 
             } catch (e) {
-                console.error(e);
+                console.error("Login error:", e);
                 showToast("Ошибка входа: " + e.message);
             }
-        });
+        }
 
-document.getElementById('logout-btn').addEventListener('click', () => {
-             // Просто показываем форму входа снова для смены (с проверкой внутри логина)
+        function handleLogout() {
+             // Просто показываем форму входа снова для смены (логика смены ника в handleLogin)
              document.getElementById('user-view').classList.add('hidden');
              document.getElementById('login-view').classList.remove('hidden');
-        });
-
+             document.getElementById('nickname-input').value = currentUser ? currentUser.displayName : '';
+        }
+        
         // Слушатель состояния входа
         onAuthStateChanged(auth, (user) => {
-            if (user && user.displayName) {
-                updateAuthUI(user);
+            if (user) {
+                // Если пользователь анонимный или без никнейма, он увидит форму логина
+                if (user.isAnonymous || !user.displayName) {
+                    // Ничего не делаем, форма логина уже показана
+                } else {
+                    updateAuthUI(user);
+                    // После успешной аутентификации запускаем слушатели Firestore
+                    setupFirestoreListeners();
+                }
+            } else {
+                // Пытаемся войти анонимно при старте, если не удалось (на всякий случай)
+                signInAnonymously(auth).catch(e => console.error("Anonymous sign-in failed:", e));
             }
         });
+
+        // --- ОБРАБОТЧИК КНОПОК И ФОРМ (ЕДИНЫЙ) ---
+        
+        function setupGlobalListeners() {
+            // Навигационные кнопки
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    window.app.setView(btn.dataset.view);
+                });
+            });
+
+            // Кнопка Вход
+            document.getElementById('login-btn').addEventListener('click', handleLogin);
+            
+            // Кнопка Сменить ник
+            document.getElementById('logout-btn').addEventListener('click', handleLogout);
+            
+            // Кнопка Отправить сообщение
+            document.getElementById('send-msg-btn').addEventListener('click', sendMessage);
+            document.getElementById('chat-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendMessage();
+            });
+
+            // Форма создания анкеты
+            document.getElementById('create-form').addEventListener('submit', createProfile);
+        }
 
         // --- ЧАТ ---
 
-        const chatContainer = document.getElementById('chat-container');
-        const qChat = query(collection(db, PATH_CHAT), orderBy('createdAt', 'desc'), limit(50));
-
-        onSnapshot(qChat, (snapshot) => {
-            chatContainer.innerHTML = '';
-            const msgs = [];
-            snapshot.forEach(d => msgs.push(d.data()));
-            msgs.reverse(); // Чтобы старые были сверху
-
-            msgs.forEach(msg => {
-                const div = document.createElement('div');
-                div.className = "bg-[#161b22] p-2 rounded border border-[#30363d] max-w-[80%]";
-                div.innerHTML = <span class="text-blue-400 font-bold text-xs">${msg.author}</span>: <span class="text-gray-300">${msg.text}</span>;
-                chatContainer.appendChild(div);
-            });
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        });
-
-        document.getElementById('send-msg-btn').addEventListener('click', async () => {
+        async function sendMessage() {
             if (!currentUser) return showToast("Сначала войдите!");
             const input = document.getElementById('chat-input');
             const text = input.value.trim();
             if (!text) return;
 
             try {
+                input.value = ''; // Очистка сразу
                 await addDoc(collection(db, PATH_CHAT), {
                     text: text,
                     author: currentUser.displayName,
                     uid: currentUser.uid,
                     createdAt: serverTimestamp()
                 });
-                input.value = '';
             } catch (e) {
-                showToast("Ошибка отправки");
+                showToast("Ошибка отправки сообщения.");
+                input.value = text; // Возврат текста при ошибке
             }
-        });
+        }
+
+function setupChatListener() {
+            const chatContainer = document.getElementById('chat-container');
+            // Ограничиваем 50 сообщениями, сортируем по дате создания
+            const qChat = query(collection(db, PATH_CHAT), orderBy('createdAt', 'desc'), limit(50));
+
+            onSnapshot(qChat, (snapshot) => {
+                chatContainer.innerHTML = '';
+                const msgs = [];
+                snapshot.forEach(d => msgs.push(d.data()));
+                msgs.reverse(); // Чтобы старые были сверху
+
+                msgs.forEach(msg => {
+                    const div = document.createElement('div');
+                    div.className = "bg-[#1f242d] p-2 rounded max-w-[80%]";
+                    div.innerHTML = <span class="text-blue-400 font-bold text-xs">${msg.author}</span>: <span class="text-gray-300">${msg.text}</span>;
+                    chatContainer.appendChild(div);
+                });
+                
+                // Прокрутка вниз, если чат открыт
+                if (!document.getElementById('view-chat').classList.contains('hidden')) {
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }
+            }, (error) => {
+                 console.error("Chat listener error:", error);
+                 showToast("Ошибка загрузки чата.");
+            });
+        }
 
         // --- АНКЕТЫ ---
 
-        const profilesContainer = document.getElementById('profiles-container');
-        const qProfiles = query(collection(db, PATH_PROFILES), orderBy('createdAt', 'desc'), limit(20));
-
-        onSnapshot(qProfiles, (snapshot) => {
-            profilesContainer.innerHTML = '';
-            if (snapshot.empty) {
-                profilesContainer.innerHTML = '<div class="text-gray-500">Анкет пока нет.</div>';
-                return;
-            }
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                const card = document.createElement('div');
-                card.className = "bg-[#161b22] p-4 rounded-xl border border-[#30363d] hover:border-blue-500 transition";
-                card.innerHTML = 
-                    <div class="font-bold text-orange-400 text-lg">${data.title}</div>
-                    <div class="text-sm text-blue-300 mb-2">${data.role}</div>
-                    <div class="text-gray-300 text-sm mb-3 whitespace-pre-wrap">${data.desc}</div>
-                    <div class="text-xs text-gray-500 border-t border-[#30363d] pt-2 flex justify-between">
-                        <span>Автор: ${data.author}</span>
-                        <span class="text-white bg-blue-900 px-2 rounded">${data.contact}</span>
-                    </div>
-                ;
-                profilesContainer.appendChild(card);
-            });
-        });
-
-        // Отправка анкеты
-        document.getElementById('create-form').addEventListener('submit', async (e) => {
+        async function createProfile(e) {
             e.preventDefault();
             if (!currentUser) return showToast("Сначала войдите!");
 
-            const title = document.getElementById('f-title').value;
-            const role = document.getElementById('f-role').value;
-            const desc = document.getElementById('f-desc').value;
-            const contact = document.getElementById('f-contact').value;
+            const title = document.getElementById('f-title').value.trim();
+            const role = document.getElementById('f-role').value.trim();
+            const desc = document.getElementById('f-desc').value.trim();
+            const contact = document.getElementById('f-contact').value.trim();
 
-try {
+            if (!title  !role  !desc || !contact) {
+                return showToast("Все поля обязательны!");
+            }
+
+            try {
                 await addDoc(collection(db, PATH_PROFILES), {
                     title, role, desc, contact,
                     author: currentUser.displayName,
@@ -331,14 +374,59 @@ try {
                 });
                 showToast("Анкета создана!");
                 e.target.reset();
-                app.setView('profiles');
+                window.app.setView('profiles');
             } catch (err) {
-                showToast("Ошибка создания: " + err.message);
+                console.error("Create profile error:", err);
+                showToast("Ошибка создания анкеты.");
             }
-        });
+        }
 
-        // Старт: По умолчанию открываем анкеты
-        app.setView('profiles');
+        function setupProfilesListener() {
+            const profilesContainer = document.getElementById('profiles-container');
+            const qProfiles = query(collection(db, PATH_PROFILES), orderBy('createdAt', 'desc'), limit(20));
+
+            onSnapshot(qProfiles, (snapshot) => {
+                profilesContainer.innerHTML = '';
+                if (snapshot.empty) {
+                    profilesContainer.innerHTML = '<div class="text-gray-500 col-span-full text-center p-4">Анкет пока нет. Будьте первым!</div>';
+                    return;
+                }
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const card = document.createElement('div');
+                    card.className = "bg-[#1f242d] p-4 rounded-xl border border-[#30363d] hover:border-blue-500 transition shadow-lg";
+                    card.innerHTML = `
+                        <div class="font-bold text-orange-400 text-lg">${data.title}</div>
+                        <div class="text-sm text-blue-300 mb-2">Ищет: ${data.role}</div>
+                        <p class="text-gray-300 text-sm mb-3 whitespace-pre-wrap line-clamp-3">${data.desc}</p>
+                        <div class="text-xs text-gray-500 border-t border-[#30363d] pt-2 flex justify-between items-center mt-2">
+
+<span class="font-medium">Автор: ${data.author}</span>
+                            <span class="text-sm text-white bg-blue-700 px-3 py-1 rounded-full">${data.contact}</span>
+                        </div>
+                    `;
+                    profilesContainer.appendChild(card);
+                });
+            }, (error) => {
+                 console.error("Profiles listener error:", error);
+                 showToast("Ошибка загрузки анкет.");
+            });
+        }
+        
+        // --- ЗАПУСК ---
+        
+        function setupFirestoreListeners() {
+            // Убедимся, что слушатели запускаются только один раз после аутентификации
+            if (currentUser) {
+                 setupChatListener();
+                 setupProfilesListener();
+            }
+        }
+
+        // Запуск глобальных слушателей (кнопки, формы)
+        setupGlobalListeners();
+        // Устанавливаем начальное представление
+        window.app.setView('profiles');
     </script>
 </body>
 </html>
