@@ -20,16 +20,6 @@
         ::-webkit-scrollbar-track { background: #161b22; }
         ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
         
-        .spinner {
-            border: 3px solid rgba(255,255,255,0.1);
-            border-top: 3px solid #3b82f6;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
         /* Класс для активной кнопки навигации */
         .nav-btn.active {
             background-color: #1f242d; /* Темно-серый фон */
@@ -41,6 +31,7 @@
 <body class="flex flex-col md:flex-row h-full">
 
     <!-- БЛОК ОТОБРАЖЕНИЯ КРИТИЧЕСКИХ ОШИБОК -->
+    <!-- Здесь будет отображаться красная полоса, если в коде есть ошибка синтаксиса -->
     <div id="error-display" class="hidden fixed top-0 left-0 w-full bg-red-600 text-white p-4 z-[9999] font-bold text-center"></div>
 
     <!-- Левая панель -->
@@ -64,6 +55,7 @@
 
         <!-- Навигация -->
         <nav id="main-nav" class="flex-1 space-y-2">
+            <!-- Обработчики now обрабатываются в JS, а не в HTML, чтобы избежать ошибки ReferenceError -->
             <button data-view="profiles" class="nav-btn active w-full text-left p-3 rounded hover:bg-[#21262d] text-gray-300 hover:text-white transition flex items-center border border-transparent focus:border-blue-500">
                 📄 Анкеты
             </button>
@@ -128,9 +120,9 @@
 
     </main>
 
-    <!-- ЛОВЕЦ ОШИБОК СКРИПТА -->
+    <!-- ЛОВЕЦ ОШИБОК СКРИПТА И ГЛОБАЛЬНАЯ НАВИГАЦИЯ -->
     <script>
-        // Глобальная функция для переключения вида, чтобы HTML-кнопки могли работать
+        // Глобальная функция для переключения вида, доступна до загрузки модуля
         window.app = {
             setView: (viewId) => {
                 document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
@@ -156,7 +148,6 @@
             const display = document.getElementById('error-display');
             display.innerText = "КРИТИЧЕСКАЯ ОШИБКА: " + e.message + " (см. консоль для деталей)";
             display.classList.remove('hidden');
-            // Если ошибка происходит до загрузки модуля, эта функция помогает ее поймать.
         });
     </script>
 
@@ -164,6 +155,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        // !!! ВНИМАНИЕ: ЗДЕСЬ МОГЛА БЫТЬ ОШИБКА ЗНАКОВ ПРЕПИНАНИЯ (ТОЧКА С ЗАПЯТОЙ/ЗАПЯТАЯ)
+        // Проверяем, что все импорты разделены запятыми
         import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- КОНФИГУРАЦИЯ ---
@@ -171,6 +164,7 @@
         const firebaseConfig = JSON.parse(typeof firebase_config !== 'undefined' ? firebase_config : '{}');
         
         // --- ПУТИ К FIRESTORE (ОБЯЗАТЕЛЬНО С ОБРАТНЫМИ КАВЫЧКАМИ) ---
+        // !!! ВНИМАНИЕ: ПРОВЕРЬТЕ, ЧТО ЗДЕСЬ НЕТ ОШИБОК С КАВЫЧКАМИ
         const PATH_PROFILES = /artifacts/${appId}/public/data/profiles;
         const PATH_CHAT = /artifacts/${appId}/public/data/chat;
         const PATH_USERS = /artifacts/${appId}/users;
@@ -216,6 +210,7 @@
             try {
                 // Если не авторизован (или аноним), авторизуемся
                 if (!auth.currentUser) {
+                    // Используем signInAnonymously для получения UID
                     await signInAnonymously(auth);
                 }
                 
@@ -225,25 +220,35 @@
                 const userSnap = await getDoc(userRef);
                 const now = Date.now();
 
-                let canChange = true;
+let canChange = true;
                 if (userSnap.exists()) {
                     const lastChange = userSnap.data().lastChange || 0;
-
-// 2592000000 мс = 30 дней
+                    // 2592000000 мс = 30 дней
                     if (now - lastChange < 2592000000) { 
                         const daysLeft = Math.ceil((2592000000 - (now - lastChange)) / (1000 * 60 * 60 * 24));
                         showToast(Менять ник можно раз в месяц! Осталось: ${daysLeft} дней.);
                         canChange = false;
+                        // Если смена запрещена, но ник уже есть, просто используем его
+                        if(auth.currentUser.displayName && auth.currentUser.displayName !== nick) {
+                            showToast(Вы используете текущий ник: ${auth.currentUser.displayName});
+                            updateAuthUI(auth.currentUser);
+                            return;
+                        }
                     }
                 }
-
-                if (canChange || !auth.currentUser.displayName) {
+                
+                // Смена разрешена или ник устанавливается впервые
+                if (canChange) {
                     await updateProfile(auth.currentUser, { displayName: nick });
-                    await setDoc(userRef, { nickname: nick, lastChange: now }, { merge: true });
+                    // Сохраняем ник и время смены в базе данных
+                    await setDoc(userRef, { nickname: nick, lastChange: now, uid: uid }, { merge: true });
                 }
                 
                 updateAuthUI(auth.currentUser);
                 showToast("Добро пожаловать, " + auth.currentUser.displayName);
+                
+                // После успешного входа перезапускаем слушатели Firestore
+                setupFirestoreListeners();
 
             } catch (e) {
                 console.error("Login error:", e);
@@ -252,7 +257,7 @@
         }
 
         function handleLogout() {
-             // Просто показываем форму входа снова для смены (логика смены ника в handleLogin)
+             // Показываем форму входа снова для смены ника
              document.getElementById('user-view').classList.add('hidden');
              document.getElementById('login-view').classList.remove('hidden');
              document.getElementById('nickname-input').value = currentUser ? currentUser.displayName : '';
@@ -260,51 +265,25 @@
         
         // Слушатель состояния входа
         onAuthStateChanged(auth, (user) => {
-            if (user) {
-                // Если пользователь анонимный или без никнейма, он увидит форму логина
-                if (user.isAnonymous || !user.displayName) {
-                    // Ничего не делаем, форма логина уже показана
-                } else {
+            if (user && user.uid) {
+                // Если у пользователя уже есть ник, обновляем UI и запускаем слушатели
+                if (user.displayName) {
                     updateAuthUI(user);
-                    // После успешной аутентификации запускаем слушатели Firestore
                     setupFirestoreListeners();
+                } else {
+                    // Если UID есть, но никнейма нет (первый вход анонимно), показываем форму ввода ника
+                    updateAuthUI(null); 
                 }
             } else {
-                // Пытаемся войти анонимно при старте, если не удалось (на всякий случай)
-                signInAnonymously(auth).catch(e => console.error("Anonymous sign-in failed:", e));
+                 // Пытаемся войти анонимно, если нет пользователя
+                 signInAnonymously(auth).catch(e => console.error("Anonymous sign-in failed:", e));
             }
         });
-
-        // --- ОБРАБОТЧИК КНОПОК И ФОРМ (ЕДИНЫЙ) ---
-        
-        function setupGlobalListeners() {
-            // Навигационные кнопки
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    window.app.setView(btn.dataset.view);
-                });
-            });
-
-            // Кнопка Вход
-            document.getElementById('login-btn').addEventListener('click', handleLogin);
-            
-            // Кнопка Сменить ник
-            document.getElementById('logout-btn').addEventListener('click', handleLogout);
-            
-            // Кнопка Отправить сообщение
-            document.getElementById('send-msg-btn').addEventListener('click', sendMessage);
-            document.getElementById('chat-input').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') sendMessage();
-            });
-
-            // Форма создания анкеты
-            document.getElementById('create-form').addEventListener('submit', createProfile);
-        }
 
         // --- ЧАТ ---
 
         async function sendMessage() {
-            if (!currentUser) return showToast("Сначала войдите!");
+            if (!currentUser || !currentUser.displayName) return showToast("Сначала войдите (укажите никнейм)!");
             const input = document.getElementById('chat-input');
             const text = input.value.trim();
             if (!text) return;
@@ -322,12 +301,13 @@
                 input.value = text; // Возврат текста при ошибке
             }
         }
-}function setupChatListener() {
+
+        function setupChatListener() {
             const chatContainer = document.getElementById('chat-container');
             // Ограничиваем 50 сообщениями, сортируем по дате создания
             const qChat = query(collection(db, PATH_CHAT), orderBy('createdAt', 'desc'), limit(50));
 
-            onSnapshot(qChat, (snapshot) => {
+const unsubscribeChat = onSnapshot(qChat, (snapshot) => {
                 chatContainer.innerHTML = '';
                 const msgs = [];
                 snapshot.forEach(d => msgs.push(d.data()));
@@ -348,13 +328,14 @@
                  console.error("Chat listener error:", error);
                  showToast("Ошибка загрузки чата.");
             });
+            return unsubscribeChat;
         }
 
         // --- АНКЕТЫ ---
 
         async function createProfile(e) {
             e.preventDefault();
-            if (!currentUser) return showToast("Сначала войдите!");
+            if (!currentUser || !currentUser.displayName) return showToast("Сначала войдите (укажите никнейм)!");
 
             const title = document.getElementById('f-title').value.trim();
             const role = document.getElementById('f-role').value.trim();
@@ -385,7 +366,7 @@
             const profilesContainer = document.getElementById('profiles-container');
             const qProfiles = query(collection(db, PATH_PROFILES), orderBy('createdAt', 'desc'), limit(20));
 
-            onSnapshot(qProfiles, (snapshot) => {
+            const unsubscribeProfiles = onSnapshot(qProfiles, (snapshot) => {
                 profilesContainer.innerHTML = '';
                 if (snapshot.empty) {
                     profilesContainer.innerHTML = '<div class="text-gray-500 col-span-full text-center p-4">Анкет пока нет. Будьте первым!</div>';
@@ -400,10 +381,10 @@
                         <div class="text-sm text-blue-300 mb-2">Ищет: ${data.role}</div>
                         <p class="text-gray-300 text-sm mb-3 whitespace-pre-wrap line-clamp-3">${data.desc}</p>
                         <div class="text-xs text-gray-500 border-t border-[#30363d] pt-2 flex justify-between items-center mt-2">
-
-<span class="font-medium">Автор: ${data.author}</span>
+                            <span class="font-medium">Автор: ${data.author}</span>
                             <span class="text-sm text-white bg-blue-700 px-3 py-1 rounded-full">${data.contact}</span>
-                        </div>
+
+</div>
                     `;
                     profilesContainer.appendChild(card);
                 });
@@ -411,22 +392,52 @@
                  console.error("Profiles listener error:", error);
                  showToast("Ошибка загрузки анкет.");
             });
+            return unsubscribeProfiles;
         }
         
-        // --- ЗАПУСК ---
-        
+        // Хранение функций отписки от слушателей
+        let unsubscribeListeners = [];
+
         function setupFirestoreListeners() {
-            // Убедимся, что слушатели запускаются только один раз после аутентификации
-            if (currentUser) {
-                 setupChatListener();
-                 setupProfilesListener();
+            // Отписываемся от старых слушателей перед созданием новых
+            unsubscribeListeners.forEach(unsub => unsub());
+            unsubscribeListeners = [];
+            
+            if (currentUser && currentUser.displayName) {
+                 unsubscribeListeners.push(setupChatListener());
+                 unsubscribeListeners.push(setupProfilesListener());
             }
         }
 
+        // --- ЗАПУСК ---
+        
         // Запуск глобальных слушателей (кнопки, формы)
-        setupGlobalListeners();
-        // Устанавливаем начальное представление
-        window.app.setView('profiles');
+        document.addEventListener('DOMContentLoaded', () => {
+             // Навигационные кнопки
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    window.app.setView(btn.dataset.view);
+                });
+            });
+
+            // Кнопка Вход
+            document.getElementById('login-btn').addEventListener('click', handleLogin);
+            
+            // Кнопка Сменить ник
+            document.getElementById('logout-btn').addEventListener('click', handleLogout);
+            
+            // Кнопка Отправить сообщение
+            document.getElementById('send-msg-btn').addEventListener('click', sendMessage);
+            document.getElementById('chat-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendMessage();
+            });
+
+            // Форма создания анкеты
+            document.getElementById('create-form').addEventListener('submit', createProfile);
+            
+            // Устанавливаем начальное представление
+            window.app.setView('profiles');
+        });
     </script>
 </body>
 </html>
