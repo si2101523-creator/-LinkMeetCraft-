@@ -1,4 +1,3 @@
-Собаки под кайфом, [24.11.2025 16:21]
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -82,7 +81,6 @@
 
         </aside>
 
-Собаки под кайфом, [24.11.2025 16:21]
 <!-- Правая панель контента -->
         <main class="flex-grow p-4 md:p-6 overflow-y-auto custom-scrollbar">
 
@@ -145,7 +143,6 @@
                 <h2 class="text-3xl font-bold mb-4 text-blue-400">Общий чат</h2>
                 <div id="chat-messages" class="flex-grow p-4 space-y-4 overflow-y-auto custom-scrollbar bg-[#1f242d] rounded-xl mb-4 h-96">
 
-Собаки под кайфом, [24.11.2025 16:22]
 <!-- Здесь будут сообщения чата -->
                     <p class="text-gray-500 text-center" id="no-chat-message">Начните общение первым!</p>
                 </div>
@@ -230,7 +227,6 @@
             }, 5000);
         }
 
-Собаки под кайфом, [24.11.2025 16:22]
 /**
          * Переключает отображение контента между разделами.
          * @param {string} viewName Имя раздела ('profiles', 'chat', 'new-profile').
@@ -327,7 +323,6 @@
             if (!desiredNickname) {
                 showMessage("Введите желаемый никнейм.", "инфо");
 
-Собаки под кайфом, [24.11.2025 16:22]
 return;
             }
             
@@ -426,7 +421,6 @@ return;
             }
             document.getElementById('no-profiles-message').classList.add('hidden');
 
-Собаки под кайфом, [24.11.2025 16:22]
 profiles.forEach(profile => {
                 const profileCard = document.createElement('div');
                 profileCard.className = 'bg-[#1f242d] p-5 rounded-xl shadow-xl border border-blue-800/50 hover:border-blue-500 transition duration-300';
@@ -617,7 +611,6 @@ profiles.forEach(profile => {
          * Обрабатывает первоначальную аутентификацию (Custom Token или Анонимно).
          */
 
-Собаки под кайфом, [24.11.2025 16:22]
 async function handleInitialAuth() {
             try {
                 if (initialAuthToken) {
