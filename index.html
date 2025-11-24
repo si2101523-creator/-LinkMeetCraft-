@@ -1,373 +1,700 @@
+Собаки под кайфом, [24.11.2025 16:21]
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Поиск Тиммейтов для любых игр | LinkMeetCraft</title>
-    
-    <!-- Подключение стилей Tailwind CSS -->
+    <title>LinkMeetCraft - Поиск команды и чат</title>
+    <!-- Подключение Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Шрифт Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        /* Установка шрифта Inter и общего чёрного фона */
         body {
             font-family: 'Inter', sans-serif;
-            background: #1a202c; /* Темный фон для неонового эффекта */
+            background-color: #0d1117; /* Тёмный, почти чёрный фон */
+            color: #e6edf3; /* Светлый текст */
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: #e2e8f0; /* Светлый текст */
         }
-        .container {
-            max-width: 900px;
-            width: 95%;
-            margin: 20px auto;
-            display: grid;
-            gap: 20px;
-            grid-template-columns: 1fr;
+        /* Стили для скроллбаров, чтобы они соответствовали тёмной теме */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
         }
-        @media (min-width: 768px) {
-            .container {
-                grid-template-columns: 1fr 2fr;
-            }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #384252; /* Более тёмный ползунок */
+            border-radius: 4px;
         }
-        .panel {
-            background-color: #2d3748; /* Темнее для контраста */
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-            transition: all 0.3s ease;
-            border: 1px solid #4a5568; /* Мягкая рамка */
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background-color: #1a1f26; /* Очень тёмный трек */
         }
-        /* Неоновый эффект для заголовка */
-        .neon-text {
-            color: #fff;
-            text-shadow:
-                0 0 7px #ffa500, /* оранжевый */
-                0 0 10px #ffa500,
-                0 0 21px #ffa500,
-                0 0 42px #ff7f00, /* более яркий оранжевый */
-                0 0 82px #ff7f00,
-                0 0 92px #ff7f00,
-                0 0 102px #ff7f00,
-                0 0 151px #ff7f00;
-        }
-        /* Неоновый эффект для кнопок и инпутов */
-        .form-input, .form-textarea, .btn-primary {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #4a5568;
-            border-radius: 8px;
-            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
-            transition: border-color 0.2s, box-shadow 0.2s;
-            background-color: #2d3748; /* Темный фон */
-            color: #e2e8f0; /* Светлый текст */
-        }
-        .form-input:focus, .form-textarea:focus {
-            outline: none;
-            border-color: #ff8c00; /* оранжевая подсветка при фокусе */
-            box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.5); /* оранжевое свечение */
-        }
-        .btn-primary {
-            background-color: #ff8c00; /* оранжевая кнопка */
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
-            cursor: pointer;
-            width: 100%;
-            box-shadow: 0 0 10px rgba(255, 140, 0, 0.5); /* Неоновый эффект */
-        }
-        .btn-primary:hover {
-            background-color: #ff7f00; /* Чуть темнее при наведении */
-            box-shadow: 0 0 15px rgba(255, 140, 0, 0.7);
-        }
-        .btn-primary:active {
-            transform: scale(0.99);
-        }
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7); /* Более темный фон для загрузки */
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .loading-spinner {
-            border: 4px solid #4a5568;
 
-border-top: 4px solid #ff8c00; /* Оранжевый спиннер */
+        /* Анимация загрузки */
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid #3b82f6; /* Синий цвет */
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 24px;
+            height: 24px;
             animation: spin 1s linear infinite;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .message-box {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background-color: #ff8c00; /* Оранжевый фон для сообщений */
-            color: white;
-            padding: 15px 25px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 0 15px rgba(255, 140, 0, 0.5); /* Неоновый эффект */
-            opacity: 0;
-            transform: translateY(-20px);
-            transition: opacity 0.5s, transform 0.5s;
-            z-index: 1100;
-        }
-        .message-box.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        .teammate-card {
-            border-left: 4px solid #ff8c00; /* Оранжевая полоска */
-            background-color: #2d3748;
-            color: #e2e8f0;
-        }
-        .teammate-card:hover {
-            background-color: #2a3342;
-            box-shadow: 0 0 10px rgba(255, 140, 0, 0.3); /* Легкое свечение при наведении */
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
-    
-    <!-- Подключение Firebase SDK -->
+</head>
+<body class="p-4 sm:p-6">
+
+    <!-- Основной контейнер приложения -->
+    <div id="app" class="flex flex-col md:flex-row h-[calc(100vh-3rem)] rounded-xl shadow-2xl overflow-hidden bg-[#161b22]">
+        
+        <!-- Левая панель навигации/профиля (Синий/Оранжевый акцент) -->
+        <aside class="w-full md:w-64 p-4 flex flex-col space-y-4 bg-[#1f242d] border-r border-gray-700">
+            
+            <h1 class="text-2xl font-bold text-orange-400 mb-4">LinkMeetCraft</h1>
+
+            <!-- Блок профиля и аутентификации -->
+            <div id="auth-panel" class="bg-gray-800 p-3 rounded-lg shadow-inner">
+                <div id="user-info" class="hidden">
+                    <p class="text-sm text-gray-400">Привет, <span id="display-nickname" class="text-blue-400 font-semibold"></span>!</p>
+                    <p class="text-xs text-gray-500 mt-1">ID: <span id="display-user-id" class="text-gray-400 text-xs"></span></p>
+                    <button id="change-nickname-btn" class="mt-2 w-full py-1 text-xs bg-orange-500 hover:bg-orange-600 rounded-md transition duration-150">Сменить ник</button>
+                </div>
+                <div id="login-form-container">
+                    <input type="text" id="login-nickname" placeholder="Придумайте никнейм" class="w-full p-2 text-sm bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400">
+                    <button id="login-btn" class="mt-2 w-full py-2 text-sm bg-blue-500 hover:bg-blue-600 rounded-md transition duration-150 font-semibold">Войти</button>
+                </div>
+            </div>
+
+            <!-- Навигация -->
+            <nav class="flex flex-col space-y-2 flex-grow">
+                <button data-view="profiles" class="nav-btn bg-blue-600 hover:bg-blue-700 p-3 rounded-lg text-lg font-semibold transition duration-150 shadow-md">
+                    <span class="mr-2">📝</span> Анкеты
+                </button>
+                <button data-view="chat" class="nav-btn bg-gray-700 hover:bg-gray-600 p-3 rounded-lg text-lg font-semibold transition duration-150">
+                    <span class="mr-2">💬</span> Общий чат
+                </button>
+                <button data-view="new-profile" class="nav-btn bg-orange-500 hover:bg-orange-600 p-3 rounded-lg text-lg font-semibold transition duration-150">
+                    <span class="mr-2">✨</span> Создать анкету
+                </button>
+            </nav>
+
+        </aside>
+
+Собаки под кайфом, [24.11.2025 16:21]
+<!-- Правая панель контента -->
+        <main class="flex-grow p-4 md:p-6 overflow-y-auto custom-scrollbar">
+
+            <!-- Область для сообщений -->
+            <div id="message-area" class="mb-4 hidden p-3 rounded-lg text-center font-medium transition duration-300"></div>
+            
+            <!-- Индикатор загрузки -->
+            <div id="loading-indicator" class="flex justify-center items-center py-8 hidden">
+                <div class="spinner"></div>
+                <p class="ml-3 text-gray-400">Загрузка данных...</p>
+            </div>
+
+            <!-- 1. Список анкет (Profiles View) -->
+            <section id="profiles-view" class="view-content">
+                <h2 class="text-3xl font-bold mb-6 text-blue-400">Все анкеты</h2>
+                <div id="profiles-list" class="grid gap-6 grid-cols-1 lg:grid-cols-2">
+                    <!-- Здесь будут карточки анкет -->
+                    <p class="text-gray-500 text-center col-span-full" id="no-profiles-message">Анкет пока нет. Будьте первым!</p>
+                </div>
+            </section>
+
+            <!-- 2. Форма создания анкеты (New Profile View) -->
+            <section id="new-profile-view" class="view-content hidden">
+                <h2 class="text-3xl font-bold mb-6 text-orange-400">Создать анкету</h2>
+                <form id="profile-form" class="space-y-4 bg-[#1f242d] p-6 rounded-xl shadow-lg border border-gray-700">
+                    
+                    <label class="block">
+                        <span class="text-gray-300">Название проекта / Ваша цель (Обязательно)</span>
+                        <input type="text" id="profile-title" required class="mt-1 block w-full p-3 bg-gray-700 border border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </label>
+
+                    <label class="block">
+                        <span class="text-gray-300">Роль, которую вы ищете / предлагаете (Обязательно)</span>
+                        <input type="text" id="profile-role" required class="mt-1 block w-full p-3 bg-gray-700 border border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </label>
+
+                    <label class="block">
+                        <span class="text-gray-300">Ваш опыт / Стек технологий</span>
+                        <textarea id="profile-experience" rows="3" class="mt-1 block w-full p-3 bg-gray-700 border border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500"></textarea>
+                    </label>
+                    
+                    <label class="block">
+                        <span class="text-gray-300">Контакт для связи (Telegram, Discord и т.д.) (Обязательно)</span>
+                        <input type="text" id="profile-contact" required class="mt-1 block w-full p-3 bg-gray-700 border border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </label>
+
+                    <label class="block">
+                        <span class="text-gray-300">Подробнее о проекте / О себе</span>
+                        <textarea id="profile-about" rows="5" class="mt-1 block w-full p-3 bg-gray-700 border border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500"></textarea>
+                    </label>
+
+                    <button type="submit" class="w-full py-3 bg-orange-500 hover:bg-orange-600 rounded-md text-lg font-bold transition duration-150">
+                        Опубликовать анкету
+                    </button>
+                </form>
+            </section>
+
+            <!-- 3. Общий чат (Chat View) -->
+            <section id="chat-view" class="view-content hidden flex flex-col h-full">
+                <h2 class="text-3xl font-bold mb-4 text-blue-400">Общий чат</h2>
+                <div id="chat-messages" class="flex-grow p-4 space-y-4 overflow-y-auto custom-scrollbar bg-[#1f242d] rounded-xl mb-4 h-96">
+
+Собаки под кайфом, [24.11.2025 16:22]
+<!-- Здесь будут сообщения чата -->
+                    <p class="text-gray-500 text-center" id="no-chat-message">Начните общение первым!</p>
+                </div>
+                <div id="chat-input-area" class="flex">
+                    <input type="text" id="chat-message-input" placeholder="Введите сообщение..." class="flex-grow p-3 bg-gray-700 border border-gray-600 rounded-l-lg focus:outline-none focus:ring-1 focus:ring-blue-500 text-white">
+                    <button id="send-message-btn" class="bg-blue-500 hover:bg-blue-600 px-6 py-3 rounded-r-lg font-semibold transition duration-150">
+                        Отправить
+                    </button>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Firebase SDK Imports -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, limit, getDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-
-        // ======================================================
-        // ВАШИ НАСТРОЙКИ FIREBASE И TELEGRAM
-        // ======================================================
-        // Конфигурация Firebase
-        const firebaseConfig = {
-          apiKey: "AIzaSyA7EumEru2qfYcAyxAWLL4TY_dWfcU3Dfg",
-          authDomain: "linkmeetcraft.firebaseapp.com",
-          projectId: "linkmeetcraft",
-          storageBucket: "linkmeetcraft.firebasestorage.app",
-          messagingSenderId: "373052253470",
-          appId: "1:373052253470:web:a66afc67876f76dc1a550f"
-        };
-
-        const TG_CHAT_ID = "-1003295508709"; // Ваш Telegram Chat ID
-        // ======================================================
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, onSnapshot, collection, query, serverTimestamp, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
+        // --- 1. ИНИЦИАЛИЗАЦИЯ И ГЛОБАЛЬНЫЕ КОНСТАНТЫ ---
         
-        let TELEGRAM_BOT_TOKEN = null;
+        // Получение глобальных переменных из среды Canvas
+        const appId = typeof app_id !== 'undefined' ? app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof firebase_config !== 'undefined' ? firebase_config : '{}');
+        const initialAuthToken = typeof initial_auth_token !== 'undefined' ? initial_auth_token : null;
+
+        let app;
+        let db;
+        let auth;
+        let userId = null;
+        let nickname = null;
+        let isAuthReady = false;
+
+        // Пути к коллекциям Firestore
+        const USERS_COLLECTION = /artifacts/${appId}/users;
+        const PUBLIC_PROFILES_COLLECTION = /artifacts/${appId}/public/data/profiles;
+        const PUBLIC_CHAT_COLLECTION = /artifacts/${appId}/public/data/chat;
         
-        const showLoading = (show) => {
-            document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
-        };
+        // Элементы DOM
+        const appContainer = document.getElementById('app');
+        const messageArea = document.getElementById('message-area');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const loginNicknameInput = document.getElementById('login-nickname');
+        const loginBtn = document.getElementById('login-btn');
+        const profileForm = document.getElementById('profile-form');
+        const profilesList = document.getElementById('profiles-list');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-message-input');
+        const sendBtn = document.getElementById('send-message-btn');
+        const navButtons = document.querySelectorAll('.nav-btn');
+        
+        // --- 2. УТИЛИТЫ ---
+        
+        /**
+         * Показывает или скрывает индикатор загрузки.
+         * @param {boolean} show
+         */
+        function showLoading(show) {
+            loadingIndicator.classList.toggle('hidden', !show);
+            appContainer.classList.toggle('pointer-events-none', show);
+            appContainer.classList.toggle('opacity-50', show);
+        }
 
-        const showMessage = (text, type = 'success') => {
-            const box = document.getElementById('message-box');
-            box.textContent = text;
-            box.style.backgroundColor = type === 'success' ? '#ff8c00' : '#f56565';
-            box.classList.add('show');
-            setTimeout(() => box.classList.remove('show'), 3000);
-        };
+        /**
+         * Отображает сообщение пользователю.
+         * @param {string} text Текст сообщения.
+         * @param {string} type Тип: 'успех', 'ошибка', 'инфо'.
+         */
+        function showMessage(text, type = 'инфо') {
+            messageArea.textContent = text;
+            messageArea.classList.remove('hidden', 'bg-green-700', 'bg-red-700', 'bg-blue-700');
+            
+            let bgColor = 'bg-blue-700';
+            if (type === 'успех') bgColor = 'bg-green-700';
+            if (type === 'ошибка') bgColor = 'bg-red-700';
 
-        // Функция для загрузки токена
-        async function getTelegramToken() {
-            try {
-                // Пытаемся войти анонимно, чтобы получить доступ к публичным настройкам
-                await signInAnonymously(auth);
-                console.log("Firebase Auth: Анонимный вход выполнен успешно.");
-                
-                // Используем ID "telegram", как в базе
-                const tokenRef = doc(db, "settings", "telegram"); 
-                const docSnap = await getDoc(tokenRef);
-                
-                if (docSnap.exists() && docSnap.data().token) {
-                    TELEGRAM_BOT_TOKEN = docSnap.data().token;
+            messageArea.classList.add(bgColor);
+            
+            setTimeout(() => {
+                messageArea.classList.add('hidden');
+            }, 5000);
+        }
 
-console.log("Token loaded successfully. First 5 chars:", TELEGRAM_BOT_TOKEN.substring(0, 5));
-                    return true;
-                } else {
-                    showMessage("Ошибка: Токен Telegram не найден. Проверьте коллекцию 'settings'.", 'error');
-                    console.error("Token lookup failed: Document 'settings/telegram' or 'token' field missing.");
-                    return false;
-                }
-            } catch (error) {
-                console.error("Error during token fetch or auth:", error);
-                // Это может указывать на неверные правила Firebase или неверный API key
-                showMessage("Ошибка аутентификации Firebase. Проверьте API Key и Правила Firestore.", 'error');
-                return false;
+Собаки под кайфом, [24.11.2025 16:22]
+/**
+         * Переключает отображение контента между разделами.
+         * @param {string} viewName Имя раздела ('profiles', 'chat', 'new-profile').
+         */
+        function switchView(viewName) {
+            document.querySelectorAll('.view-content').forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.getElementById(${viewName}-view).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                const isSelected = btn.dataset.view === viewName;
+                btn.classList.toggle('bg-blue-600', isSelected);
+                btn.classList.toggle('hover:bg-blue-700', isSelected);
+                btn.classList.toggle('bg-gray-700', !isSelected);
+                btn.classList.toggle('hover:bg-gray-600', !isSelected);
+            });
+            
+            // Если переключаемся в чат, прокручиваем вниз
+            if (viewName === 'chat') {
+                setTimeout(() => chatMessages.scrollTop = chatMessages.scrollHeight, 100);
             }
         }
 
-        // Отправка формы (в Firebase и в Telegram)
-        async function submitForm(event) {
-            event.preventDefault();
-            
-            // Если токен еще не загружен, пытаемся его загрузить
-            if (!TELEGRAM_BOT_TOKEN) {
-                const tokenLoaded = await getTelegramToken();
-                if (!tokenLoaded) return; // Останавливаем отправку, если токен не найден
-            }
-            
-            // Получение и очистка значений от пробелов
-            const name = document.getElementById('name').value.trim();
-            const role = document.getElementById('role').value.trim();
-            const experience = document.getElementById('experience').value.trim();
-            const contact = document.getElementById('contact').value.trim();
-            const about = document.getElementById('about').value.trim();
-            
-            // ПРОВЕРКА ОБЯЗАТЕЛЬНЫХ ПОЛЕЙ (ЯВНАЯ ПРОВЕРКА ДЛИНЫ)
-            if (name.length === 0  role.length === 0  contact.length === 0) {
-                showMessage("Заполните обязательные поля!", 'error');
+        /**
+         * Форматирует временную метку
+         * @param {number} timestamp
+         * @returns {string}
+         */
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return '';
+            const date = new Date(timestamp.seconds * 1000);
+            return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        }
+
+
+        // --- 3. АУТЕНТИФИКАЦИЯ И УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЕМ ---
+
+        /**
+         * Завершает процесс аутентификации и устанавливает никнейм.
+         * @param {string} newNickname Никнейм, выбранный пользователем.
+         */
+        async function completeLogin(newNickname) {
+            if (!newNickname || newNickname.length < 3) {
+                showMessage("Никнейм должен содержать не менее 3 символов.", "ошибка");
                 return;
             }
-            
             showLoading(true);
-
-            // Шаблон для Telegram
-            const tgMessage = 🔥 *НОВЫЙ ПОИСК ТИММЕЙТА!* 🔥\n\n*Имя:* ${name}\n*Ищу команду в:* ${role}\n*Опыт/Роль:* ${experience || '—'}\n*Связаться:* ${contact}\n*Детали:* ${about || '—'};
             
             try {
-                // 1. Сохранение в коллекцию 'teammates'
-                await addDoc(collection(db, "teammates"), {
-                    name, role, experience, contact, about, timestamp: Date.now()
-                });
-                
-                // 2. Отправка в Telegram
-                const telegramApiUrl = https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage;
-                
-                console.log("Attempting to send message to:", telegramApiUrl);
-                
-                const response = await fetch(telegramApiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: TG_CHAT_ID, text: tgMessage, parse_mode: 'Markdown' })
-                });
+                // Обновление профиля Firebase Auth
+                await updateProfile(auth.currentUser, { displayName: newNickname });
 
-                const result = await response.json();
+                // Проверяем и обновляем документ пользователя в Firestore
+                const userDocRef = doc(db, USERS_COLLECTION, auth.currentUser.uid);
+                const userDocSnap = await getDoc(userDocRef);
                 
-                if (response.ok && result.ok) {
-                    showMessage("Анкета успешно опубликована!", 'success');
-                    document.getElementById('teammate-form').reset();
+                const now = Date.now();
+                const userPublicData = {
+                    nickname: newNickname,
+                    lastNicknameChange: now,
+                    createdAt: now
+                };
+
+                if (userDocSnap.exists()) {
+                    // Если документ существует, просто обновляем никнейм
+                    await updateDoc(userDocRef, { 
+                        nickname: newNickname, 
+                        lastNicknameChange: now 
+                    });
                 } else {
-                    // Telegram API вернул ошибку (например, неверный chat ID или токен)
-                    console.error("Telegram API Error:", result);
-                    showMessage(Ошибка отправки Telegram: ${result.description || 'Неизвестная ошибка'}, 'error');
+                    // Если новый пользователь, создаем документ
+                    await setDoc(userDocRef, userPublicData);
                 }
-                
+
+                // Перезагрузка UI
+                nickname = newNickname;
+                updateUserInfoUI(auth.currentUser);
+                showMessage(Добро пожаловать, ${nickname}!, "успех");
+
             } catch (error) {
-                console.error("Submission error:", error);
-                showMessage("Ошибка отправки. Проверьте соединение и настройки.", 'error');
+                console.error("Ошибка установки никнейма:", error);
+                showMessage("Ошибка при установке никнейма.", "ошибка");
             } finally {
                 showLoading(false);
             }
         }
 
-// Рендеринг одной карточки тиммейта
-        function renderTeammate(data) {
-            const date = new Date(data.timestamp).toLocaleDateString();
-            return 
-                <div class="teammate-card panel mb-4 p-4">
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 class="text-xl font-bold text-gray-100">${data.name}</h3>
-                        <span class="text-sm text-gray-400">${date}</span>
-                    </div>
-                    <p class="text-lg font-semibold text-orange-400 mb-1">🎮 ${data.role}</p>
-                    <p class="text-gray-300">${data.about || 'Нет описания.'}</p>
-                    <div class="mt-3 pt-3 border-t border-gray-600">
-                        <a href="https://t.me/${data.contact.replace('@', '')}" target="_blank" class="text-orange-300 hover:underline font-bold">📞 ${data.contact}</a>
-                    </div>
-                </div>
-            ;
+        /**
+         * Обработчик входа (если токен пустой или анонимный пользователь).
+         */
+        loginBtn.addEventListener('click', async () => {
+            const desiredNickname = loginNicknameInput.value.trim();
+            if (!desiredNickname) {
+                showMessage("Введите желаемый никнейм.", "инфо");
+
+Собаки под кайфом, [24.11.2025 16:22]
+return;
+            }
+            
+            showLoading(true);
+            try {
+                // Сначала выполняем анонимный вход
+                if (!auth.currentUser || auth.currentUser.isAnonymous) {
+                    await signInAnonymously(auth);
+                }
+                // Затем завершаем вход, устанавливая никнейм
+                await completeLogin(desiredNickname);
+            } catch (error) {
+                console.error("Ошибка входа:", error);
+                showMessage("Не удалось войти.", "ошибка");
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        /**
+         * Обновляет UI после аутентификации.
+         * @param {Object} user Объект пользователя Firebase.
+         */
+        function updateUserInfoUI(user) {
+            const loginFormContainer = document.getElementById('login-form-container');
+            const userInfo = document.getElementById('user-info');
+            
+            if (user && user.displayName) {
+                nickname = user.displayName;
+                userId = user.uid;
+                document.getElementById('display-nickname').textContent = nickname;
+                document.getElementById('display-user-id').textContent = userId;
+                loginFormContainer.classList.add('hidden');
+                userInfo.classList.remove('hidden');
+            } else {
+                loginFormContainer.classList.remove('hidden');
+                userInfo.classList.add('hidden');
+            }
         }
 
-        // Настройка слушателя для отображения анкет в реальном времени
-        function setupListener() {
-            // Запрашиваем последние 50 анкет, сортируя по времени (новые сверху)
-            const q = query(collection(db, "teammates"), limit(50));
-            // onSnapshot слушает изменения в базе в реальном времени
-            onSnapshot(q, (snapshot) => {
-                const list = [];
-                snapshot.forEach((doc) => list.push(doc.data()));
+        /**
+         * Обработчик смены никнейма с проверкой на 1 месяц.
+         */
+        document.getElementById('change-nickname-btn').addEventListener('click', async () => {
+            if (!userId) return;
+
+            showLoading(true);
+            try {
+                const userDocRef = doc(db, USERS_COLLECTION, userId);
+                const userDocSnap = await getDoc(userDocRef);
                 
-                // Сортировка по времени в JS (чтобы избежать проблем с индексами Firestore)
-                list.sort((a, b) => b.timestamp - a.timestamp);
+                if (!userDocSnap.exists()) {
+                    showMessage("Не удалось найти данные пользователя.", "ошибка");
+                    return;
+                }
+
+                const userData = userDocSnap.data();
+                const lastChange = userData.lastNicknameChange || 0;
+                const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+                const timeSinceLastChange = Date.now() - lastChange;
+
+                if (timeSinceLastChange < thirtyDays) {
+                    const remainingDays = Math.ceil((thirtyDays - timeSinceLastChange) / (1000 * 60 * 60 * 24));
+                    showMessage(Никнейм можно менять только раз в 30 дней. Осталось дней: ${remainingDays}., "инфо");
+                    return;
+                }
                 
-                const container = document.getElementById('teammates-list');
-                container.innerHTML = list.length ? '' : '<p class="text-center text-gray-400 p-8">Тут пока пусто. Будьте первым!</p>';
-                list.forEach(t => container.innerHTML += renderTeammate(t));
+                const newNickname = prompt("Введите новый никнейм (мин 3 символа):");
+                if (newNickname && newNickname.trim().length >= 3) {
+                    await completeLogin(newNickname.trim());
+                } else if (newNickname !== null) {
+                    showMessage("Никнейм отменен или слишком короткий.", "инфо");
+                }
+
+            } catch (error) {
+                console.error("Ошибка при смене никнейма:", error);
+                showMessage("Ошибка при попытке сменить никнейм.", "ошибка");
+            } finally {
+                showLoading(false);
+            }
+        });
+
+
+        // --- 4. УПРАВЛЕНИЕ АНКЕТАМИ (PROFILES) ---
+
+        /**
+         * Отображает список анкет в DOM.
+         * @param {Array<Object>} profiles Массив объектов анкет.
+         */
+        function renderProfiles(profiles) {
+            profilesList.innerHTML = '';
+            
+            if (profiles.length === 0) {
+                document.getElementById('no-profiles-message').classList.remove('hidden');
+                return;
+            }
+            document.getElementById('no-profiles-message').classList.add('hidden');
+
+Собаки под кайфом, [24.11.2025 16:22]
+profiles.forEach(profile => {
+                const profileCard = document.createElement('div');
+                profileCard.className = 'bg-[#1f242d] p-5 rounded-xl shadow-xl border border-blue-800/50 hover:border-blue-500 transition duration-300';
+                
+                profileCard.innerHTML = 
+                    <h3 class="text-xl font-bold mb-2 text-orange-400">${profile.title}</h3>
+                    <p class="text-blue-400 font-semibold mb-3 border-b border-gray-700 pb-2">Роль: ${profile.role}</p>
+                    
+                    <p class="text-sm text-gray-300 mb-2">Опыт/Стек: <span class="text-gray-400">${profile.experience || 'Не указан'}</span></p>
+                    <p class="text-sm text-gray-300 mb-4">Описание: <span class="text-gray-400">${profile.about || 'Нет описания'}</span></p>
+
+                    <div class="pt-3 border-t border-gray-700">
+                        <p class="text-xs text-gray-500">Автор: <span class="text-blue-300">${profile.userNickname || 'Аноним'}</span></p>
+                        <p class="text-xs text-gray-500 mt-1">Контакт: <span class="text-orange-300 font-medium break-all">${profile.contact}</span></p>
+                    </div>
+                ;
+                profilesList.appendChild(profileCard);
+            });
+        }
+        
+        /**
+         * Обработчик отправки формы анкеты.
+         */
+        profileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!nickname) {
+                showMessage("Пожалуйста, сначала установите свой никнейм.", "инфо");
+                return;
+            }
+
+            const title = document.getElementById('profile-title').value.trim();
+            const role = document.getElementById('profile-role').value.trim();
+            const experience = document.getElementById('profile-experience').value.trim();
+            const contact = document.getElementById('profile-contact').value.trim();
+            const about = document.getElementById('profile-about').value.trim();
+
+            if (!title  !role  !contact) {
+                showMessage("Заполните обязательные поля: Название, Роль и Контакт.", "ошибка");
+                return;
+            }
+
+            showLoading(true);
+
+            try {
+                const profileData = {
+                    title: title,
+                    role: role,
+                    experience: experience,
+                    contact: contact,
+                    about: about,
+                    userId: userId,
+                    userNickname: nickname,
+                    createdAt: serverTimestamp()
+                };
+
+                await addDoc(collection(db, PUBLIC_PROFILES_COLLECTION), profileData);
+
+                showMessage("Анкета успешно опубликована!", "успех");
+                profileForm.reset();
+                switchView('profiles'); // Переключаемся на просмотр анкет
+
+            } catch (error) {
+                console.error("Ошибка сохранения анкеты:", error);
+                showMessage("Произошла ошибка при сохранении анкеты. Попробуйте снова.", "ошибка");
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        // --- 5. УПРАВЛЕНИЕ ЧАТОМ (CHAT) ---
+
+        /**
+         * Отображает сообщение чата в DOM.
+         * @param {Object} message Сообщение Firestore.
+         */
+        function renderMessage(message) {
+            const messageElement = document.createElement('div');
+            messageElement.className = 'flex items-start space-x-3';
+            
+            const timestamp = formatTimestamp(message.createdAt);
+            
+            messageElement.innerHTML = `
+                <div>
+                    <span class="text-blue-400 font-semibold">${message.userNickname || 'Аноним'}</span>
+
+Собаки под кайфом, [24.11.2025 16:22]
+<span class="text-gray-500 text-xs ml-2">${timestamp}</span>
+                    <p class="text-gray-200 break-words mt-1">${message.text}</p>
+                </div>
+            `;
+            chatMessages.appendChild(messageElement);
+        }
+
+        /**
+         * Обработчик отправки сообщения.
+         */
+        sendBtn.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        async function sendMessage() {
+            const text = chatInput.value.trim();
+            
+            if (!nickname) {
+                showMessage("Пожалуйста, сначала установите свой никнейм, чтобы писать в чат.", "инфо");
+                return;
+            }
+            
+            if (text.length === 0) return;
+
+            chatInput.value = ''; // Очистка поля ввода
+            
+            try {
+                const messageData = {
+                    userId: userId,
+                    userNickname: nickname,
+                    text: text,
+                    createdAt: serverTimestamp()
+                };
+
+                await addDoc(collection(db, PUBLIC_CHAT_COLLECTION), messageData);
+
+            } catch (error) {
+                console.error("Ошибка отправки сообщения:", error);
+                showMessage("Не удалось отправить сообщение.", "ошибка");
+                chatInput.value = text; // Возвращаем текст, если отправка не удалась
+            }
+        }
+
+        // --- 6. ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ И СЛУШАТЕЛИ FIRESTORE ---
+
+        /**
+         * Инициализирует Firebase и устанавливает слушатели.
+         */
+        async function initApp() {
+            try {
+                showLoading(true);
+
+                // Инициализация
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                // Слушатель состояния аутентификации
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        // Если есть токен, но нет displayName (обычно при первом анонимном входе)
+                        if (!user.displayName && !initialAuthToken) {
+                            // Просим пользователя установить никнейм
+                            updateUserInfoUI(user); 
+                        } else {
+                            // Пользователь аутентифицирован и имеет никнейм (или токен был предоставлен)
+                            updateUserInfoUI(user);
+                            isAuthReady = true;
+                            // Начинаем прослушивание данных
+                            setupFirestoreListeners();
+                        }
+                    } else {
+                        // Если нет пользователя (или выход), пытаемся войти анонимно
+                        await handleInitialAuth();
+                    }
+                    showLoading(false);
+                });
+
+                // Если уже есть токен, используем его для входа
+                if (initialAuthToken) {
+                    await handleInitialAuth();
+                } else {
+                    // Иначе ждем onAuthStateChanged
+                    // showLoading(false); 
+                }
+
+                // Устанавливаем начальное представление
+                switchView('profiles'); 
+                
+            } catch (error) {
+                console.error("Критическая ошибка инициализации Firebase:", error);
+                showMessage("Не удалось подключиться к сервису данных.", "ошибка");
+                showLoading(false);
+            }
+        }
+
+        /**
+         * Обрабатывает первоначальную аутентификацию (Custom Token или Анонимно).
+         */
+
+Собаки под кайфом, [24.11.2025 16:22]
+async function handleInitialAuth() {
+            try {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                 // Если signInWithCustomToken не удался, пробуем анонимный
+                console.warn("Ошибка входа с токеном. Попытка анонимного входа.", error);
+                try {
+                    await signInAnonymously(auth);
+                } catch (anonError) {
+                    console.error("Не удалось войти анонимно:", anonError);
+                }
+            }
+        }
+
+        /**
+         * Настраивает слушателей Firestore для чата и анкет.
+         */
+        function setupFirestoreListeners() {
+            if (!isAuthReady) return;
+
+            // 1. Слушатель для анкет
+            const profilesQuery = query(collection(db, PUBLIC_PROFILES_COLLECTION));
+            onSnapshot(profilesQuery, (snapshot) => {
+                const profiles = [];
+                snapshot.forEach(doc => {
+                    profiles.push({ id: doc.id, ...doc.data() });
+                });
+                // Сортируем в памяти по дате (самые новые сверху)
+                profiles.sort((a, b) => b.createdAt?.seconds - a.createdAt?.seconds);
+                renderProfiles(profiles);
+            }, (error) => {
+                console.error("Ошибка прослушивания анкет:", error);
+                showMessage("Не удалось загрузить анкеты.", "ошибка");
+            });
+
+            // 2. Слушатель для чата
+            // Получаем последние 50 сообщений
+            const chatQuery = query(collection(db, PUBLIC_CHAT_COLLECTION), 
+                                    // orderBy('createdAt'), // Firestore требует индекс для этого, сортируем в памяти
+                                    limit(50)); 
+            
+            onSnapshot(chatQuery, (snapshot) => {
+                chatMessages.innerHTML = '';
+                const messages = [];
+                snapshot.forEach(doc => {
+                    messages.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Сортируем в памяти по дате (самые старые сверху для правильного порядка в чате)
+                messages.sort((a, b) => a.createdAt?.seconds - b.createdAt?.seconds);
+
+                messages.forEach(message => renderMessage(message));
+                
+                // Автопрокрутка вниз
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                document.getElementById('no-chat-message').classList.toggle('hidden', messages.length > 0);
+
+            }, (error) => {
+                console.error("Ошибка прослушивания чата:", error);
+                showMessage("Не удалось загрузить сообщения чата.", "ошибка");
             });
         }
 
-        // Инициализация приложения
-        window.onload = async () => {
-            document.getElementById('teammate-form').addEventListener('submit', submitForm); // Вешаем обработчик на форму
-            
-            // Загрузка токена при старте, чтобы он был готов к первой отправке
-            await getTelegramToken(); 
-            setupListener(); // Запускаем слушатель анкет
-        };
+        // --- 7. СЛУШАТЕЛИ DOM-СОБЫТИЙ ---
+
+        navButtons.forEach(btn => {
+            btn.addEventListener('click', () => switchView(btn.dataset.view));
+        });
+
+        // Запуск приложения
+        window.onload = initApp;
+
     </script>
-</head>
-<body class="bg-gray-900 text-gray-100"> 
-
-<header class="bg-gray-800 shadow-lg sticky top-0 z-10">
-        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <span class="text-2xl neon-text">🔥</span> 
-                <h1 class="text-3xl font-bold neon-text">Поиск Тиммейтов</h1> 
-            </div>
-            <a href="https://t.me/LinkMeetCraft" target="_blank" class="text-orange-400 font-medium hover:underline">
-                Telegram Канал
-            </a>
-        </div>
-    </header>
-
-    <main class="container">
-        <div class="panel h-fit sticky top-5">
-            <h2 class="text-2xl font-semibold mb-4 text-orange-400 border-b border-gray-600 pb-2">📝 Заявить о себе (Ваша Анкета)</h2>
-            <form id="teammate-form">
-                <label class="block text-sm font-medium text-gray-300 mb-1">Никнейм:</label>
-                <input type="text" id="name" class="form-input" required>
-
-                <label class="block text-sm font-medium text-gray-300 mb-1">В какую игру ищете команду:</label>
-                <input type="text" id="role" class="form-input" placeholder="Например: Minecraft, CS2, Genshin Impact" required>
-                
-                <label class="block text-sm font-medium text-gray-300 mb-1">Ваша роль / Опыт:</label>
-                <input type="text" id="experience" class="form-input" placeholder="Например: Опытный строитель / Снайпер, звание LEM">
-
-<label class="block text-sm font-medium text-gray-300 mb-1">Контакт для связи (Telegram/Discord):</label>
-                <input type="text" id="contact" class="form-input" placeholder="@ваш_юзернейм" required>
-                
-                <label class="block text-sm font-medium text-gray-300 mb-1">Опишите, кого ищете/что умеете:</label>
-                <textarea id="about" class="form-textarea" rows="4" placeholder="Например: Ищу адекватную команду для ММ, играю вечерами."></textarea>
-
-                <button type="submit" class="btn-primary">Опубликовать Анкету</button>
-            </form>
-        </div>
-
-        <div class="panel">
-            <h2 class="text-2xl font-semibold mb-4 text-orange-400 border-b border-gray-600 pb-2">📜 Активные Заявки на Поиск</h2>
-            <div id="teammates-list">
-                <p class="text-center text-gray-400 p-8">Загрузка...</p>
-            </div>
-        </div>
-    </main>
-    
-    <!-- Всплывающие сообщения и экран загрузки -->
-    <div id="message-box" class="message-box"></div>
-    <div id="loading-overlay" class="loading-overlay"><div class="loading-spinner"></div></div>
 </body>
 </html>
