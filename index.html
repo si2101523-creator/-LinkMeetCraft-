@@ -148,12 +148,10 @@
                         projectId: "mock-project-id",
                         appId: "mock-app-id"
                     };
-
                     isMockConfig = true; // Устанавливаем флаг MOCK-режима
-
+                    
                     // Обновляем UI, чтобы показать предупреждение MOCK-режима
-                    authStatusEl.textContent = 'Статус Auth: ⚠️ MOCK (Ожидание входа)';
-                    dbStatusEl.textContent = 'Статус DB: ⚠️ MOCK (Ожидание Auth)';
+                    dbStatusEl.textContent = 'Статус DB: ⚠️ MOCK (Принудительный вход)...';
                     errorEl.textContent = `ВНИМАНИЕ! Конфигурация Firebase отсутствует. Инициализация продолжена в MOCK-режиме (нет записи/чтения в реальную БД).`;
                     errorEl.classList.remove('hidden');
                 }
@@ -163,30 +161,31 @@
                 auth = getAuth(app);
                 db = getFirestore(app);
 
+                // --- КРИТИЧЕСКИЙ ОБХОД MOCK-РЕЖИМА ---
+                if (isMockConfig) {
+                    // Мгновенно устанавливаем фейковый ID и готовность
+                    userId = 'MOCK_USER_' + crypto.randomUUID(); 
+                    isAuthReady = true;
+                    updateUI(); // Обновляем UI, чтобы разблокировать кнопки
+                    setupFirestoreListener(); // Запускаем MOCK-данные
+                    return; // Выходим, не запуская асинхронную логику Auth
+                }
+                // --- КОНЕЦ КРИТИЧЕСКОГО ОБХОДА ---
+
+
                 dbStatusEl.textContent = 'Статус DB: Инициализация Firestore...';
 
-                // Listen for Auth State Changes
+                // Реальная настройка Firebase Auth (запускается только если НЕ MOCK режим)
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
-                        // 1. Успешный реальный вход (пользователь есть)
+                        // 1. Успешный реальный вход
                         userId = user.uid;
                         isAuthReady = true;
                         updateUI();
                         // Запуск прослушивания Firestore
                         setupFirestoreListener();
                     } else {
-                        // --- НОВОЕ: БЫСТРЫЙ ВЫХОД ИЗ MOCK-РЕЖИМА ---
-                        if (isMockConfig && !isAuthReady) {
-                            // Если мы в MOCK-режиме и еще не готовы (первый вызов onAuthStateChanged)
-                            userId = 'MOCK_USER_' + crypto.randomUUID().substring(0, 8); // Генерируем фейковый ID
-                            isAuthReady = true;
-                            updateUI(); // Обновляем UI, чтобы разблокировать кнопки
-                            setupFirestoreListener(); // Запускаем MOCK-данные
-                            return; // Выходим, не пытаясь выполнить реальный сетевой запрос
-                        }
-                        // --- КОНЕЦ БЫСТРОГО ВЫХОДА ИЗ MOCK-РЕЖИМА ---
-
-                        // 2. Пользователь не вошел. Попытка реального входа (происходит только при реальной конфигурации).
+                        // 2. Пользователь не вошел. Попытка реального входа.
                         try {
                             if (initialAuthToken) {
                                 console.log("Attempting sign-in with custom token...");
@@ -195,11 +194,11 @@
                                 console.log("Attempting anonymous sign-in...");
                                 await signInAnonymously(auth);
                             }
-                            // onAuthStateChanged поймает успех и обновит состояние
+                            // onAuthStateChanged поймает успех
                         } catch (error) {
                             console.error("Authentication failed:", error);
                             authStatusEl.textContent = `Статус Auth: ❌ Ошибка (${error.code})`;
-                            isAuthReady = true; // Отмечаем как "готов", чтобы не зацикливаться
+                            isAuthReady = true;
                             updateUI();
                         }
                     }
@@ -225,7 +224,7 @@
             
             if (isMockConfig) {
                 // Сценарий MOCK DATA: Обход реального подключения
-                dbStatusEl.textContent = 'Статус DB: ⚠️ MOCK: Локальная имитация данных.';
+                dbStatusEl.textContent = 'Статус DB: ⚠️ MOCK: Локальная имитация.';
                 loadingTextEl.classList.add('hidden'); // Скрываем текст загрузки
 
                 // Инициализация сообщений-заглушек
