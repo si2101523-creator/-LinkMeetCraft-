@@ -215,27 +215,33 @@
                 }
                 
                 // Проверка на смену ника (1 месяц)
-                const uid = auth.currentUser.uid;
-                const userRef = doc(db, PATH_USERS, uid);
-                const userSnap = await getDoc(userRef);
-                const now = Date.now();
+const uid = auth.currentUser.uid;
+const userRef = doc(db, PATH_USERS, uid);
+const userSnap = await getDoc(userRef);
+const now = Date.now();
 
 let canChange = true;
-                if (userSnap.exists()) {
-                    const lastChange = userSnap.data().lastChange || 0;
-                    // 2592000000 мс = 30 дней
-                    if (now - lastChange < 2592000000) { 
-                        const daysLeft = Math.ceil((2592000000 - (now - lastChange)) / (1000 * 60 * 60 * 24));
-                        showToast(Менять ник можно раз в месяц! Осталось: ${daysLeft} дней.);
-                        canChange = false;
-                        // Если смена запрещена, но ник уже есть, просто используем его
-                        if(auth.currentUser.displayName && auth.currentUser.displayName !== nick) {
-                            showToast(Вы используете текущий ник: ${auth.currentUser.displayName});
-                            updateAuthUI(auth.currentUser);
-                            return;
-                        }
-                    }
-                }
+if (userSnap.exists()) {
+    const lastChange = userSnap.data().lastChange || 0;
+    // 2592000000 мс = 30 дней
+    if (now - lastChange < 2592000000) { 
+        const daysLeft = Math.ceil((2592000000 - (now - lastChange)) / (1000 * 60 * 60 * 24));
+        canChange = false;
+        // Если смена запрещена, но ник уже есть, просто используем его
+        if(auth.currentUser.displayName && auth.currentUser.displayName !== nick) {
+            showToast(Вы используете текущий ник: ${auth.currentUser.displayName});
+            updateAuthUI(auth.currentUser);
+            return;
+        } else if (!auth.currentUser.displayName) {
+            // Если пользователь без никнейма, но только что вошел, даем ввести ник
+            canChange = true;
+        }
+        
+        if (!canChange) {
+            showToast(Менять ник можно раз в месяц! Осталось: ${daysLeft} дней.);
+        }
+    }
+}
                 
                 // Смена разрешена или ник устанавливается впервые
                 if (canChange) {
