@@ -151,14 +151,30 @@
 
     <!-- СКРИПТ ПРИЛОЖЕНИЯ (Модуль) -->
     <script type="module">
-        // ИМПОРТЫ FIREBASE (ДОЛЖНЫ БЫТЬ ЧИСТЫМИ)
+        // ИМПОРТЫ FIREBASE
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- КОНФИГУРАЦИЯ ---
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        
+        // **ИСПРАВЛЕННЫЙ БЛОК: Более надежная загрузка конфигурации**
+        let firebaseConfig = {};
+        try {
+            // Проверяем, существует ли глобальная переменная и является ли она непустой строкой, прежде чем парсить
+            if (typeof __firebase_config === 'string' && __firebase_config.length > 0) {
+                firebaseConfig = JSON.parse(__firebase_config);
+            }
+        } catch (e) {
+            console.error("Failed to parse __firebase_config, using empty config.", e);
+            document.getElementById('error-display').innerText = "КРИТИЧЕСКАЯ ОШИБКА: Не удалось загрузить конфигурацию Firebase. Возможно, проблема в окружении.";
+            document.getElementById('error-display').classList.remove('hidden');
+            // Если конфигурация не загружена, мы не можем инициализировать Firebase.
+            // Приложение не будет работать, но мы избежим ошибки (auth/invalid-api-key)
+            // на этапе initializeApp, если ключа действительно нет.
+            // Однако, для корректной работы, мы все равно должны вызвать initializeApp
+        }
         
         // --- ПУТИ К FIRESTORE ---
         const PATH_PROFILES = `/artifacts/${appId}/public/data/profiles`;
@@ -199,7 +215,6 @@
         
         // Вспомогательная функция для копирования в буфер обмена
         function copyToClipboard(text, message) {
-            // Временный элемент для копирования, так как navigator.clipboard может быть недоступен в iframe
             const tempInput = document.createElement('input');
             tempInput.value = text;
             document.body.appendChild(tempInput);
@@ -223,7 +238,6 @@
             try {
                 // Если не авторизован (или аноним), авторизуемся
                 if (!auth.currentUser) {
-                    // Используем signInAnonymously для получения UID, чтобы можно было сохранить ник
                     await signInAnonymously(auth);
                 }
                 
@@ -240,15 +254,6 @@
                     if (now - lastChange < 2592000000) { 
                         const daysLeft = Math.ceil((2592000000 - (now - lastChange)) / (1000 * 60 * 60 * 24));
                         canChange = false;
-                        // Если смена запрещена, но ник уже есть, просто используем его
-                        if(auth.currentUser.displayName && auth.currentUser.displayName !== nick) {
-                            showToast(`Вы используете текущий ник: ${auth.currentUser.displayName}`);
-                            updateAuthUI(auth.currentUser);
-                            return;
-                        } else if (!auth.currentUser.displayName) {
-                            // Если пользователь без никнейма, но только что вошел, даем ввести ник
-                            canChange = true;
-                        }
                         
                         if (!canChange) {
                             showToast(`Менять ник можно раз в месяц! Осталось: ${daysLeft} дней.`);
@@ -282,19 +287,16 @@
              document.getElementById('nickname-input').value = currentUser ? currentUser.displayName : '';
         }
         
-        // Слушатель состояния входа (Теперь только обновляет UI, вход происходит по кнопке)
+        // Слушатель состояния входа
         onAuthStateChanged(auth, (user) => {
             if (user && user.uid) {
-                // Если у пользователя уже есть ник, обновляем UI и запускаем слушатели
                 if (user.displayName) {
                     updateAuthUI(user);
                     setupFirestoreListeners();
                 } else {
-                    // Если UID есть, но никнейма нет, показываем форму ввода ника
                     updateAuthUI(null); 
                 }
             } else {
-                 // Пользователь вышел/не вошел. Просто обновляем UI, чтобы показать форму входа.
                  updateAuthUI(null);
             }
         });
@@ -323,7 +325,6 @@
 
         function setupChatListener() {
             const chatContainer = document.getElementById('chat-container');
-            // Ограничиваем 50 сообщениями, сортируем по дате создания
             const qChat = query(collection(db, PATH_CHAT), orderBy('createdAt', 'desc'), limit(50));
 
             const unsubscribeChat = onSnapshot(qChat, (snapshot) => {
@@ -339,7 +340,6 @@
                     chatContainer.appendChild(div);
                 });
                 
-                // Прокрутка вниз, если чат открыт
                 if (!document.getElementById('view-chat').classList.contains('hidden')) {
                     chatContainer.scrollTop = chatContainer.scrollHeight;
                 }
@@ -396,8 +396,7 @@
                     const card = document.createElement('div');
                     card.className = "bg-[#1f242d] p-4 rounded-xl border border-[#30363d] hover:border-blue-500 transition shadow-lg";
                     
-                    const profileId = doc.id; // Получаем ID документа
-                    // Создаем URL в формате: ваш_адрес_сайта?profileId=УНИКАЛЬНЫЙ_ID
+                    const profileId = doc.id; 
                     const profileURL = `${window.location.origin}${window.location.pathname}?profileId=${profileId}`; 
 
                     card.innerHTML = `
@@ -415,9 +414,8 @@
                         </div>
                     `;
                     
-                    // Добавляем обработчик на карточку для кнопки копирования
                     card.querySelector('.copy-link-btn').addEventListener('click', (e) => {
-                        e.stopPropagation(); // Останавливаем всплытие, чтобы не ломать другие клики
+                        e.stopPropagation(); 
                         const url = e.currentTarget.getAttribute('data-url');
                         copyToClipboard(url, "Ссылка на анкету скопирована!");
                     });
