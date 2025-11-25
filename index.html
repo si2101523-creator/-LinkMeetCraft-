@@ -129,6 +129,7 @@
         let userId = null;
         let isAuthReady = false;
         let isMockConfig = false; 
+        let mockTeammates = []; // Глобальный массив для хранения данных в MOCK-режиме
 
         // UI Elements
         const authStatusEl = document.getElementById('auth-status');
@@ -324,12 +325,16 @@
                 dbStatusEl.textContent = 'Статус DB: ⚠️ MOCK: Локальная имитация.';
                 loadingTextEl.classList.add('hidden'); 
                 
-                // MOCK Data for demonstration
-                const mockTeammates = [
-                    { name: 'Система', role: 'Fullstack Dev', experience: 'React, Node, Mongo', contact: '@system_dev', about: 'Ищу любой проект.', userId: 'SYSTEM_USER' },
-                    { name: 'Анонимный', role: 'Дизайнер', experience: 'Figma, Sketch, UI/UX', contact: 'design@mail.com', about: 'Ищу креативную команду.', userId: 'ANONYMOUS_USER' },
-                    { name: 'Вы', role: 'Владелец', experience: 'Заполните форму!', contact: 'ваш_контакт', about: 'Проверка, как выглядит ваша карточка.', userId: userId },
-                ];
+                // MOCK Data initialization (Fill the array only on first load)
+                if (mockTeammates.length === 0) {
+                     mockTeammates = [
+                        { name: 'Система', role: 'Fullstack Dev', experience: 'React, Node, Mongo', contact: '@system_dev', about: 'Ищу любой проект.', userId: 'SYSTEM_USER' },
+                        { name: 'Анонимный', role: 'Дизайнер', experience: 'Figma, Sketch, UI/UX', contact: 'design@mail.com', about: 'Ищу креативную команду.', userId: 'ANONYMOUS_USER' },
+                        // Добавляем запись пользователя по умолчанию, которая будет заменена реальной при отправке формы
+                        { name: 'Вы', role: 'Владелец', experience: 'Заполните форму!', contact: 'ваш_контакт', about: 'Проверка, как выглядит ваша карточка.', userId: userId },
+                    ];
+                }
+
                 renderTeammates(mockTeammates);
                 return; // Выход, не запускаем onSnapshot
             }
@@ -394,14 +399,27 @@
             submitBtn.disabled = true;
             submitBtn.textContent = 'Публикация...';
             
-            // MOCK LOGIC
+            // MOCK LOGIC (Теперь добавляет заявку в локальный массив и перерисовывает)
             if (isMockConfig) {
-                 showMessage("Заявка успешно опубликована (локально в MOCK-режиме).", "успех");
-                 clearForm();
-                 // В MOCK-режиме перерисовка произойдет автоматически при следующем обновлении
-                 submitBtn.disabled = false;
-                 submitBtn.textContent = 'Опубликовать Заявку';
-                 return;
+                 const newTeammate = {
+                    name: name,
+                    role: role,
+                    experience: experience,
+                    contact: contact,
+                    about: about,
+                    userId: userId,
+                };
+                
+                // Добавляем новую заявку в локальный массив
+                mockTeammates.push(newTeammate);
+                // Мануально вызываем перерисовку списка
+                renderTeammates(mockTeammates); 
+
+                showMessage("Заявка успешно опубликована (локально в MOCK-режиме).", "успех");
+                clearForm();
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Опубликовать Заявку';
+                return;
             }
 
             // РЕАЛЬНАЯ ЛОГИКА ЗАПИСИ
