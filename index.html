@@ -1,605 +1,307 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LinkMeetCraft - Поиск команды</title>
-    <!-- Подключение Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0d1117; /* Черный фон */
-            color: #e6edf3;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
-        }
-        /* Скроллбары */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #161b22; }
-        ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
-        
-        /* Класс для активной кнопки навигации */
-        .nav-btn.active {
-            background-color: #1f242d; /* Темно-серый фон */
-            color: #ffffff;
-            border-color: #3b82f6; /* Синяя рамка */
-        }
-        /* Блокировка кнопки при отключенном Firebase */
-        .firebase-disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .line-clamp-3 {
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отладка: Инициализация и Визуал</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar for message box */
+        #message-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        /* Style for the application container */
+        .app-container {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            background-color: #f7f9fb;
+        }
+    </style>
 </head>
-<body class="flex flex-col md:flex-row h-full">
+<body>
+    <div class="app-container">
+        <div id="app" class="bg-white p-6 md:p-10 rounded-xl shadow-2xl w-full max-w-lg space-y-6">
+            <h1 class="text-3xl font-extrabold text-indigo-700 text-center">
+                🛠️ Отладка Firebase и Визуализации
+            </h1>
+            <p class="text-sm text-gray-500 text-center">
+                Проверка подключения к аутентификации и Firestore.
+            </p>
 
-    <!-- БЛОК ОТОБРАЖЕНИЯ КРИТИЧЕСКИХ ОШИБОК -->
-    <div id="error-display" class="hidden fixed top-0 left-0 w-full bg-red-600 text-white p-4 z-[9999] font-bold text-center"></div>
+            <!-- Status and User Info Block -->
+            <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-200 space-y-2">
+                <div id="auth-status" class="text-base font-semibold text-indigo-800">
+                    Статус Auth: Загрузка...
+                </div>
+                <div id="user-id-display" class="text-xs font-mono text-gray-700 break-all">
+                    ID Пользователя: Ожидание...
+                </div>
+                <div id="db-status" class="text-xs font-medium text-gray-600">
+                    Статус DB: Ожидание инициализации...
+                </div>
+            </div>
 
-    <!-- Левая панель -->
-    <aside class="w-full md:w-64 bg-[#161b22] border-r border-[#30363d] flex flex-col p-4 z-20">
-        <h1 class="text-2xl font-bold text-orange-500 mb-6 tracking-wider">LinkMeetCraft</h1>
+            <!-- Message List Area (Visual Check) -->
+            <div class="space-y-3">
+                <h2 class="text-xl font-semibold text-gray-700">Сообщения Firestore (в реальном времени)</h2>
+                <div id="message-list" class="bg-gray-100 p-4 rounded-lg border border-gray-300 shadow-inner">
+                    <!-- Messages will be injected here -->
+                    <p class="text-gray-500 italic" id="loading-text">Загрузка сообщений...</p>
+                </div>
+            </div>
 
-        <!-- Панель входа -->
-        <div id="auth-box" class="bg-[#0d1117] p-4 rounded-xl border border-[#30363d] mb-4 shadow-lg">
-            <!-- Если не вошел -->
-            <div id="login-view">
-                <input type="text" id="nickname-input" placeholder="Ваш никнейм" class="w-full bg-[#21262d] border border-[#30363d] rounded p-2 text-white mb-2 focus:border-blue-500 outline-none" maxlength="20">
-                <button data-action="login" id="login-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition">Войти</button>
-            </div>
-            <!-- Если вошел -->
-            <div id="user-view" class="hidden">
-                <div class="text-gray-400 text-xs">Вы вошли как:</div>
-                <div id="current-nickname" class="text-blue-400 font-bold text-lg truncate"></div>
-                <button data-action="logout" id="logout-btn" class="mt-2 text-xs text-red-400 hover:text-red-300 underline">Сменить ник</button>
-            </div>
-        </div>
+            <!-- Input Form for testing Firestore write (Initialization Check) -->
+            <div class="space-y-4">
+                <h2 class="text-xl font-semibold text-gray-700">Отправить Сообщение (Тест Записи)</h2>
+                <input
+                    type="text"
+                    id="new-message-input"
+                    placeholder="Введите ваше тестовое сообщение"
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out"
+                    disabled
+                >
+                <button
+                    id="send-message-btn"
+                    class="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold hover:bg-indigo-700 transition duration-150 ease-in-out disabled:bg-indigo-400 disabled:cursor-not-allowed shadow-md"
+                    onclick="sendMessage()"
+                    disabled
+                >
+                    Отправить
+                </button>
+                <p id="error-message" class="text-red-600 text-sm hidden">
+                    Ошибка: Проверьте консоль.
+                </p>
+            </div>
+        </div>
+    </div>
 
-        <!-- Навигация -->
-        <nav id="main-nav" class="flex-1 space-y-2">
-            <button data-view="profiles" class="nav-btn active w-full text-left p-3 rounded hover:bg-[#21262d] text-gray-300 hover:text-white transition flex items-center border border-transparent focus:border-blue-500">
-                📄 Анкеты
-            </button>
-            <button data-view="chat" class="nav-btn w-full text-left p-3 rounded hover:bg-[#21262d] text-gray-300 hover:text-white transition flex items-center border border-transparent focus:border-blue-500">
-                💬 Общий чат
-            </button>
-            <button data-view="create" class="nav-btn w-full text-left p-3 rounded bg-orange-900/20 text-orange-400 hover:bg-orange-900/40 hover:text-orange-300 transition flex items-center border border-orange-900/50 mt-4">
-                ➕ Создать анкету
-            </button>
-        </nav>
-    </aside>
+    <!-- Firebase Script Setup -->
+    <script type="module">
+        // Import necessary Firebase functions
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, addDoc, onSnapshot, collection, query, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    <!-- Правая панель (Контент) -->
-    <main class="flex-1 relative bg-[#0d1117] overflow-hidden flex flex-col">
-        
-        <!-- Уведомления -->
-        <div id="toast" class="absolute top-4 right-4 bg-blue-600 text-white px-6 py-3 rounded shadow-xl transform translate-x-full transition-transform duration-300 z-50"></div>
+        // IMPORTANT: Enable debug logging for Firebase
+        setLogLevel('Debug');
 
-        <!-- Экран: Анкеты -->
-        <div id="view-profiles" class="view-section h-full overflow-y-auto p-6">
-            <h2 class="text-2xl font-bold text-white mb-4 border-b border-[#30363d] pb-2">Активные анкеты</h2>
-            <div id="profiles-container" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <!-- Контент генерируется в JS -->
-                <div class="text-gray-500 col-span-full text-center p-4">Подключение к базе данных...</div>
-            </div>
-        </div>
+        // Global variables provided by the Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        <!-- Экран: Чат -->
-        <div id="view-chat" class="view-section h-full flex flex-col p-4 hidden">
-            <h2 class="text-xl font-bold text-white mb-2 border-b border-[#30363d] pb-2">Общий чат</h2>
-            <div id="chat-container" class="flex-1 overflow-y-auto space-y-3 mb-4 pr-2">
-                <!-- Контент генерируется в JS -->
-                <div class="text-center text-gray-600 mt-10">Ожидание сообщений...</div>
-            </div>
-            <div class="flex gap-2">
-                <input type="text" id="chat-input" placeholder="Напишите сообщение..." class="flex-1 bg-[#21262d] border border-[#30363d] rounded p-3 text-white focus:border-blue-500 outline-none">
-                <button data-action="send-msg" id="send-msg-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 rounded font-bold firebase-disabled transition-colors duration-200">></button>
-            </div>
-        </div>
+        let db = null;
+        let auth = null;
+        let userId = null;
+        let isAuthReady = false;
 
-        <!-- Экран: Создание анкеты -->
-        <div id="view-create" class="view-section h-full overflow-y-auto p-6 hidden">
-            <h2 class="text-2xl font-bold text-orange-500 mb-6">Новая анкета</h2>
-            <form data-action="create-profile" id="create-form" class="max-w-2xl bg-[#161b22] p-6 rounded-xl border border-[#30363d] space-y-4">
-                <div>
-                    <label class="block text-gray-400 text-sm mb-1">Название проекта / Цель</label>
-                    <input type="text" id="f-title" required class="w-full bg-[#0d1117] border border-[#30363d] rounded p-2 text-white focus:border-orange-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-gray-400 text-sm mb-1">Кого ищете (Роль)</label>
-                    <input type="text" id="f-role" required class="w-full bg-[#0d1117] border border-[#30363d] rounded p-2 text-white focus:border-orange-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-gray-400 text-sm mb-1">Описание / Стек</label>
-                    <textarea id="f-desc" required rows="4" class="w-full bg-[#0d1117] border border-[#30363d] rounded p-2 text-white focus:border-orange-500 outline-none"></textarea>
-                </div>
-                <div>
-                    <label class="block text-gray-400 text-sm mb-1">Ваш контакт (Telegram/Discord)</label>
-                    <input type="text" id="f-contact" required class="w-full bg-[#0d1117] border border-[#30363d] rounded p-2 text-white focus:border-orange-500 outline-none">
-                </div>
-                <button type="submit" id="create-submit-btn" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded mt-4 transition firebase-disabled">Опубликовать</button>
-            </form>
-        </div>
+        const authStatusEl = document.getElementById('auth-status');
+        const userIdDisplayEl = document.getElementById('user-id-display');
+        const dbStatusEl = document.getElementById('db-status');
+        const messageListEl = document.getElementById('message-list');
+        const loadingTextEl = document.getElementById('loading-text');
+        const inputEl = document.getElementById('new-message-input');
+        const buttonEl = document.getElementById('send-message-btn');
+        const errorEl = document.getElementById('error-message');
 
-    </main>
+        // Function to update UI elements based on state
+        function updateUI() {
+            if (isAuthReady && userId) {
+                authStatusEl.textContent = 'Статус Auth: ✅ Подключено';
+                userIdDisplayEl.textContent = `ID Пользователя: ${userId}`;
+                dbStatusEl.textContent = 'Статус DB: ✅ Готово к работе';
+                inputEl.disabled = false;
+                buttonEl.disabled = false;
+                errorEl.classList.add('hidden');
+            } else if (isAuthReady) {
+                authStatusEl.textContent = 'Статус Auth: 🟡 Неизвестный пользователь';
+                userIdDisplayEl.textContent = 'ID Пользователя: Анонимный вход';
+            } else {
+                authStatusEl.textContent = 'Статус Auth: 🔄 Инициализация...';
+                userIdDisplayEl.textContent = 'ID Пользователя: Ожидание...';
+                inputEl.disabled = true;
+                buttonEl.disabled = true;
+            }
+        }
 
-    <!-- ЛОВЕЦ ОШИБОК СКРИПТА И ГЛОБАЛЬНАЯ НАВИГАЦИЯ -->
-    <script>
-        // Глобальная функция для переключения вида
-        window.app = {
-            setView: (viewId) => {
-                document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-                const activeView = document.getElementById('view-' + viewId);
-                if (activeView) activeView.classList.remove('hidden');
+        /**
+         * Initializes Firebase and sets up the authentication listener.
+         */
+        function initializeFirebase() {
+            try {
+                if (!firebaseConfig || Object.keys(firebaseConfig).length === 0) {
+                    throw new Error("Firebase configuration is missing or empty.");
+                }
 
-                document.querySelectorAll('.nav-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                const selectedBtn = document.querySelector(`.nav-btn[data-view="${viewId}"]`);
-                if (selectedBtn) selectedBtn.classList.add('active');
+                // Initialize App, Auth, and Firestore
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
 
-                // Автоскролл чата при открытии
-                if(viewId === 'chat') {
-                    const container = document.getElementById('chat-container');
-                    setTimeout(() => container.scrollTop = container.scrollHeight, 100); 
-                }
-            }
-        };
+                dbStatusEl.textContent = 'Статус DB: Инициализация Firestore...';
 
-        // Ловец ошибок
-        window.addEventListener('error', function(e) {
-            const display = document.getElementById('error-display');
-            // Пропускаем ошибку "Cannot read properties of null (reading 'toMillis')" на старте
-            if (e.message.includes("toMillis") && e.filename.includes("firebase")) return;
-            
-            if (!display.innerText.includes("ПРЕДУПРЕЖДЕНИЕ")) {
-                 display.innerText = "КРИТИЧЕСКАЯ ОШИБКА: " + e.message + " (см. консоль для деталей)";
-                 display.classList.remove('hidden');
-            }
-        });
-    </script>
+                // Listen for Auth State Changes
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        // User is signed in
+                        userId = user.uid;
+                        isAuthReady = true;
+                        updateUI();
+                        // Start listening to Firestore after successful authentication
+                        setupFirestoreListener();
+                    } else {
+                        // User is signed out or not yet signed in. Attempt sign-in.
+                        try {
+                            if (initialAuthToken) {
+                                // 1. Attempt sign-in with the provided custom token
+                                console.log("Attempting sign-in with custom token...");
+                                await signInWithCustomToken(auth, initialAuthToken);
+                            } else {
+                                // 2. Fallback to anonymous sign-in if no token is available
+                                console.log("Attempting anonymous sign-in...");
+                                await signInAnonymously(auth);
+                            }
+                            // The onAuthStateChanged listener will catch the success and update the state
+                        } catch (error) {
+                            console.error("Authentication failed:", error);
+                            authStatusEl.textContent = `Статус Auth: ❌ Ошибка (${error.code})`;
+                            isAuthReady = true; // Mark as ready even if failed, to avoid infinite loop
+                            updateUI();
+                        }
+                    }
+                });
 
-    <!-- СКРИПТ ПРИЛОЖЕНИЯ (Модуль) -->
-    <script type="module">
-        // ИМПОРТЫ FIREBASE
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, limit, onSnapshot, serverTimestamp, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        
-        // --- КОНФИГУРАЦИЯ И ЗАЩИТА ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        let firebaseConfig = {};
-        let isFirebaseReady = false;
-        
-        try {
-            if (typeof __firebase_config === 'string' && __firebase_config.length > 0) {
-                firebaseConfig = JSON.parse(__firebase_config);
-            }
-            
-            // Если конфигурация есть, пытаемся инициализировать
-            if (firebaseConfig && firebaseConfig.apiKey && firebaseConfig.projectId) {
-                isFirebaseReady = true;
-            } else {
-                 console.warn("Firebase configuration is missing vital keys. Disabling Firebase features.");
-                 document.getElementById('error-display').innerText = "ПРЕДУПРЕЖДЕНИЕ: Ключ Firebase API не загружен. Функции чата и анкет временно недоступны.";
-                 document.getElementById('error-display').classList.remove('hidden');
-            }
-        } catch (e) {
-            console.error("Failed to parse __firebase_config.", e);
-            document.getElementById('error-display').innerText = "КРИТИЧЕСКАЯ ОШИБКА: Не удалось прочитать конфигурацию Firebase. Функции отключены.";
-            document.getElementById('error-display').classList.remove('hidden');
-        }
-        
-        let firebaseApp, auth, db;
-        
-        if (isFirebaseReady) {
-            firebaseApp = initializeApp(firebaseConfig);
-            auth = getAuth(firebaseApp);
-            db = getFirestore(firebaseApp);
-        }
+            } catch (e) {
+                console.error("Critical Firebase Initialization Error:", e);
+                authStatusEl.textContent = `Статус Auth: ❌ Критическая ошибка инициализации`;
+                dbStatusEl.textContent = `Статус DB: ❌ Критическая ошибка: ${e.message}`;
+                errorEl.textContent = `Критическая ошибка: ${e.message}. Проверьте консоль.`;
+                errorEl.classList.remove('hidden');
+            }
+        }
 
-        // --- ПУТИ К FIRESTORE (публичные и для пользователей) ---
-        // Анкеты и чат — публичные, доступны всем
-        const PATH_PROFILES = `/artifacts/${appId}/public/data/profiles`;
-        const PATH_CHAT = `/artifacts/${appId}/public/data/chat`;
-        // Данные пользователя (никнейм/кулдаун) — приватные, для аутентифицированного пользователя
-        const PATH_USERS = `/artifacts/${appId}/users`; 
+        /**
+         * Sets up the real-time Firestore listener for messages.
+         */
+        function setupFirestoreListener() {
+            if (!db || !userId) {
+                dbStatusEl.textContent = 'Статус DB: Ожидание Auth...';
+                return;
+            }
 
-        let currentUser = null; // Будет содержать объект { uid, displayName }
+            // Public collection path: /artifacts/{appId}/public/data/messages
+            const messagesCollectionPath = `artifacts/${appId}/public/data/messages`;
+            const messagesRef = collection(db, messagesCollectionPath);
+            const messagesQuery = query(messagesRef);
 
-        // --- ФУНКЦИИ ИНТЕРФЕЙСА ---
+            dbStatusEl.textContent = 'Статус DB: Подключение к сообщениям...';
 
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            toast.innerText = msg;
-            toast.style.transform = 'translateX(0)';
-            setTimeout(() => toast.style.transform = 'translateX(120%)', 3000);
-        }
+            // Real-time listener
+            onSnapshot(messagesQuery, (snapshot) => {
+                dbStatusEl.textContent = `Статус DB: ✅ Подключено к ${messagesCollectionPath}`;
 
-        function updateAuthUI(user) {
-            const loginView = document.getElementById('login-view');
-            const userView = document.getElementById('user-view');
-            const sendMsgBtn = document.getElementById('send-msg-btn');
-            const chatInput = document.getElementById('chat-input');
-            const createBtn = document.getElementById('create-submit-btn');
-            const createNavBtn = document.querySelector('.nav-btn[data-view="create"]');
-            
-            if (user && user.displayName) {
-                currentUser = user;
-                loginView.classList.add('hidden');
-                userView.classList.remove('hidden');
-                document.getElementById('current-nickname').innerText = user.displayName;
-                
-                // Включаем функциональные кнопки
-                sendMsgBtn.classList.remove('firebase-disabled');
-                chatInput.disabled = false;
-                createBtn.classList.remove('firebase-disabled');
-                createNavBtn.classList.remove('firebase-disabled');
+                const messages = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    messages.push({
+                        id: doc.id,
+                        text: data.text || 'Нет текста',
+                        timestamp: data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString('ru-RU') : 'Нет времени',
+                        authorId: data.authorId || 'Неизвестно'
+                    });
+                });
 
-            } else {
-                currentUser = null;
-                loginView.classList.remove('hidden');
-                userView.classList.add('hidden');
+                // Sort messages by timestamp (newest first, since Firestore doesn't guarantee order without orderBy)
+                messages.sort((a, b) => {
+                    const timeA = a.timestamp === 'Нет времени' ? 0 : new Date(`01/01/2000 ${a.timestamp}`).getTime();
+                    const timeB = b.timestamp === 'Нет времени' ? 0 : new Date(`01/01/2000 ${b.timestamp}`).getTime();
+                    return timeB - timeA;
+                });
 
-                // Отключаем кнопки
-                sendMsgBtn.classList.add('firebase-disabled');
-                chatInput.disabled = true;
-                createBtn.classList.add('firebase-disabled');
-                createNavBtn.classList.add('firebase-disabled');
-            }
-        }
-        
-        function copyToClipboard(text, message) {
-            // Используем document.execCommand('copy') для совместимости в iframe
-            const tempInput = document.createElement('input');
-            tempInput.value = text;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            try {
-                document.execCommand('copy');
-                showToast(message || "Скопировано!");
-            } catch (err) {
-                showToast("Не удалось скопировать.");
-                console.error('Copy failed:', err);
-            }
-            document.body.removeChild(tempInput);
-        }
+                renderMessages(messages);
+            }, (error) => {
+                console.error("Error fetching messages:", error);
+                dbStatusEl.textContent = `Статус DB: ❌ Ошибка получения данных: ${error.message}`;
+                errorEl.textContent = `Ошибка Firestore: ${error.message}. Проверьте консоль.`;
+                errorEl.classList.remove('hidden');
+                loadingTextEl.textContent = 'Не удалось загрузить сообщения.';
+            });
+        }
 
-        // --- ЛОГИКА АУТЕНТИФИКАЦИИ (ТОЛЬКО FIREBASE) ---
+        /**
+         * Renders the fetched messages to the UI.
+         * @param {Array} messages - List of message objects.
+         */
+        function renderMessages(messages) {
+            messageListEl.innerHTML = '';
+            if (messages.length === 0) {
+                messageListEl.innerHTML = '<p class="text-gray-500 italic">Пока нет сообщений. Отправьте первое!</p>';
+                return;
+            }
 
-        async function handleLogin() {
-            const nick = document.getElementById('nickname-input').value.trim();
-            if(nick.length < 3) return showToast("Ник слишком короткий!");
-            
-            if (!isFirebaseReady) {
-                 return showToast("КРИТИЧЕСКАЯ ОШИБКА: Невозможно войти, подключение к Firebase отсутствует.");
-            }
+            messages.forEach(msg => {
+                const isMine = msg.authorId === userId;
+                const messageClass = isMine ? 'bg-indigo-200 text-indigo-900 self-end' : 'bg-white text-gray-800 self-start';
+                const alignmentClass = isMine ? 'justify-end' : 'justify-start';
 
-            try {
-                // 1. Обеспечить анонимный вход
-                if (!auth.currentUser) {
-                    await signInAnonymously(auth);
-                }
-                
-                const uid = auth.currentUser.uid;
-                const userRef = doc(db, PATH_USERS, uid);
-                const now = Date.now();
-                
-                let canChange = true;
-                let userData = {};
+                const messageEl = document.createElement('div');
+                messageEl.className = `flex ${alignmentClass}`;
+                messageEl.innerHTML = `
+                    <div class="max-w-[80%] rounded-xl px-4 py-2 my-1 shadow-sm ${messageClass}">
+                        <p class="font-medium">${msg.text}</p>
+                        <p class="text-xs mt-1 text-right opacity-70">
+                            ${msg.timestamp}
+                        </p>
+                    </div>
+                `;
+                messageListEl.appendChild(messageEl);
+            });
+        }
 
-                // 2. Проверить данные пользователя и кулдаун на смену ника (30 дней)
-                const userSnap = await getDoc(userRef);
-                if (userSnap.exists()) {
-                    userData = userSnap.data();
-                    const lastChange = userData.lastChange || 0;
-                    const COOLDOWN_MS = 2592000000; // 30 дней в мс
-                    
-                    // Если ник не менялся, пропускаем кулдаун
-                    if (userData.nickname === nick && auth.currentUser.displayName === nick) {
-                        canChange = false; 
-                    } else if (now - lastChange < COOLDOWN_MS) { 
-                        const daysLeft = Math.ceil((COOLDOWN_MS - (now - lastChange)) / (1000 * 60 * 60 * 24));
-                        canChange = false;
-                        showToast(`Менять ник можно раз в 30 дней! Осталось: ${daysLeft} д.`);
-                    }
-                }
-                
-                // 3. Обновить профиль
-                if (canChange || !userSnap.exists()) {
-                    await updateProfile(auth.currentUser, { displayName: nick });
-                    await setDoc(userRef, { 
-                        nickname: nick, 
-                        lastChange: now, 
-                        uid: uid 
-                    }, { merge: true });
-                } else if (auth.currentUser.displayName !== userData.nickname) {
-                     // Если сменить ник нельзя, но текущий в Auth отличается от сохраненного, возвращаем сохраненный
-                     await updateProfile(auth.currentUser, { displayName: userData.nickname || 'Anon' });
-                }
-                
-                // 4. Финальное обновление
-                updateAuthUI(auth.currentUser);
-                showToast(`Добро пожаловать, ${auth.currentUser.displayName}`);
-                setupFirestoreListeners();
+        /**
+         * Sends a new message to Firestore.
+         */
+        window.sendMessage = async function() {
+            if (!isAuthReady || !db || !userId) {
+                console.warn("Attempted to send message before Auth/DB was ready.");
+                return;
+            }
 
-            } catch (e) {
-                console.error("Login error:", e);
-                showToast("Ошибка входа: " + e.message);
-            }
-        }
+            const messageText = inputEl.value.trim();
+            if (messageText === "") return;
 
-        function handleLogout() {
-            // Просто сбрасываем UI
-            updateAuthUI(null);
-            document.getElementById('nickname-input').value = '';
-            
-            // Останавливаем листенеры (кроме публичных анкет)
-            unsubscribeListeners.forEach(unsub => { if (typeof unsub === 'function') unsub(); });
-            unsubscribeListeners = [];
-            
-            // Перерисовываем анкеты
-            setupProfilesListener(); 
-        }
-        
-        // --- ЧАТ ---
+            buttonEl.disabled = true;
+            buttonEl.textContent = 'Отправка...';
 
-        async function sendMessage() {
-            if (!currentUser || !currentUser.displayName) return showToast("Необходимо войти.");
+            try {
+                const messagesCollectionPath = `artifacts/${appId}/public/data/messages`;
+                const messagesRef = collection(db, messagesCollectionPath);
 
-            const input = document.getElementById('chat-input');
-            const text = input.value.trim();
-            if (!text) return;
-            
-            // Логика Firebase
-            try {
-                input.value = ''; 
-                await addDoc(collection(db, PATH_CHAT), {
-                    text: text,
-                    author: currentUser.displayName,
-                    uid: currentUser.uid,
-                    createdAt: serverTimestamp()
-                });
-            } catch (e) {
-                showToast("Ошибка отправки сообщения: " + e.message);
-                input.value = text; 
-            }
-        }
+                await addDoc(messagesRef, {
+                    text: messageText,
+                    authorId: userId,
+                    timestamp: serverTimestamp() // Use serverTimestamp for reliable ordering
+                });
 
-        function setupChatListener() {
-            const chatContainer = document.getElementById('chat-container');
-            
-            if (!currentUser || !currentUser.displayName) {
-                chatContainer.innerHTML = '<div class="text-center text-gray-600 mt-10">Войдите в систему, чтобы увидеть чат.</div>';
-                return;
-            }
+                inputEl.value = ''; // Clear input on success
+                errorEl.classList.add('hidden');
+            } catch (e) {
+                console.error("Error writing document:", e);
+                errorEl.textContent = `Ошибка записи: ${e.message}.`;
+                errorEl.classList.remove('hidden');
+            } finally {
+                buttonEl.disabled = false;
+                buttonEl.textContent = 'Отправить';
+            }
+        }
 
-            // Логика Firebase
-            // Убираем orderBy для избежания необходимости создания индекса, сортируем в JS.
-            const qChat = query(collection(db, PATH_CHAT), limit(50));
-            
-            const unsubscribeChat = onSnapshot(qChat, (snapshot) => {
-                chatContainer.innerHTML = '';
-                
-                let msgs = [];
-                snapshot.forEach(d => {
-                    const data = d.data();
-                    // Используем toMillis() для надежной сортировки.
-                    const timestamp = data.createdAt ? data.createdAt.toMillis() : Date.now();
-                    msgs.push({ ...data, timestamp });
-                });
-                
-                // Сортируем вручную по времени (по возрастанию, чтобы новые были внизу)
-                msgs.sort((a, b) => a.timestamp - b.timestamp);
-
-                msgs.forEach(msg => {
-                    const div = document.createElement('div');
-                    const isOwn = currentUser && msg.uid === currentUser.uid;
-                    div.className = `p-2 rounded max-w-[80%] ${isOwn ? 'bg-blue-900 ml-auto' : 'bg-[#1f242d] mr-auto'}`;
-                    div.innerHTML = `<span class="text-blue-400 font-bold text-xs">${msg.author}</span>: <span class="text-gray-300">${msg.text}</span>`;
-                    chatContainer.appendChild(div);
-                });
-                
-                if (!document.getElementById('view-chat').classList.contains('hidden')) {
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                }
-            }, (error) => {
-                 console.error("Chat listener error:", error);
-                 showToast("Ошибка загрузки чата. Проверьте правила безопасности Firestore.");
-            });
-            return unsubscribeChat;
-        }
-
-        // --- АНКЕТЫ ---
-
-        async function createProfile(e) {
-            e.preventDefault();
-            if (!currentUser || !currentUser.displayName) return showToast("Необходимо войти.");
-
-            const title = document.getElementById('f-title').value.trim();
-            const role = document.getElementById('f-role').value.trim();
-            const desc = document.getElementById('f-desc').value.trim();
-            const contact = document.getElementById('f-contact').value.trim();
-
-            if (!title || !role || !desc || !contact) {
-                return showToast("Все поля обязательны!");
-            }
-
-            // Логика Firebase
-            try {
-                await addDoc(collection(db, PATH_PROFILES), {
-                    title, role, desc, contact,
-                    author: currentUser.displayName,
-                    uid: currentUser.uid,
-                    createdAt: serverTimestamp()
-                });
-                showToast("Анкета опубликована!");
-                e.target.reset();
-                window.app.setView('profiles');
-            } catch (err) {
-                console.error("Create profile error:", err);
-                showToast("Ошибка создания анкеты: " + err.message);
-            }
-        }
-
-        function renderProfiles(profiles) {
-            const profilesContainer = document.getElementById('profiles-container');
-            profilesContainer.innerHTML = '';
-
-            if (profiles.length === 0) {
-                profilesContainer.innerHTML = '<div class="text-gray-500 col-span-full text-center p-4">Анкет пока нет. Будьте первым!</div>';
-                return;
-            }
-
-            profiles.forEach(data => {
-                const card = document.createElement('div');
-                card.className = "bg-[#1f242d] p-4 rounded-xl border border-[#30363d] hover:border-blue-500 transition shadow-lg";
-                
-                const profileId = data.id; 
-                // Создаем ссылку, которую можно скопировать и поделиться
-                const profileURL = `${window.location.origin}${window.location.pathname}?profileId=${profileId}`; 
-                
-                card.innerHTML = `
-                    <div class="font-bold text-orange-400 text-lg">${data.title}</div>
-                    <div class="text-sm text-blue-300 mb-2">Ищет: ${data.role}</div>
-                    <p class="text-gray-300 text-sm mb-3 whitespace-pre-wrap line-clamp-3">${data.desc}</p>
-                    <div class="text-xs text-gray-500 border-t border-[#30363d] pt-2 flex flex-col sm:flex-row sm:justify-between sm:items-center mt-2 gap-2">
-                        <span class="font-medium text-gray-400">Автор: ${data.author}</span>
-                        <div class="flex flex-col sm:flex-row gap-2">
-                            <button data-url="${profileURL}" class="copy-link-btn text-xs text-white bg-green-600 hover:bg-green-700 px-3 py-1 rounded-full transition">
-                                🔗 Копировать ссылку
-                            </button>
-                            <span class="text-sm text-white bg-blue-700 px-3 py-1 rounded-full whitespace-nowrap">${data.contact}</span>
-                        </div>
-                    </div>
-                `;
-                
-                const copyBtn = card.querySelector('.copy-link-btn');
-                copyBtn.addEventListener('click', (e) => {
-                    e.stopPropagation(); 
-                    const url = e.currentTarget.getAttribute('data-url');
-                    copyToClipboard(url, "Ссылка на анкету скопирована!");
-                });
-                
-                profilesContainer.appendChild(card);
-            });
-        }
-
-        function setupProfilesListener() {
-            const profilesContainer = document.getElementById('profiles-container');
-            profilesContainer.innerHTML = '<div class="text-gray-500 col-span-full text-center p-4">Подключение к базе данных...</div>';
-
-            if (!isFirebaseReady) {
-                 profilesContainer.innerHTML = '<div class="text-red-500 col-span-full text-center p-4">Не удалось инициализировать Firebase. Анкеты недоступны.</div>';
-                 return;
-            }
-            
-            // Логика Firebase
-            // Убираем orderBy для избежания необходимости создания индекса, сортируем в JS.
-            const qProfiles = query(collection(db, PATH_PROFILES), limit(20));
-
-            const unsubscribeProfiles = onSnapshot(qProfiles, (snapshot) => {
-                let profiles = [];
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    // Используем toMillis() для надежной сортировки.
-                    const timestamp = data.createdAt ? data.createdAt.toMillis() : Date.now();
-                    profiles.push({ id: doc.id, ...data, timestamp });
-                });
-                
-                // Сортируем вручную (по убыванию, чтобы новые были вверху)
-                profiles.sort((a, b) => b.timestamp - a.timestamp);
-                
-                renderProfiles(profiles);
-
-            }, (error) => {
-                 console.error("Profiles listener error:", error);
-                 profilesContainer.innerHTML = '<div class="text-red-500 col-span-full text-center p-4">Ошибка загрузки анкет. Проверьте правила безопасности.</div>';
-                 showToast("Ошибка загрузки анкет.");
-            });
-            return unsubscribeProfiles;
-        }
-        
-        let unsubscribeListeners = [];
-
-        function setupFirestoreListeners() {
-            // Отписываемся от старых подписок
-            unsubscribeListeners.forEach(unsub => { if (typeof unsub === 'function') unsub(); });
-            unsubscribeListeners = [];
-            
-            // Анкеты всегда показываем
-            const profilesUnsub = setupProfilesListener(); 
-            if (profilesUnsub) unsubscribeListeners.push(profilesUnsub);
-
-            // Чат показываем, только если пользователь вошел
-            if (currentUser && currentUser.displayName) {
-                 const chatUnsub = setupChatListener();
-                 if (chatUnsub) unsubscribeListeners.push(chatUnsub);
-            }
-        }
-
-        // --- ЗАПУСК ---
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            if (isFirebaseReady) {
-                 // Инициализация при загрузке: проверяем Firebase Auth status
-                 onAuthStateChanged(auth, (user) => {
-                    if (user && user.uid) {
-                        if (user.displayName) {
-                            updateAuthUI(user);
-                            setupFirestoreListeners();
-                        } else {
-                            // Анонимный вход без имени: показываем форму входа
-                            updateAuthUI(null); 
-                            setupProfilesListener(); // Анкеты публичные
-                        }
-                    } else {
-                        // Не вошел
-                         updateAuthUI(null); 
-                         setupProfilesListener(); // Анкеты публичные
-                    }
-                 });
-            } else {
-                // Если Firebase не готов, нужно показать только ошибку в анкетах
-                setupProfilesListener();
-            }
-
-             // Навигационные кнопки
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    if (e.currentTarget.classList.contains('firebase-disabled') && !currentUser) {
-                         return showToast("Недоступно. Войдите, чтобы использовать эту функцию.");
-                    }
-                    window.app.setView(btn.dataset.view);
-                });
-            });
-
-            // Кнопка Вход
-            document.getElementById('login-btn').addEventListener('click', handleLogin);
-            
-            // Кнопка Сменить ник
-            document.getElementById('logout-btn').addEventListener('click', handleLogout);
-            
-            // Кнопка Отправить сообщение
-            const sendMsgBtn = document.getElementById('send-msg-btn');
-            sendMsgBtn.addEventListener('click', sendMessage);
-            document.getElementById('chat-input').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') sendMessage();
-            });
-
-            // Форма создания анкеты
-            document.getElementById('create-form').addEventListener('submit', createProfile);
-            
-            window.app.setView('profiles');
-        });
-    </script>
+        // Initialize the application on window load
+        window.onload = initializeFirebase;
+    </script>
 </body>
 </html>
