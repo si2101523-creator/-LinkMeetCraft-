@@ -26,6 +26,11 @@
             color: #ffffff;
             border-color: #3b82f6; /* Синяя рамка */
         }
+        /* Блокировка кнопки при отключенном Firebase */
+        .firebase-disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body class="flex flex-col md:flex-row h-full">
@@ -156,35 +161,48 @@
         import { getAuth, signInAnonymously, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- КОНФИГУРАЦИЯ ---
+        // --- КОНФИГУРАЦИЯ И ЗАЩИТА ---
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        
-        // **ИСПРАВЛЕННЫЙ БЛОК: Более надежная загрузка конфигурации**
         let firebaseConfig = {};
+        let isFirebaseReady = false;
+        
         try {
-            // Проверяем, существует ли глобальная переменная и является ли она непустой строкой, прежде чем парсить
             if (typeof __firebase_config === 'string' && __firebase_config.length > 0) {
                 firebaseConfig = JSON.parse(__firebase_config);
             }
+            
+            // УЛЬТРА-ЗАЩИТА: Проверяем наличие ключа, прежде чем пытаться инициализировать
+            if (firebaseConfig && firebaseConfig.apiKey && firebaseConfig.projectId) {
+                isFirebaseReady = true;
+            } else {
+                 console.warn("Firebase configuration is missing vital keys (apiKey/projectId). Disabling Firebase features.");
+                 document.getElementById('error-display').innerText = "ПРЕДУПРЕЖДЕНИЕ: Ключ Firebase API не загружен. Функции чата и анкет временно недоступны.";
+                 document.getElementById('error-display').classList.remove('hidden');
+            }
         } catch (e) {
-            console.error("Failed to parse __firebase_config, using empty config.", e);
-            document.getElementById('error-display').innerText = "КРИТИЧЕСКАЯ ОШИБКА: Не удалось загрузить конфигурацию Firebase. Возможно, проблема в окружении.";
+            console.error("Failed to parse __firebase_config.", e);
+            document.getElementById('error-display').innerText = "КРИТИЧЕСКАЯ ОШИБКА: Не удалось прочитать конфигурацию Firebase. Функции отключены.";
             document.getElementById('error-display').classList.remove('hidden');
-            // Если конфигурация не загружена, мы не можем инициализировать Firebase.
-            // Приложение не будет работать, но мы избежим ошибки (auth/invalid-api-key)
-            // на этапе initializeApp, если ключа действительно нет.
-            // Однако, для корректной работы, мы все равно должны вызвать initializeApp
         }
         
+        let firebaseApp, auth, db;
+        
+        // Инициализация только при наличии конфигурации
+        if (isFirebaseReady) {
+            firebaseApp = initializeApp(firebaseConfig);
+            auth = getAuth(firebaseApp);
+            db = getFirestore(firebaseApp);
+        } else {
+            // Отключаем кнопки, если Firebase не готов
+             document.getElementById('login-btn').classList.add('firebase-disabled');
+             document.getElementById('send-msg-btn').classList.add('firebase-disabled');
+             document.querySelector('.nav-btn[data-view="create"]').classList.add('firebase-disabled');
+        }
+
         // --- ПУТИ К FIRESTORE ---
         const PATH_PROFILES = `/artifacts/${appId}/public/data/profiles`;
         const PATH_CHAT = `/artifacts/${appId}/public/data/chat`;
         const PATH_USERS = `/artifacts/${appId}/users`;
-
-        // Инициализация
-        const firebaseApp = initializeApp(firebaseConfig);
-        const auth = getAuth(firebaseApp);
-        const db = getFirestore(firebaseApp);
 
         let currentUser = null;
 
@@ -213,7 +231,6 @@
             }
         }
         
-        // Вспомогательная функция для копирования в буфер обмена
         function copyToClipboard(text, message) {
             const tempInput = document.createElement('input');
             tempInput.value = text;
@@ -232,6 +249,8 @@
         // --- ЛОГИКА АУТЕНТИФИКАЦИИ ---
 
         async function handleLogin() {
+            if (!isFirebaseReady) return showToast("Функции отключены из-за отсутствия ключа API.");
+            
             const nick = document.getElementById('nickname-input').value.trim();
             if(nick.length < 3) return showToast("Ник слишком короткий!");
             
@@ -261,17 +280,14 @@
                     }
                 }
                 
-                // Смена разрешена или ник устанавливается впервые
                 if (canChange) {
                     await updateProfile(auth.currentUser, { displayName: nick });
-                    // Сохраняем ник и время смены в базе данных
                     await setDoc(userRef, { nickname: nick, lastChange: now, uid: uid }, { merge: true });
                 }
                 
                 updateAuthUI(auth.currentUser);
                 showToast("Добро пожаловать, " + auth.currentUser.displayName);
                 
-                // После успешного входа перезапускаем слушатели Firestore
                 setupFirestoreListeners();
 
             } catch (e) {
@@ -281,30 +297,31 @@
         }
 
         function handleLogout() {
-             // Показываем форму входа снова для смены ника
              document.getElementById('user-view').classList.add('hidden');
              document.getElementById('login-view').classList.remove('hidden');
              document.getElementById('nickname-input').value = currentUser ? currentUser.displayName : '';
         }
         
-        // Слушатель состояния входа
-        onAuthStateChanged(auth, (user) => {
-            if (user && user.uid) {
-                if (user.displayName) {
-                    updateAuthUI(user);
-                    setupFirestoreListeners();
+        if (isFirebaseReady) {
+            onAuthStateChanged(auth, (user) => {
+                if (user && user.uid) {
+                    if (user.displayName) {
+                        updateAuthUI(user);
+                        setupFirestoreListeners();
+                    } else {
+                        updateAuthUI(null); 
+                    }
                 } else {
-                    updateAuthUI(null); 
+                     updateAuthUI(null);
                 }
-            } else {
-                 updateAuthUI(null);
-            }
-        });
+            });
+        }
+
 
         // --- ЧАТ ---
 
         async function sendMessage() {
-            if (!currentUser || !currentUser.displayName) return showToast("Сначала войдите (укажите никнейм)!");
+            if (!isFirebaseReady || !currentUser || !currentUser.displayName) return showToast("Функции отключены/Необходимо войти.");
             const input = document.getElementById('chat-input');
             const text = input.value.trim();
             if (!text) return;
@@ -324,6 +341,7 @@
         }
 
         function setupChatListener() {
+            if (!isFirebaseReady) return;
             const chatContainer = document.getElementById('chat-container');
             const qChat = query(collection(db, PATH_CHAT), orderBy('createdAt', 'desc'), limit(50));
 
@@ -331,7 +349,7 @@
                 chatContainer.innerHTML = '';
                 const msgs = [];
                 snapshot.forEach(d => msgs.push(d.data()));
-                msgs.reverse(); // Чтобы старые были сверху
+                msgs.reverse(); 
 
                 msgs.forEach(msg => {
                     const div = document.createElement('div');
@@ -354,7 +372,7 @@
 
         async function createProfile(e) {
             e.preventDefault();
-            if (!currentUser || !currentUser.displayName) return showToast("Сначала войдите (укажите никнейм)!");
+            if (!isFirebaseReady || !currentUser || !currentUser.displayName) return showToast("Функции отключены/Необходимо войти.");
 
             const title = document.getElementById('f-title').value.trim();
             const role = document.getElementById('f-role').value.trim();
@@ -382,6 +400,7 @@
         }
 
         function setupProfilesListener() {
+            if (!isFirebaseReady) return;
             const profilesContainer = document.getElementById('profiles-container');
             const qProfiles = query(collection(db, PATH_PROFILES), orderBy('createdAt', 'desc'), limit(20));
 
@@ -429,11 +448,10 @@
             return unsubscribeProfiles;
         }
         
-        // Хранение функций отписки от слушателей
         let unsubscribeListeners = [];
 
         function setupFirestoreListeners() {
-            // Отписываемся от старых слушателей перед созданием новых
+            if (!isFirebaseReady) return;
             unsubscribeListeners.forEach(unsub => unsub());
             unsubscribeListeners = [];
             
@@ -445,11 +463,13 @@
 
         // --- ЗАПУСК ---
         
-        // Запуск глобальных слушателей (кнопки, формы)
         document.addEventListener('DOMContentLoaded', () => {
              // Навигационные кнопки
             document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
+                btn.addEventListener('click', (e) => {
+                    if (e.currentTarget.classList.contains('firebase-disabled')) {
+                         return showToast("Недоступно. Функции отключены из-за ошибки API.");
+                    }
                     window.app.setView(btn.dataset.view);
                 });
             });
@@ -469,9 +489,7 @@
             // Форма создания анкеты
             document.getElementById('create-form').addEventListener('submit', createProfile);
             
-            // Устанавливаем начальное представление
             window.app.setView('profiles');
         });
     </script>
 </body>
-</html>
