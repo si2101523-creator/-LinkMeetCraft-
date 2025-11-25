@@ -121,8 +121,20 @@
 
         // Глобальные переменные, предоставляемые средой Canvas
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        // Попытка получить конфигурацию Firebase из внешней среды. Если не удается, будет пустой объект.
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        let firebaseConfig = {};
+        let isExternalConfigProvided = false;
+        
+        try {
+            // Попытка парсинга конфигурации, предоставляемой внешней средой
+            const configString = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
+            firebaseConfig = JSON.parse(configString);
+            if (Object.keys(firebaseConfig).length > 0 && firebaseConfig.projectId) {
+                isExternalConfigProvided = true;
+            }
+        } catch (e) {
+            console.error("Error parsing __firebase_config:", e);
+        }
+        
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         let db = null;
@@ -138,7 +150,7 @@
         function loadMockData() {
             try {
                 const storedData = localStorage.getItem(MOCK_STORAGE_KEY);
-                if (storedData) return JSON.parse(storedData);
+                if (storedData) return JSON.parse(storedData).filter(t => t.userId !== userId); // Исключаем старый заполнитель
             } catch (e) {
                 console.error("Error loading mock data:", e);
             }
@@ -232,7 +244,7 @@
                 let configToUse = firebaseConfig;
 
                 // 1. Проверка конфигурации. Если ключей нет, переходим в MOCK.
-                if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.projectId) {
+                if (!isExternalConfigProvided) {
                     configToUse = { apiKey: "MOCK_KEY", authDomain: "mock.com", projectId: "mock", appId: "mock" };
                     isMockConfig = true; 
                     showMessage(`ВНИМАНИЕ! Конфигурация Firebase отсутствует. Запуск в MOCK-режиме (нет синхронизации между устройствами).`, 'info');
@@ -354,20 +366,6 @@
                 
                 // 1. Загружаем MOCK-данные из localStorage
                 mockTeammates = loadMockData();
-                
-                // 2. Добавляем заполнитель для текущего пользователя
-                const isUserListed = mockTeammates.some(t => t.userId === userId);
-                if (!isUserListed) {
-                    mockTeammates.push({ 
-                        name: 'Вы (заполнитель)', 
-                        role: 'Ожидание данных', 
-                        experience: 'Заполните форму!', 
-                        contact: 'ваш_контакт', 
-                        about: 'Проверка, как выглядит ваша карточка.', 
-                        userId: userId 
-                    });
-                }
-
                 renderTeammates(mockTeammates);
                 return; // Выход, не запускаем onSnapshot
             }
