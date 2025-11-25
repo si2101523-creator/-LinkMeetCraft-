@@ -3,16 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Отладка: Инициализация и Визуал</title>
+    <title>Link Meet Craft: Поиск Команды</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom scrollbar for message box */
-        #message-list {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        /* Style for the application container */
+        /* Убедимся, что приложение выглядит хорошо на любом устройстве */
         .app-container {
             min-height: 100vh;
             display: flex;
@@ -21,62 +16,95 @@
             padding: 1rem;
             background-color: #f7f9fb;
         }
+        /* Стили для списка товарищей по команде */
+        #teammate-list {
+            max-height: 400px;
+            overflow-y: auto;
+            min-height: 150px;
+        }
+        /* Стили для заголовков форм */
+        input:disabled, textarea:disabled, button:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+            background-color: #f3f4f6;
+        }
     </style>
 </head>
 <body>
     <div class="app-container">
-        <div id="app" class="bg-white p-6 md:p-10 rounded-xl shadow-2xl w-full max-w-lg space-y-6">
-            <h1 class="text-3xl font-extrabold text-indigo-700 text-center">
-                🛠️ Отладка Firebase и Визуализации
+        <div id="app" class="bg-white p-6 md:p-10 rounded-xl shadow-2xl w-full max-w-2xl space-y-8">
+            <h1 class="text-4xl font-extrabold text-center text-indigo-700">
+                Link Meet Craft 🚀
             </h1>
-            <p class="text-sm text-gray-500 text-center">
-                Проверка подключения к аутентификации и Firestore.
+            <p class="text-base text-gray-600 text-center">
+                Найдите идеального товарища по команде для вашего следующего проекта.
             </p>
 
-            <!-- Status and User Info Block -->
-            <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-200 space-y-2">
-                <div id="auth-status" class="text-base font-semibold text-indigo-800">
+            <!-- Блок Статуса и ID (для отладки) -->
+            <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-200 space-y-2 text-sm">
+                <div id="auth-status" class="font-semibold text-yellow-800">
                     Статус Auth: Загрузка...
                 </div>
-                <div id="user-id-display" class="text-xs font-mono text-gray-700 break-all">
+                <div id="user-id-display" class="font-mono text-gray-700 break-all text-xs">
                     ID Пользователя: Ожидание...
                 </div>
-                <div id="db-status" class="text-xs font-medium text-gray-600">
+                <div id="db-status" class="font-medium text-gray-600">
                     Статус DB: Ожидание инициализации...
                 </div>
             </div>
 
-            <!-- Message List Area (Visual Check) -->
-            <div class="space-y-3">
-                <h2 class="text-xl font-semibold text-gray-700">Сообщения Firestore (в реальном времени)</h2>
-                <div id="message-list" class="bg-gray-100 p-4 rounded-lg border border-gray-300 shadow-inner">
-                    <!-- Messages will be injected here -->
-                    <p class="text-gray-500 italic" id="loading-text">Загрузка сообщений...</p>
+            <!-- Форма для подачи заявки -->
+            <form id="teammate-form" class="space-y-4" onsubmit="submitForm(event)">
+                <h2 class="text-2xl font-bold text-gray-700">
+                    Опубликовать свою заявку
+                </h2>
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700">Ваше Имя / Ник <span class="text-red-500">*</span></label>
+                    <input type="text" id="name" required placeholder="Например: Иван"
+                           class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" disabled>
                 </div>
-            </div>
 
-            <!-- Input Form for testing Firestore write (Initialization Check) -->
-            <div class="space-y-4">
-                <h2 class="text-xl font-semibold text-gray-700">Отправить Сообщение (Тест Записи)</h2>
-                <input
-                    type="text"
-                    id="new-message-input"
-                    placeholder="Введите ваше тестовое сообщение"
-                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out"
-                    disabled
-                    onkeydown="if(event.key === 'Enter') { sendMessage(); }"
-                >
-                <button
-                    id="send-message-btn"
-                    class="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold hover:bg-indigo-700 transition duration-150 ease-in-out disabled:bg-indigo-400 disabled:cursor-not-allowed shadow-md"
-                    onclick="sendMessage()"
-                    disabled
-                >
-                    Отправить
+                <div>
+                    <label for="role" class="block text-sm font-medium text-gray-700">Роль в Команде (что вы делаете) <span class="text-red-500">*</span></label>
+                    <input type="text" id="role" required placeholder="Например: Фронтенд-разработчик / Дизайнер / Менеджер"
+                           class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" disabled>
+                </div>
+
+                <div>
+                    <label for="experience" class="block text-sm font-medium text-gray-700">Опыт (ключевые навыки)</label>
+                    <textarea id="experience" rows="2" placeholder="Например: React, Tailwind, Figma, 3 года в геймдеве"
+                              class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" disabled></textarea>
+                </div>
+                
+                <div>
+                    <label for="contact" class="block text-sm font-medium text-gray-700">Контакт (Telegram, Email, Discord) <span class="text-red-500">*</span></label>
+                    <input type="text" id="contact" required placeholder="Ваш @nickname или email для связи"
+                           class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" disabled>
+                </div>
+
+                <div>
+                    <label for="about" class="block text-sm font-medium text-gray-700">О себе / Что ищете</label>
+                    <textarea id="about" rows="3" placeholder="Кратко расскажите о себе и о том, какой проект вы хотите найти или создать."
+                              class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" disabled></textarea>
+                </div>
+                
+                <button type="submit" id="submit-btn" 
+                        class="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold hover:bg-indigo-700 transition duration-150 ease-in-out shadow-md disabled:bg-indigo-400" disabled>
+                    Опубликовать Заявку
                 </button>
-                <p id="error-message" class="text-red-600 text-sm hidden">
-                    Ошибка: Проверьте консоль.
-                </p>
+                <p id="message-area" class="text-center text-sm font-medium"></p>
+            </form>
+
+
+            <!-- Список доступных товарищей по команде -->
+            <div class="space-y-3 pt-6 border-t border-gray-200">
+                <h2 class="text-2xl font-bold text-gray-700">
+                    Активные Заявки (<span id="teammate-count">0</span>)
+                </h2>
+                <div id="teammate-list" class="bg-gray-100 p-4 rounded-lg border border-gray-300 shadow-inner space-y-3">
+                    <p class="text-gray-500 italic" id="loading-text">Загрузка заявок...</p>
+                    <!-- Teammate cards will be injected here -->
+                </div>
             </div>
         </div>
     </div>
@@ -93,9 +121,6 @@
 
         // Global variables provided by the Canvas environment
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        // Здесь происходит автоматический "обмен ключами":
-        // __firebase_config - это глобальная переменная, которая будет содержать вашу реальную конфигурацию
-        // если вы ее предоставите в настройках проекта.
         const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
@@ -103,35 +128,71 @@
         let auth = null;
         let userId = null;
         let isAuthReady = false;
-        let isMockConfig = false; // Флаг для MOCK-режима
-        let currentMessages = []; // Локальное хранилище сообщений для MOCK-режима
+        let isMockConfig = false; 
 
+        // UI Elements
         const authStatusEl = document.getElementById('auth-status');
         const userIdDisplayEl = document.getElementById('user-id-display');
         const dbStatusEl = document.getElementById('db-status');
-        const messageListEl = document.getElementById('message-list');
+        const teammateListEl = document.getElementById('teammate-list');
         const loadingTextEl = document.getElementById('loading-text');
-        const inputEl = document.getElementById('new-message-input');
-        const buttonEl = document.getElementById('send-message-btn');
-        const errorEl = document.getElementById('error-message');
+        const submitBtn = document.getElementById('submit-btn');
+        const messageAreaEl = document.getElementById('message-area');
+        const teammateCountEl = document.getElementById('teammate-count');
 
-        // Function to update UI elements based on state
+        // Form elements
+        const formEl = document.getElementById('teammate-form');
+        const nameInput = document.getElementById('name');
+        const roleInput = document.getElementById('role');
+        const experienceInput = document.getElementById('experience');
+        const contactInput = document.getElementById('contact');
+        const aboutInput = document.getElementById('about');
+
+        // --- UI Feedback Functions ---
+
+        /** Shows transient message feedback (success/error/info) */
+        function showMessage(text, type = 'info') {
+            messageAreaEl.textContent = text;
+            messageAreaEl.classList.remove('text-green-600', 'text-red-600', 'text-gray-600');
+            if (type === 'успех') {
+                messageAreaEl.classList.add('text-green-600');
+            } else if (type === 'ошибка') {
+                messageAreaEl.classList.add('text-red-600');
+            } else {
+                messageAreaEl.classList.add('text-gray-600');
+            }
+            setTimeout(() => { messageAreaEl.textContent = ''; }, 5000);
+        }
+
+        /** Clears the form fields */
+        function clearForm() {
+            formEl.reset();
+        }
+
+        /** Disables/Enables form elements based on auth status */
+        function updateFormState(enabled) {
+            [nameInput, roleInput, experienceInput, contactInput, aboutInput, submitBtn].forEach(el => {
+                el.disabled = !enabled;
+            });
+        }
+
+        // --- Core Application Logic ---
+
         function updateUI() {
-            if (isAuthReady && userId) {
+            const isReady = isAuthReady && userId;
+            updateFormState(isReady);
+
+            if (isReady) {
                 authStatusEl.textContent = 'Статус Auth: ✅ Подключено';
                 userIdDisplayEl.textContent = `ID Пользователя: ${userId}`;
                 dbStatusEl.textContent = isMockConfig ? 'Статус DB: ⚠️ MOCK: Локальная имитация.' : 'Статус DB: ✅ Готово к работе';
-                inputEl.disabled = false;
-                buttonEl.disabled = false;
-                errorEl.classList.add('hidden');
             } else if (isAuthReady) {
                 authStatusEl.textContent = 'Статус Auth: 🟡 Неизвестный пользователь';
                 userIdDisplayEl.textContent = 'ID Пользователя: Анонимный вход';
             } else {
                 authStatusEl.textContent = 'Статус Auth: 🔄 Инициализация...';
                 userIdDisplayEl.textContent = 'ID Пользователя: Ожидание...';
-                inputEl.disabled = true;
-                buttonEl.disabled = true;
+                dbStatusEl.textContent = 'Статус DB: Ожидание инициализации...';
             }
         }
 
@@ -142,17 +203,11 @@
             try {
                 let configToUse = firebaseConfig;
 
-                // Проверка: пуста ли реальная конфигурация?
-                if (Object.keys(firebaseConfig).length === 0) {
-                    // Активируем MOCK-режим
-                    // Используем минимальные MOCK-значения для инициализации, когда нет реальной конфигурации.
+                // 1. Check for MOCK Configuration
+                if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.projectId) {
                     configToUse = { apiKey: "MOCK_KEY", authDomain: "mock.com", projectId: "mock", appId: "mock" };
-                    isMockConfig = true; // Устанавливаем флаг MOCK-режима
-                    
-                    // Обновляем UI, чтобы показать предупреждение MOCK-режима
-                    dbStatusEl.textContent = 'Статус DB: ⚠️ MOCK (Принудительный вход)...';
-                    errorEl.textContent = `ВНИМАНИЕ! Конфигурация Firebase отсутствует. Инициализация продолжена в MOCK-режиме (нет записи/чтения в реальную БД).`;
-                    errorEl.classList.remove('hidden');
+                    isMockConfig = true; 
+                    showMessage(`ВНИМАНИЕ! Конфигурация Firebase отсутствует. Инициализация в MOCK-режиме (нет записи/чтения в реальную БД).`, 'info');
                 }
 
                 // Initialize App, Auth, and Firestore
@@ -160,31 +215,27 @@
                 auth = getAuth(app);
                 db = getFirestore(app);
 
-                // --- КРИТИЧЕСКИЙ ОБХОД MOCK-РЕЖИМА ---
+                // 2. Handle MOCK Mode (bypasses Auth listeners)
                 if (isMockConfig) {
-                    // Мгновенно устанавливаем фейковый ID и готовность
-                    userId = 'MOCK_USER_' + crypto.randomUUID(); 
+                    userId = 'MOCK_USER_' + crypto.randomUUID();
                     isAuthReady = true;
-                    updateUI(); // Обновляем UI, чтобы разблокировать кнопки
-                    setupFirestoreListener(); // Запускаем MOCK-данные
-                    return; // Выходим, не запуская асинхронную логику Auth
+                    updateUI();
+                    setupFirestoreListener(); 
+                    return; 
                 }
-                // --- КОНЕЦ КРИТИЧЕСКОГО ОБХОДА ---
 
-
+                // 3. Real Firebase Setup (runs only if NOT MOCK mode)
                 dbStatusEl.textContent = 'Статус DB: Инициализация Firestore...';
 
-                // Реальная настройка Firebase Auth (запускается только если НЕ MOCK режим)
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
-                        // 1. Успешный реальный вход
+                        // Успешный реальный вход
                         userId = user.uid;
                         isAuthReady = true;
                         updateUI();
-                        // Запуск прослушивания Firestore
                         setupFirestoreListener();
                     } else {
-                        // 2. Пользователь не вошел. Попытка реального входа.
+                        // Пользователь не вошел. Попытка реального входа.
                         try {
                             if (initialAuthToken) {
                                 console.log("Attempting sign-in with custom token...");
@@ -196,7 +247,7 @@
                             // onAuthStateChanged поймает успех
                         } catch (error) {
                             console.error("Authentication failed:", error);
-                            authStatusEl.textContent = `Статус Auth: ❌ Ошибка (${error.code})`;
+                            showMessage(`Статус Auth: ❌ Ошибка (${error.code}). Проверьте консоль.`, 'ошибка');
                             isAuthReady = true;
                             updateUI();
                         }
@@ -205,15 +256,60 @@
 
             } catch (e) {
                 console.error("Critical Firebase Initialization Error:", e);
-                authStatusEl.textContent = `Статус Auth: ❌ Критическая ошибка инициализации`;
-                dbStatusEl.textContent = `Статус DB: ❌ Критическая ошибка: ${e.message}`;
-                errorEl.textContent = `Критическая ошибка: ${e.message}. Проверьте консоль.`;
-                errorEl.classList.remove('hidden');
+                showMessage(`Критическая ошибка: ${e.message}. Проверьте консоль.`, 'ошибка');
             }
         }
 
         /**
-         * Sets up the real-time Firestore listener for messages.
+         * Renders the fetched teammates to the UI.
+         * @param {Array} teammates - List of teammate objects.
+         */
+        function renderTeammates(teammates) {
+            teammateListEl.innerHTML = '';
+            teammateCountEl.textContent = teammates.length;
+
+            if (teammates.length === 0) {
+                teammateListEl.innerHTML = '<p class="text-gray-500 italic">Пока нет активных заявок. Станьте первым!</p>';
+                return;
+            }
+            
+            // Сортировка по имени, чтобы новые данные не прыгали
+            teammates.sort((a, b) => a.name.localeCompare(b.name));
+
+            teammates.forEach(tm => {
+                const isMine = tm.userId === userId;
+                const cardClass = isMine ? 'bg-indigo-100 border-indigo-400' : 'bg-white border-gray-300';
+                
+                const teammateEl = document.createElement('div');
+                teammateEl.className = `p-4 border-2 rounded-xl shadow-sm ${cardClass}`;
+                
+                teammateEl.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <h3 class="text-lg font-bold text-indigo-800">${tm.name}</h3>
+                        <span class="text-xs font-semibold px-2 py-1 rounded-full ${isMine ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'}">
+                            ${isMine ? 'Ваша заявка' : tm.role}
+                        </span>
+                    </div>
+                    <p class="text-sm font-medium text-gray-700 mt-1">
+                        Роль: ${tm.role}
+                    </p>
+                    <p class="text-xs text-gray-500 mt-2">
+                        Опыт/Навыки: ${tm.experience || 'Не указан'}
+                    </p>
+                    <p class="text-xs text-gray-500">
+                        Ищет: ${tm.about || 'Не указано'}
+                    </p>
+                    <p class="text-sm font-semibold mt-3 text-indigo-600 break-all">
+                        Контакт: ${tm.contact}
+                    </p>
+                `;
+                teammateListEl.appendChild(teammateEl);
+            });
+        }
+
+
+        /**
+         * Sets up the real-time Firestore listener for teammates.
          */
         function setupFirestoreListener() {
             if (!db || !userId) {
@@ -221,180 +317,123 @@
                 return;
             }
             
-            if (isMockConfig) {
-                // Сценарий MOCK DATA: Обход реального подключения
-                dbStatusEl.textContent = 'Статус DB: ⚠️ MOCK: Локальная имитация.';
-                loadingTextEl.classList.add('hidden'); // Скрываем текст загрузки
+            const collectionName = 'teammates';
+            const publicCollectionPath = `artifacts/${appId}/public/data/${collectionName}`;
 
-                // Инициализация сообщений-заглушек
-                if (currentMessages.length === 0) {
-                     currentMessages = [
-                        { id: 'm1', text: 'Привет! Это тестовое сообщение из MOCK-режима. Реальная база данных не подключена.', timestamp: new Date().toLocaleTimeString('ru-RU'), authorId: 'SYSTEM' },
-                        { id: 'm2', text: 'Чтобы проверить UI, введите сообщение и нажмите "Отправить".', timestamp: new Date().toLocaleTimeString('ru-RU'), authorId: userId },
-                    ];
-                }
+            if (isMockConfig) {
+                dbStatusEl.textContent = 'Статус DB: ⚠️ MOCK: Локальная имитация.';
+                loadingTextEl.classList.add('hidden'); 
                 
-                // Рендер текущих сообщений
-                renderMessages(currentMessages);
+                // MOCK Data for demonstration
+                const mockTeammates = [
+                    { name: 'Система', role: 'Fullstack Dev', experience: 'React, Node, Mongo', contact: '@system_dev', about: 'Ищу любой проект.', userId: 'SYSTEM_USER' },
+                    { name: 'Анонимный', role: 'Дизайнер', experience: 'Figma, Sketch, UI/UX', contact: 'design@mail.com', about: 'Ищу креативную команду.', userId: 'ANONYMOUS_USER' },
+                    { name: 'Вы', role: 'Владелец', experience: 'Заполните форму!', contact: 'ваш_контакт', about: 'Проверка, как выглядит ваша карточка.', userId: userId },
+                ];
+                renderTeammates(mockTeammates);
                 return; // Выход, не запускаем onSnapshot
             }
 
-            // Public collection path: /artifacts/{appId}/public/data/messages
-            const messagesCollectionPath = `artifacts/${appId}/public/data/messages`;
-            const messagesRef = collection(db, messagesCollectionPath);
-            const messagesQuery = query(messagesRef);
+            // Real-time listener for the public teammates collection
+            const teammatesRef = collection(db, publicCollectionPath);
+            const teammatesQuery = query(teammatesRef);
 
-            dbStatusEl.textContent = 'Статус DB: Подключение к сообщениям...';
+            dbStatusEl.textContent = 'Статус DB: Подключение к заявкам...';
 
-            // Real-time listener
-            onSnapshot(messagesQuery, (snapshot) => {
-                dbStatusEl.textContent = `Статус DB: ✅ Подключено к ${messagesCollectionPath}`;
+            onSnapshot(teammatesQuery, (snapshot) => {
+                dbStatusEl.textContent = `Статус DB: ✅ Подключено к ${publicCollectionPath}`;
 
-                const messages = [];
+                const teammates = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    messages.push({
+                    teammates.push({
                         id: doc.id,
-                        text: data.text || 'Нет текста',
-                        timestamp: data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString('ru-RU') : 'Нет времени',
-                        authorId: data.authorId || 'Неизвестно'
+                        name: data.name || 'Аноним',
+                        role: data.role || 'Не указана',
+                        experience: data.experience || '',
+                        contact: data.contact || 'Нет контакта',
+                        about: data.about || '',
+                        userId: data.userId || 'Неизвестно'
                     });
                 });
 
-                // Sort messages by timestamp (newest first, since Firestore doesn't guarantee order without orderBy)
-                messages.sort((a, b) => {
-                    const timeA = a.timestamp === 'Нет времени' ? 0 : new Date(`01/01/2000 ${a.timestamp}`).getTime();
-                    const timeB = b.timestamp === 'Нет времени' ? 0 : new Date(`01/01/2000 ${b.timestamp}`).getTime();
-                    return timeB - timeA;
-                });
-
-                renderMessages(messages);
+                renderTeammates(teammates);
             }, (error) => {
-                console.error("Error fetching messages:", error);
+                console.error("Error fetching documents:", error);
                 dbStatusEl.textContent = `Статус DB: ❌ Ошибка получения данных: ${error.message}`;
-                errorEl.textContent = `Ошибка Firestore: ${error.message}. Проверьте консоль.`;
-                errorEl.classList.remove('hidden');
-                loadingTextEl.textContent = 'Не удалось загрузить сообщения.';
+                showMessage(`Ошибка Firestore: ${error.message}. Проверьте консоль.`, 'ошибка');
+                loadingTextEl.textContent = 'Не удалось загрузить заявки.';
             });
         }
-
+        
         /**
-         * Renders the fetched messages to the UI.
-         * @param {Array} messages - List of message objects.
+         * Sends a new teammate submission to Firestore (or local state in MOCK mode).
          */
-        function renderMessages(messages) {
-            messageListEl.innerHTML = '';
-            
-            // Сортировка по времени (самые новые внизу для чата)
-            messages.sort((a, b) => {
-                const timeA = a.timestamp === 'Нет времени' ? 0 : new Date(`01/01/2000 ${a.timestamp}`).getTime();
-                const timeB = b.timestamp === 'Нет времени' ? 0 : new Date(`01/01/2000 ${b.timestamp}`).getTime();
-                return timeA - timeB; 
-            });
+        window.submitForm = async function(event) {
+            if (event) event.preventDefault();
 
-            if (messages.length === 0) {
-                messageListEl.innerHTML = '<p class="text-gray-500 italic">Пока нет сообщений. Отправьте первое!</p>';
-                return;
-            }
-
-            messages.forEach(msg => {
-                const isMine = msg.authorId === userId;
-                // 'SYSTEM' - для системных сообщений в MOCK-режиме
-                const isSystem = msg.authorId === 'SYSTEM'; 
-
-                let messageClass = 'bg-white text-gray-800 self-start';
-                let alignmentClass = 'justify-start';
-
-                if (isMine) {
-                    messageClass = 'bg-indigo-600 text-white self-end';
-                    alignmentClass = 'justify-end';
-                } else if (isSystem) {
-                    messageClass = 'bg-gray-200 text-gray-700 self-center text-center';
-                    alignmentClass = 'justify-center';
-                } else {
-                    messageClass = 'bg-indigo-100 text-indigo-900 self-start';
-                    alignmentClass = 'justify-start';
-                }
-
-
-                const messageEl = document.createElement('div');
-                messageEl.className = `flex ${alignmentClass} w-full`;
-                
-                const content = isSystem ? 
-                    `<p class="text-xs italic">${msg.text}</p>` : 
-                    `<p class="font-medium">${msg.text}</p>
-                     <p class="text-xs mt-1 text-right opacity-70">
-                         ${msg.timestamp}
-                     </p>`;
-
-                messageEl.innerHTML = `
-                    <div class="max-w-[80%] rounded-xl px-4 py-2 my-1 shadow-md ${messageClass}">
-                        ${content}
-                    </div>
-                `;
-                messageListEl.appendChild(messageEl);
-            });
-            // Прокручиваем вниз, чтобы видеть новые сообщения
-            messageListEl.scrollTop = messageListEl.scrollHeight; 
-        }
-
-        /**
-         * Sends a new message to Firestore (или local state in MOCK mode).
-         */
-        window.sendMessage = async function() {
             if (!isAuthReady || !userId) {
-                console.warn("Attempted to send message before Auth/DB was ready.");
+                console.warn("Attempted to submit form before Auth/DB was ready.");
+                showMessage("Сначала дождитесь подключения к базе данных.", 'ошибка');
                 return;
             }
 
-            const messageText = inputEl.value.trim();
-            if (messageText === "") return;
+            // Получение и очистка значений от пробелов
+            const name = nameInput.value.trim();
+            const role = roleInput.value.trim();
+            const experience = experienceInput.value.trim();
+            const contact = contactInput.value.trim();
+            const about = aboutInput.value.trim();
 
-            buttonEl.disabled = true;
-            buttonEl.textContent = 'Отправка...';
-            
-            // Обработка записи в MOCK-режиме
-            if (isMockConfig) {
-                // Имитация успешной записи в локальное состояние
-                const newMessage = {
-                    id: crypto.randomUUID(), 
-                    text: messageText,
-                    timestamp: new Date().toLocaleTimeString('ru-RU'),
-                    authorId: userId
-                };
-                currentMessages.push(newMessage);
-                renderMessages(currentMessages); // Перерисовываем все сообщения
-                
-                inputEl.value = '';
-                buttonEl.disabled = false;
-                buttonEl.textContent = 'Отправить';
-                errorEl.classList.add('hidden');
-                dbStatusEl.textContent = 'Статус DB: ⚠️ MOCK: Сообщение добавлено локально.';
+            // ПРОВЕРКА ОБЯЗАТЕЛЬНЫХ ПОЛЕЙ
+            if (!name || !role || !contact) {
+                showMessage("Заполните обязательные поля!", "ошибка");
                 return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Публикация...';
+            
+            // MOCK LOGIC
+            if (isMockConfig) {
+                 showMessage("Заявка успешно опубликована (локально в MOCK-режиме).", "успех");
+                 clearForm();
+                 // В MOCK-режиме перерисовка произойдет автоматически при следующем обновлении
+                 submitBtn.disabled = false;
+                 submitBtn.textContent = 'Опубликовать Заявку';
+                 return;
             }
 
             // РЕАЛЬНАЯ ЛОГИКА ЗАПИСИ
             try {
-                const messagesCollectionPath = `artifacts/${appId}/public/data/messages`;
-                const messagesRef = collection(db, messagesCollectionPath);
+                const collectionName = 'teammates';
+                const publicCollectionPath = `artifacts/${appId}/public/data/${collectionName}`;
 
-                await addDoc(messagesRef, {
-                    text: messageText,
-                    authorId: userId,
-                    timestamp: serverTimestamp()
-                });
+                const teammateData = {
+                    name: name,
+                    role: role,
+                    experience: experience,
+                    contact: contact,
+                    about: about,
+                    userId: userId, // ID пользователя, который создал запись
+                    createdAt: serverTimestamp() // Метка времени создания
+                };
 
-                inputEl.value = ''; // Clear input on success
-                errorEl.classList.add('hidden');
-            } catch (e) {
-                console.error("Error writing document:", e);
-                errorEl.textContent = `Ошибка записи: ${e.message}. (Проверьте правила безопасности Firestore и консоль)`;
-                errorEl.classList.remove('hidden');
+                // Добавление нового документа в публичную коллекцию
+                await addDoc(collection(db, publicCollectionPath), teammateData);
+
+                showMessage("Ваша заявка успешно опубликована! Мы ищем вам команду.", "успех");
+                clearForm(); 
+
+            } catch (error) {
+                console.error("Ошибка сохранения данных:", error);
+                showMessage(`Ошибка сохранения данных: ${error.message}. Проверьте правила Firestore.`, "ошибка");
             } finally {
-                buttonEl.disabled = false;
-                buttonEl.textContent = 'Отправить';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Опубликовать Заявку';
             }
         }
+
 
         // Initialize the application on window load
         window.onload = initializeFirebase;
