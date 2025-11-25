@@ -121,6 +121,7 @@
 
         // Глобальные переменные, предоставляемые средой Canvas
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        // Попытка получить конфигурацию Firebase из внешней среды. Если не удается, будет пустой объект.
         const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
@@ -141,7 +142,7 @@
             } catch (e) {
                 console.error("Error loading mock data:", e);
             }
-            // Данные по умолчанию, если ничего не найдено
+            // Данные по умолчанию
             return [
                 { name: 'Система', role: 'Fullstack Dev', experience: 'React, Node, Mongo', contact: '@system_dev', about: 'Ищу любой проект.', userId: 'SYSTEM_USER' },
                 { name: 'Анонимный', role: 'Дизайнер', experience: 'Figma, Sketch, UI/UX', contact: 'design@mail.com', about: 'Ищу креативную команду.', userId: 'ANONYMOUS_USER' },
@@ -212,7 +213,7 @@
             if (isReady) {
                 authStatusEl.textContent = 'Статус Auth: ✅ Подключено';
                 userIdDisplayEl.textContent = `ID Пользователя: ${userId}`;
-                dbStatusEl.textContent = isMockConfig ? 'Статус DB: ⚠️ MOCK: Локальная имитация.' : 'Статус DB: ✅ Готово к работе';
+                dbStatusEl.textContent = isMockConfig ? 'Статус DB: ⚠️ MOCK: Локальная имитация (Нет синхронизации).' : 'Статус DB: ✅ Готово к работе (Синхронизация активна)';
             } else if (isAuthReady) {
                 authStatusEl.textContent = 'Статус Auth: 🟡 Неизвестный пользователь';
                 userIdDisplayEl.textContent = 'ID Пользователя: Анонимный вход';
@@ -234,7 +235,7 @@
                 if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.projectId) {
                     configToUse = { apiKey: "MOCK_KEY", authDomain: "mock.com", projectId: "mock", appId: "mock" };
                     isMockConfig = true; 
-                    showMessage(`ВНИМАНИЕ! Конфигурация Firebase отсутствует. Инициализация в MOCK-режиме (нет синхронизации).`, 'info');
+                    showMessage(`ВНИМАНИЕ! Конфигурация Firebase отсутствует. Запуск в MOCK-режиме (нет синхронизации между устройствами).`, 'info');
                 }
 
                 // Инициализация App, Auth и Firestore
@@ -339,16 +340,16 @@
          */
         function setupFirestoreListener() {
             if (!db || !userId) {
-                // Это должно быть исправлено в onAuthStateChanged, но на всякий случай
                 dbStatusEl.textContent = 'Статус DB: Ожидание Auth...';
                 return;
             }
             
             const collectionName = 'teammates';
+            // Путь к публичной коллекции для обмена данными
             const publicCollectionPath = `artifacts/${appId}/public/data/${collectionName}`;
 
             if (isMockConfig) {
-                dbStatusEl.textContent = 'Статус DB: ⚠️ MOCK: Локальная имитация.';
+                dbStatusEl.textContent = 'Статус DB: ⚠️ MOCK: Локальная имитация (Нет синхронизации).';
                 loadingTextEl.classList.add('hidden'); 
                 
                 // 1. Загружаем MOCK-данные из localStorage
