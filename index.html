@@ -165,9 +165,9 @@
         
         // --- ПУТИ К FIRESTORE (ОБЯЗАТЕЛЬНО С ОБРАТНЫМИ КАВЫЧКАМИ) ---
         // !!! ВНИМАНИЕ: ПРОВЕРЬТЕ, ЧТО ЗДЕСЬ НЕТ ОШИБОК С КАВЫЧКАМИ
-        const PATH_PROFILES = /artifacts/${appId}/public/data/profiles;
-        const PATH_CHAT = /artifacts/${appId}/public/data/chat;
-        const PATH_USERS = /artifacts/${appId}/users;
+        const PATH_PROFILES = `/artifacts/${appId}/public/data/profiles`;
+        const PATH_CHAT = `/artifacts/${appId}/public/data/chat`;
+        const PATH_USERS = `/artifacts/${appId}/users`;
 
         // Инициализация
         const firebaseApp = initializeApp(firebaseConfig);
