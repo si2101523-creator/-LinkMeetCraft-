@@ -51,6 +51,10 @@
                 <div id="db-status" class="font-medium text-gray-600">
                     Статус DB: Ожидание инициализации...
                 </div>
+                <!-- Кнопка очистки MOCK-данных -->
+                <button onclick="window.clearMockData()" class="text-xs text-red-500 hover:text-red-700 font-medium transition duration-150">
+                    Очистить локальные MOCK-данные
+                </button>
             </div>
 
             <!-- Форма для подачи заявки -->
@@ -134,6 +138,24 @@
         // Ключ для хранения MOCK-данных в localStorage
         const MOCK_STORAGE_KEY = `link_meet_craft_mock_data_${appId}`;
 
+        // UI Elements
+        const authStatusEl = document.getElementById('auth-status');
+        const userIdDisplayEl = document.getElementById('user-id-display');
+        const dbStatusEl = document.getElementById('db-status');
+        const teammateListEl = document.getElementById('teammate-list');
+        const loadingTextEl = document.getElementById('loading-text');
+        const submitBtn = document.getElementById('submit-btn');
+        const messageAreaEl = document.getElementById('message-area');
+        const teammateCountEl = document.getElementById('teammate-count');
+
+        // Form elements
+        const formEl = document.getElementById('teammate-form');
+        const nameInput = document.getElementById('name');
+        const roleInput = document.getElementById('role');
+        const experienceInput = document.getElementById('experience');
+        const contactInput = document.getElementById('contact');
+        const aboutInput = document.getElementById('about');
+
         // --- MOCK Persistence Functions (Используют localStorage) ---
         
         /** Загружает данные из localStorage или возвращает данные по умолчанию. */
@@ -163,25 +185,19 @@
                 console.error("Error saving mock data to localStorage:", e);
             }
         }
+        
+        /** Очищает MOCK-данные из localStorage и перезагружает список. */
+        window.clearMockData = function() {
+            if (isMockConfig) {
+                localStorage.removeItem(MOCK_STORAGE_KEY);
+                mockTeammates = loadMockData(); // Перезагружаем данные по умолчанию
+                renderTeammates(mockTeammates);
+                showMessage("Локальные MOCK-данные удалены. Загружены данные по умолчанию.", 'info');
+            } else {
+                showMessage("Очистка MOCK-данных не требуется, вы работаете с реальной БД.", 'info');
+            }
+        }
         // --- Конец MOCK Persistence Functions ---
-
-        // UI Elements
-        const authStatusEl = document.getElementById('auth-status');
-        const userIdDisplayEl = document.getElementById('user-id-display');
-        const dbStatusEl = document.getElementById('db-status');
-        const teammateListEl = document.getElementById('teammate-list');
-        const loadingTextEl = document.getElementById('loading-text');
-        const submitBtn = document.getElementById('submit-btn');
-        const messageAreaEl = document.getElementById('message-area');
-        const teammateCountEl = document.getElementById('teammate-count');
-
-        // Form elements
-        const formEl = document.getElementById('teammate-form');
-        const nameInput = document.getElementById('name');
-        const roleInput = document.getElementById('role');
-        const experienceInput = document.getElementById('experience');
-        const contactInput = document.getElementById('contact');
-        const aboutInput = document.getElementById('about');
 
         // --- UI Feedback Functions ---
 
