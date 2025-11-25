@@ -67,7 +67,7 @@
         .nav-btn {
             transition: all 0.3s ease;
             border-left: 3px solid transparent;
-            cursor: pointer; /* Явно указываем курсор */
+            cursor: pointer;
         }
         .nav-btn:hover {
             background: linear-gradient(90deg, rgba(0, 243, 255, 0.1) 0%, transparent 100%);
@@ -275,6 +275,38 @@
         const PATH_CHAT = `/artifacts/${appId}/public/data/chat`;
         const PATH_USERS = `/artifacts/${appId}/users`;
 
+        // --- ГЛОБАЛЬНОЕ УПРАВЛЕНИЕ ВИДАМИ (РЕШЕНИЕ ПРОБЛЕМЫ) ---
+        window.app = {
+            setView: (viewName) => {
+                // 1. Скрыть все секции контента
+                document.querySelectorAll('.view-section').forEach(el => {
+                    el.classList.add('hidden');
+                });
+                // 2. Показать нужную секцию
+                const targetView = document.getElementById(`view-${viewName}`);
+                if (targetView) {
+                    targetView.classList.remove('hidden');
+                }
+                
+                // 3. Обновить активный класс на кнопках навигации
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.view === viewName) {
+                        btn.classList.add('active');
+                    }
+                });
+
+                // 4. Прокрутка чата вниз при открытии
+                if (viewName === 'chat') {
+                    const chatContainer = document.getElementById('chat-container');
+                    if (chatContainer) {
+                        chatContainer.scrollTop = chatContainer.scrollHeight;
+                    }
+                }
+            }
+        };
+
+
         // --- UI ФУНКЦИИ ---
 
         function showToast(msg) {
@@ -349,16 +381,15 @@
 
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
-                        // Если пользователь есть, но нет имени (например, после первого анонимного входа)
                         if (user.displayName) {
                             updateAuthUI(user);
                             setupListeners();
                         } else {
-                            updateAuthUI(null); // Показываем форму входа
-                            setupProfilesListener(); // Анкеты все равно грузим
+                            updateAuthUI(null); 
+                            setupProfilesListener(); 
                         }
                     } else {
-                        // Пытаемся войти анонимно сразу при загрузке, чтобы подготовить сессию
+                        // Пытаемся войти анонимно сразу при загрузке
                         signInAnonymously(auth).catch(e => console.log("Anon auth pending user interaction"));
                         updateAuthUI(null); 
                         setupProfilesListener();
@@ -385,33 +416,29 @@
                 const userRef = doc(db, PATH_USERS, uid);
                 const userSnap = await getDoc(userRef);
                 const now = Date.now();
-                const COOLDOWN = 2592000000; // 30 дней
+                const COOLDOWN = 2592000000; // 30 дней в миллисекундах
 
-                // Проверка на существование данных пользователя и таймер
                 if (userSnap.exists()) {
                     const data = userSnap.data();
                     const currentDisplayName = auth.currentUser.displayName;
                     
-                    // Если пользователь пытается поставить тот же ник, что и сейчас - разрешаем (это не смена)
                     if (currentDisplayName === nick) {
                          updateAuthUI(auth.currentUser);
                          cancelEditMode();
                          return;
                     }
 
-                    // Если ник другой, проверяем таймер
                     if (now - (data.lastChange || 0) < COOLDOWN) {
                          const daysLeft = Math.ceil((COOLDOWN - (now - (data.lastChange||0))) / (86400000));
                          return showToast(`Смена ника заблокирована. Ждать: ${daysLeft} д.`);
                     }
                 }
 
-                // Если проверки пройдены - обновляем
                 await updateProfile(auth.currentUser, { displayName: nick });
                 await setDoc(userRef, { nickname: nick, lastChange: now, uid }, { merge: true });
                 
                 updateAuthUI(auth.currentUser);
-                cancelEditMode(); // Возвращаем вид карточки
+                cancelEditMode();
                 showToast(`Добро пожаловать, ${nick}!`);
                 setupListeners();
 
@@ -431,7 +458,7 @@
 
         function cancelEditMode() {
              if (currentUser && currentUser.displayName) {
-                updateAuthUI(currentUser); // Возвращаем вид пользователя
+                updateAuthUI(currentUser);
              }
              document.getElementById('cancel-edit-btn').classList.add('hidden');
              document.getElementById('login-title').textContent = "ИДЕНТИФИКАЦИЯ";
@@ -441,7 +468,7 @@
         async function sendMessage() {
             const input = document.getElementById('chat-input');
             const text = input.value.trim();
-            if (!text) return;
+            if (!text || !currentUser) return;
             
             try {
                 input.value = '';
@@ -459,6 +486,8 @@
         // --- АНКЕТЫ ---
         async function createProfile(e) {
             e.preventDefault();
+            if(!currentUser) return showToast("Нужно войти, чтобы создавать анкеты!");
+
             const title = document.getElementById('f-title').value;
             const role = document.getElementById('f-role').value;
             const desc = document.getElementById('f-desc').value;
@@ -482,7 +511,9 @@
         }
 
         async function deleteProfile(id) {
-            if(!confirm("Удалить эту анкету?")) return;
+            // Используем пользовательское модальное окно вместо confirm()
+            const shouldDelete = window.confirm("Удалить эту анкету?");
+            if(!shouldDelete) return;
             try {
                 await deleteDoc(doc(db, PATH_PROFILES, id));
                 showToast("Удалено.");
@@ -508,6 +539,7 @@
                 items.sort((a,b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
 
                 items.forEach(p => {
+                    // Используем currentUser для проверки владения
                     const isOwner = currentUser && p.uid === currentUser.uid;
                     const el = document.createElement('div');
                     el.className = `bg-gray-900/60 border ${isOwner ? 'border-neonOrange' : 'border-gray-700'} p-6 rounded-xl hover:bg-gray-800/60 transition-all duration-300 shadow-lg backdrop-blur-sm`;
@@ -526,7 +558,8 @@
                     `;
                     
                     el.querySelector('.copy-btn').onclick = () => copyToClipboard(p.contact);
-                    if(isOwner) el.querySelector('.del-btn').onclick = () => deleteProfile(p.id);
+                    const delBtn = el.querySelector('.del-btn');
+                    if(delBtn) delBtn.onclick = () => deleteProfile(p.id);
                     
                     cont.appendChild(el);
                 });
@@ -534,7 +567,9 @@
         }
 
         function setupListeners() {
-            // Чат
+            // Чат (добавлена проверка на currentUser)
+            if (!currentUser) return;
+
             const qChat = query(collection(db, PATH_CHAT), limit(50));
             onSnapshot(qChat, (snap) => {
                 const cont = document.getElementById('chat-container');
@@ -544,7 +579,7 @@
                 msgs.sort((a,b) => (a.createdAt?.toMillis() || 0) - (b.createdAt?.toMillis() || 0));
 
                 msgs.forEach(m => {
-                    const isMe = m.uid === currentUser.uid;
+                    const isMe = currentUser && m.uid === currentUser.uid;
                     const div = document.createElement('div');
                     div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} mb-3`;
                     div.innerHTML = `
@@ -564,30 +599,31 @@
         }
         
         // --- ГЛОБАЛЬНЫЕ ОБРАБОТЧИКИ ---
-        // Важно: выносим функции на глобальный уровень window для кнопок
-        window.handleLogin = handleLogin;
-        window.enableEditMode = enableEditMode;
-        window.cancelEditMode = cancelEditMode;
-        window.sendMessage = sendMessage;
-        window.createProfile = createProfile;
-
+        
         // Привязка событий (гарантируем после загрузки DOM)
         window.onload = () => {
             init();
 
+            // Привязка кнопок авторизации/смены ника
             document.getElementById('login-btn').onclick = handleLogin;
             document.getElementById('edit-nick-btn').onclick = enableEditMode;
             document.getElementById('cancel-edit-btn').onclick = cancelEditMode;
             
+            // Привязка кнопок действий
             document.getElementById('send-msg-btn').onclick = sendMessage;
             document.getElementById('chat-input').onkeypress = (e) => { if(e.key === 'Enter') sendMessage() };
             document.getElementById('create-form').onsubmit = createProfile;
 
+            // Привязка навигационных кнопок к новой функции setView
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.onclick = () => {
+                    // Используем глобально определенный setView
                     window.app.setView(btn.dataset.view);
                 }
             });
+
+            // Инициализируем первый вид
+            window.app.setView('profiles');
         };
     </script>
 </body>
