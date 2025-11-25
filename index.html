@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LinkMeetCraft - Поиск команды</title>
     <!-- Подключение Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
     <style>
         body {
             font-family: sans-serif;
@@ -31,7 +31,6 @@
 <body class="flex flex-col md:flex-row h-full">
 
     <!-- БЛОК ОТОБРАЖЕНИЯ КРИТИЧЕСКИХ ОШИБОК -->
-    <!-- Здесь будет отображаться красная полоса, если в коде есть ошибка синтаксиса -->
     <div id="error-display" class="hidden fixed top-0 left-0 w-full bg-red-600 text-white p-4 z-[9999] font-bold text-center"></div>
 
     <!-- Левая панель -->
@@ -55,7 +54,6 @@
 
         <!-- Навигация -->
         <nav id="main-nav" class="flex-1 space-y-2">
-            <!-- Обработчики now обрабатываются в JS, а не в HTML, чтобы избежать ошибки ReferenceError -->
             <button data-view="profiles" class="nav-btn active w-full text-left p-3 rounded hover:bg-[#21262d] text-gray-300 hover:text-white transition flex items-center border border-transparent focus:border-blue-500">
                 📄 Анкеты
             </button>
@@ -74,7 +72,7 @@
         <!-- Уведомления -->
         <div id="toast" class="absolute top-4 right-4 bg-blue-600 text-white px-6 py-3 rounded shadow-xl transform translate-x-full transition-transform duration-300 z-50"></div>
 
-<!-- Экран: Анкеты -->
+        <!-- Экран: Анкеты -->
         <div id="view-profiles" class="view-section h-full overflow-y-auto p-6">
             <h2 class="text-2xl font-bold text-white mb-4 border-b border-[#30363d] pb-2">Активные анкеты</h2>
             <div id="profiles-container" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -132,10 +130,10 @@
                 document.querySelectorAll('.nav-btn').forEach(btn => {
                     btn.classList.remove('active');
                 });
-                const selectedBtn = document.querySelector(.nav-btn[data-view="${viewId}"]);
+                const selectedBtn = document.querySelector(`.nav-btn[data-view="${viewId}"]`);
                 if (selectedBtn) selectedBtn.classList.add('active');
 
-// Автоскролл чата при открытии
+                // Автоскролл чата при открытии
                 if(viewId === 'chat') {
                     const container = document.getElementById('chat-container');
                     setTimeout(() => container.scrollTop = container.scrollHeight, 100);
@@ -153,18 +151,15 @@
 
     <!-- СКРИПТ ПРИЛОЖЕНИЯ (Модуль) -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        // !!! ВНИМАНИЕ: ЗДЕСЬ МОГЛА БЫТЬ ОШИБКА ЗНАКОВ ПРЕПИНАНИЯ (ТОЧКА С ЗАПЯТОЙ/ЗАПЯТАЯ)
-        // Проверяем, что все импорты разделены запятыми
-        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { initializeApp } from "[https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js](https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js)";
+        import { getAuth, signInAnonymously, updateProfile, onAuthStateChanged } from "[https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js](https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js)";
+        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, doc, setDoc, getDoc } from "[https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js](https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js)";
 
         // --- КОНФИГУРАЦИЯ ---
-        const appId = typeof app_id !== 'undefined' ? app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof firebase_config !== 'undefined' ? firebase_config : '{}');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
         
-        // --- ПУТИ К FIRESTORE (ОБЯЗАТЕЛЬНО С ОБРАТНЫМИ КАВЫЧКАМИ) ---
-        // !!! ВНИМАНИЕ: ПРОВЕРЬТЕ, ЧТО ЗДЕСЬ НЕТ ОШИБОК С КАВЫЧКАМИ
+        // --- ПУТИ К FIRESTORE (ИСПРАВЛЕНО - ОБЯЗАТЕЛЬНО С ОБРАТНЫМИ КАВЫЧКАМИ) ---
         const PATH_PROFILES = `/artifacts/${appId}/public/data/profiles`;
         const PATH_CHAT = `/artifacts/${appId}/public/data/chat`;
         const PATH_USERS = `/artifacts/${appId}/users`;
@@ -210,38 +205,38 @@
             try {
                 // Если не авторизован (или аноним), авторизуемся
                 if (!auth.currentUser) {
-                    // Используем signInAnonymously для получения UID
+                    // Используем signInAnonymously для получения UID, чтобы можно было сохранить ник
                     await signInAnonymously(auth);
                 }
                 
                 // Проверка на смену ника (1 месяц)
-const uid = auth.currentUser.uid;
-const userRef = doc(db, PATH_USERS, uid);
-const userSnap = await getDoc(userRef);
-const now = Date.now();
+                const uid = auth.currentUser.uid;
+                const userRef = doc(db, PATH_USERS, uid);
+                const userSnap = await getDoc(userRef);
+                const now = Date.now();
 
-let canChange = true;
-if (userSnap.exists()) {
-    const lastChange = userSnap.data().lastChange || 0;
-    // 2592000000 мс = 30 дней
-    if (now - lastChange < 2592000000) { 
-        const daysLeft = Math.ceil((2592000000 - (now - lastChange)) / (1000 * 60 * 60 * 24));
-        canChange = false;
-        // Если смена запрещена, но ник уже есть, просто используем его
-        if(auth.currentUser.displayName && auth.currentUser.displayName !== nick) {
-            showToast(`Вы используете текущий ник: ${auth.currentUser.displayName}`);
-            updateAuthUI(auth.currentUser);
-            return;
-        } else if (!auth.currentUser.displayName) {
-            // Если пользователь без никнейма, но только что вошел, даем ввести ник
-            canChange = true;
-        }
-        
-        if (!canChange) {
-            showToast(`Менять ник можно раз в месяц! Осталось: ${daysLeft} дней.`);
-        }
-    }
-}
+                let canChange = true;
+                if (userSnap.exists()) {
+                    const lastChange = userSnap.data().lastChange || 0;
+                    // 2592000000 мс = 30 дней
+                    if (now - lastChange < 2592000000) { 
+                        const daysLeft = Math.ceil((2592000000 - (now - lastChange)) / (1000 * 60 * 60 * 24));
+                        canChange = false;
+                        // Если смена запрещена, но ник уже есть, просто используем его
+                        if(auth.currentUser.displayName && auth.currentUser.displayName !== nick) {
+                            showToast(`Вы используете текущий ник: ${auth.currentUser.displayName}`);
+                            updateAuthUI(auth.currentUser);
+                            return;
+                        } else if (!auth.currentUser.displayName) {
+                            // Если пользователь без никнейма, но только что вошел, даем ввести ник
+                            canChange = true;
+                        }
+                        
+                        if (!canChange) {
+                            showToast(`Менять ник можно раз в месяц! Осталось: ${daysLeft} дней.`);
+                        }
+                    }
+                }
                 
                 // Смена разрешена или ник устанавливается впервые
                 if (canChange) {
@@ -269,7 +264,7 @@ if (userSnap.exists()) {
              document.getElementById('nickname-input').value = currentUser ? currentUser.displayName : '';
         }
         
-        // Слушатель состояния входа
+        // Слушатель состояния входа (Теперь только обновляет UI, вход происходит по кнопке)
         onAuthStateChanged(auth, (user) => {
             if (user && user.uid) {
                 // Если у пользователя уже есть ник, обновляем UI и запускаем слушатели
@@ -277,12 +272,12 @@ if (userSnap.exists()) {
                     updateAuthUI(user);
                     setupFirestoreListeners();
                 } else {
-                    // Если UID есть, но никнейма нет (первый вход анонимно), показываем форму ввода ника
+                    // Если UID есть, но никнейма нет, показываем форму ввода ника
                     updateAuthUI(null); 
                 }
             } else {
-                 // Пытаемся войти анонимно, если нет пользователя
-                 signInAnonymously(auth).catch(e => console.error("Anonymous sign-in failed:", e));
+                 // Пользователь вышел/не вошел. Просто обновляем UI, чтобы показать форму входа.
+                 updateAuthUI(null);
             }
         });
 
@@ -313,7 +308,7 @@ if (userSnap.exists()) {
             // Ограничиваем 50 сообщениями, сортируем по дате создания
             const qChat = query(collection(db, PATH_CHAT), orderBy('createdAt', 'desc'), limit(50));
 
-const unsubscribeChat = onSnapshot(qChat, (snapshot) => {
+            const unsubscribeChat = onSnapshot(qChat, (snapshot) => {
                 chatContainer.innerHTML = '';
                 const msgs = [];
                 snapshot.forEach(d => msgs.push(d.data()));
@@ -322,7 +317,7 @@ const unsubscribeChat = onSnapshot(qChat, (snapshot) => {
                 msgs.forEach(msg => {
                     const div = document.createElement('div');
                     div.className = "bg-[#1f242d] p-2 rounded max-w-[80%]";
-                    div.innerHTML = <span class="text-blue-400 font-bold text-xs">${msg.author}</span>: <span class="text-gray-300">${msg.text}</span>;
+                    div.innerHTML = `<span class="text-blue-400 font-bold text-xs">${msg.author}</span>: <span class="text-gray-300">${msg.text}</span>`;
                     chatContainer.appendChild(div);
                 });
                 
@@ -348,7 +343,7 @@ const unsubscribeChat = onSnapshot(qChat, (snapshot) => {
             const desc = document.getElementById('f-desc').value.trim();
             const contact = document.getElementById('f-contact').value.trim();
 
-            if (!title  !role  !desc || !contact) {
+            if (!title || !role || !desc || !contact) {
                 return showToast("Все поля обязательны!");
             }
 
@@ -389,8 +384,7 @@ const unsubscribeChat = onSnapshot(qChat, (snapshot) => {
                         <div class="text-xs text-gray-500 border-t border-[#30363d] pt-2 flex justify-between items-center mt-2">
                             <span class="font-medium">Автор: ${data.author}</span>
                             <span class="text-sm text-white bg-blue-700 px-3 py-1 rounded-full">${data.contact}</span>
-
-</div>
+                        </div>
                     `;
                     profilesContainer.appendChild(card);
                 });
@@ -447,3 +441,4 @@ const unsubscribeChat = onSnapshot(qChat, (snapshot) => {
     </script>
 </body>
 </html>
+
