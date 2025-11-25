@@ -131,6 +131,40 @@
         let isMockConfig = false; 
         let mockTeammates = []; // Глобальный массив для хранения данных в MOCK-режиме
 
+        // Ключ для хранения MOCK-данных в localStorage
+        const MOCK_STORAGE_KEY = `link_meet_craft_mock_data_${appId}`;
+
+        // --- MOCK Persistence Functions (Используют localStorage) ---
+        
+        /** Загружает данные из localStorage или возвращает данные по умолчанию. */
+        function loadMockData() {
+            try {
+                const storedData = localStorage.getItem(MOCK_STORAGE_KEY);
+                if (storedData) {
+                    const data = JSON.parse(storedData);
+                    // Убеждаемся, что мы не возвращаем пустой массив, если он был сохранен
+                    if (data.length > 0) return data;
+                }
+            } catch (e) {
+                console.error("Error loading mock data from localStorage:", e);
+            }
+            // Данные по умолчанию, если ничего не найдено
+            return [
+                { name: 'Система', role: 'Fullstack Dev', experience: 'React, Node, Mongo', contact: '@system_dev', about: 'Ищу любой проект.', userId: 'SYSTEM_USER' },
+                { name: 'Анонимный', role: 'Дизайнер', experience: 'Figma, Sketch, UI/UX', contact: 'design@mail.com', about: 'Ищу креативную команду.', userId: 'ANONYMOUS_USER' },
+            ];
+        }
+
+        /** Сохраняет текущий массив MOCK-данных в localStorage. */
+        function saveMockData(data) {
+            try {
+                localStorage.setItem(MOCK_STORAGE_KEY, JSON.stringify(data));
+            } catch (e) {
+                console.error("Error saving mock data to localStorage:", e);
+            }
+        }
+        // --- Конец MOCK Persistence Functions ---
+
         // UI Elements
         const authStatusEl = document.getElementById('auth-status');
         const userIdDisplayEl = document.getElementById('user-id-display');
@@ -325,14 +359,20 @@
                 dbStatusEl.textContent = 'Статус DB: ⚠️ MOCK: Локальная имитация.';
                 loadingTextEl.classList.add('hidden'); 
                 
-                // MOCK Data initialization (Fill the array only on first load)
-                if (mockTeammates.length === 0) {
-                     mockTeammates = [
-                        { name: 'Система', role: 'Fullstack Dev', experience: 'React, Node, Mongo', contact: '@system_dev', about: 'Ищу любой проект.', userId: 'SYSTEM_USER' },
-                        { name: 'Анонимный', role: 'Дизайнер', experience: 'Figma, Sketch, UI/UX', contact: 'design@mail.com', about: 'Ищу креативную команду.', userId: 'ANONYMOUS_USER' },
-                        // Добавляем запись пользователя по умолчанию, которая будет заменена реальной при отправке формы
-                        { name: 'Вы', role: 'Владелец', experience: 'Заполните форму!', contact: 'ваш_контакт', about: 'Проверка, как выглядит ваша карточка.', userId: userId },
-                    ];
+                // 1. Загружаем данные из localStorage
+                mockTeammates = loadMockData();
+                
+                // 2. Добавляем карточку-заполнитель для текущего пользователя (если он еще не отправил свою заявку)
+                const isUserListed = mockTeammates.some(t => t.userId === userId);
+                if (!isUserListed) {
+                    mockTeammates.push({ 
+                        name: 'Вы (заполнитель)', 
+                        role: 'Ожидание данных', 
+                        experience: 'Заполните форму!', 
+                        contact: 'ваш_контакт', 
+                        about: 'Проверка, как выглядит ваша карточка.', 
+                        userId: userId 
+                    });
                 }
 
                 renderTeammates(mockTeammates);
@@ -399,7 +439,7 @@
             submitBtn.disabled = true;
             submitBtn.textContent = 'Публикация...';
             
-            // MOCK LOGIC (Теперь добавляет заявку в локальный массив и перерисовывает)
+            // MOCK LOGIC (Теперь использует localStorage)
             if (isMockConfig) {
                  const newTeammate = {
                     name: name,
@@ -410,12 +450,19 @@
                     userId: userId,
                 };
                 
-                // Добавляем новую заявку в локальный массив
+                // 1. Удаляем старую заявку пользователя или заполнитель, если они существуют
+                mockTeammates = mockTeammates.filter(t => t.userId !== userId);
+
+                // 2. Добавляем новую заявку
                 mockTeammates.push(newTeammate);
-                // Мануально вызываем перерисовку списка
+                
+                // 3. Сохраняем обновленный массив в localStorage
+                saveMockData(mockTeammates);
+
+                // 4. Мануально вызываем перерисовку списка
                 renderTeammates(mockTeammates); 
 
-                showMessage("Заявка успешно опубликована (локально в MOCK-режиме).", "успех");
+                showMessage("Заявка успешно опубликована (локально в MOCK-режиме). Перезагрузите страницу, чтобы проверить сохранение!", "успех");
                 clearForm();
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Опубликовать Заявку';
