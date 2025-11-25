@@ -111,12 +111,12 @@
 
     <!-- Firebase Script Setup -->
     <script type="module">
-        // Import necessary Firebase functions
+        // Импортируем необходимые функции Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, addDoc, onSnapshot, collection, query, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // ВАЖНО: Включить отладку для Firebase
+        // ВАЖНО: Включаем отладку для Firebase, чтобы видеть статус в консоли
         setLogLevel('Debug');
 
         // Глобальные переменные, предоставляемые средой Canvas
@@ -129,41 +129,17 @@
         let userId = null;
         let isAuthReady = false;
         let isMockConfig = false; 
-        let mockTeammates = []; // Глобальный массив для хранения данных в MOCK-режиме
-
-        // Ключ для хранения MOCK-данных в localStorage
-        const MOCK_STORAGE_KEY = `link_meet_craft_mock_data_${appId}`;
-
-        // UI Elements
-        const authStatusEl = document.getElementById('auth-status');
-        const userIdDisplayEl = document.getElementById('user-id-display');
-        const dbStatusEl = document.getElementById('db-status');
-        const teammateListEl = document.getElementById('teammate-list');
-        const loadingTextEl = document.getElementById('loading-text');
-        const submitBtn = document.getElementById('submit-btn');
-        const messageAreaEl = document.getElementById('message-area');
-        const teammateCountEl = document.getElementById('teammate-count');
-
-        // Form elements
-        const formEl = document.getElementById('teammate-form');
-        const nameInput = document.getElementById('name');
-        const roleInput = document.getElementById('role');
-        const experienceInput = document.getElementById('experience');
-        const contactInput = document.getElementById('contact');
-        const aboutInput = document.getElementById('about');
-
-        // --- MOCK Persistence Functions (Используют localStorage) ---
         
-        /** Загружает данные из localStorage или возвращает данные по умолчанию. */
+        // --- MOCK Persistence Functions (Используют localStorage для имитации) ---
+        const MOCK_STORAGE_KEY = `link_meet_craft_mock_data_${appId}`;
+        let mockTeammates = []; 
+
         function loadMockData() {
             try {
                 const storedData = localStorage.getItem(MOCK_STORAGE_KEY);
-                if (storedData) {
-                    const data = JSON.parse(storedData);
-                    if (data.length > 0) return data;
-                }
+                if (storedData) return JSON.parse(storedData);
             } catch (e) {
-                console.error("Error loading mock data from localStorage:", e);
+                console.error("Error loading mock data:", e);
             }
             // Данные по умолчанию, если ничего не найдено
             return [
@@ -172,15 +148,31 @@
             ];
         }
 
-        /** Сохраняет текущий массив MOCK-данных в localStorage. */
         function saveMockData(data) {
             try {
                 localStorage.setItem(MOCK_STORAGE_KEY, JSON.stringify(data));
             } catch (e) {
-                console.error("Error saving mock data to localStorage:", e);
+                console.error("Error saving mock data:", e);
             }
         }
         // --- Конец MOCK Persistence Functions ---
+
+
+        // UI Elements (получаем ссылки на элементы DOM)
+        const authStatusEl = document.getElementById('auth-status');
+        const userIdDisplayEl = document.getElementById('user-id-display');
+        const dbStatusEl = document.getElementById('db-status');
+        const teammateListEl = document.getElementById('teammate-list');
+        const loadingTextEl = document.getElementById('loading-text');
+        const submitBtn = document.getElementById('submit-btn');
+        const messageAreaEl = document.getElementById('message-area');
+        const teammateCountEl = document.getElementById('teammate-count');
+        const formEl = document.getElementById('teammate-form');
+        const nameInput = document.getElementById('name');
+        const roleInput = document.getElementById('role');
+        const experienceInput = document.getElementById('experience');
+        const contactInput = document.getElementById('contact');
+        const aboutInput = document.getElementById('about');
 
         // --- UI Feedback Functions ---
 
@@ -212,6 +204,7 @@
 
         // --- Core Application Logic ---
 
+        /** Обновляет статусы в UI */
         function updateUI() {
             const isReady = isAuthReady && userId;
             updateFormState(isReady);
@@ -231,18 +224,17 @@
         }
 
         /**
-         * Инициализирует Firebase и настраивает прослушиватель аутентификации.
+         * Инициализирует Firebase и настраивает аутентификацию.
          */
         function initializeFirebase() {
             try {
                 let configToUse = firebaseConfig;
 
-                // 1. Проверка конфигурации MOCK/REAL
+                // 1. Проверка конфигурации. Если ключей нет, переходим в MOCK.
                 if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.projectId) {
-                    // Если конфиг пуст, переходим в MOCK-режим для стабильности
                     configToUse = { apiKey: "MOCK_KEY", authDomain: "mock.com", projectId: "mock", appId: "mock" };
                     isMockConfig = true; 
-                    showMessage(`ВНИМАНИЕ! Конфигурация Firebase отсутствует. Инициализация в MOCK-режиме (локальное хранилище).`, 'info');
+                    showMessage(`ВНИМАНИЕ! Конфигурация Firebase отсутствует. Инициализация в MOCK-режиме (нет синхронизации).`, 'info');
                 }
 
                 // Инициализация App, Auth и Firestore
@@ -264,13 +256,13 @@
 
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
-                        // Успешный реальный вход
+                        // Пользователь аутентифицирован (реальный вход)
                         userId = user.uid;
                         isAuthReady = true;
                         updateUI();
                         setupFirestoreListener();
                     } else {
-                        // Пользователь не вошел. Попытка реального входа.
+                        // Пользователь не аутентифицирован. Пытаемся войти.
                         try {
                             if (initialAuthToken) {
                                 console.log("Attempting sign-in with custom token...");
@@ -297,7 +289,6 @@
 
         /**
          * Отображает полученные заявки в пользовательском интерфейсе.
-         * @param {Array} teammates - Список объектов заявок.
          */
         function renderTeammates(teammates) {
             teammateListEl.innerHTML = '';
@@ -308,7 +299,7 @@
                 return;
             }
             
-            // Сортировка по имени, чтобы новые данные не прыгали
+            // Сортировка по имени
             teammates.sort((a, b) => a.name.localeCompare(b.name));
 
             teammates.forEach(tm => {
@@ -348,22 +339,22 @@
          */
         function setupFirestoreListener() {
             if (!db || !userId) {
+                // Это должно быть исправлено в onAuthStateChanged, но на всякий случай
                 dbStatusEl.textContent = 'Статус DB: Ожидание Auth...';
                 return;
             }
             
             const collectionName = 'teammates';
-            // Используем публичный путь для обмена данными между всеми пользователями
             const publicCollectionPath = `artifacts/${appId}/public/data/${collectionName}`;
 
             if (isMockConfig) {
                 dbStatusEl.textContent = 'Статус DB: ⚠️ MOCK: Локальная имитация.';
                 loadingTextEl.classList.add('hidden'); 
                 
-                // 1. Загружаем данные из localStorage
+                // 1. Загружаем MOCK-данные из localStorage
                 mockTeammates = loadMockData();
                 
-                // 2. Добавляем карточку-заполнитель для текущего пользователя
+                // 2. Добавляем заполнитель для текущего пользователя
                 const isUserListed = mockTeammates.some(t => t.userId === userId);
                 if (!isUserListed) {
                     mockTeammates.push({ 
@@ -380,7 +371,7 @@
                 return; // Выход, не запускаем onSnapshot
             }
 
-            // Real-time listener for the public teammates collection
+            // Real-time listener for the public teammates collection (Cloud Firestore)
             const teammatesRef = collection(db, publicCollectionPath);
             const teammatesQuery = query(teammatesRef);
 
@@ -414,7 +405,7 @@
         }
         
         /**
-         * Отправляет новую заявку в Firestore (или в локальное состояние в режиме MOCK).
+         * Отправляет новую заявку.
          */
         window.submitForm = async function(event) {
             if (event) event.preventDefault();
@@ -441,7 +432,7 @@
             submitBtn.disabled = true;
             submitBtn.textContent = 'Публикация...';
             
-            // ЛОГИКА MOCK (Использует localStorage)
+            // ЛОГИКА MOCK
             if (isMockConfig) {
                  const newTeammate = {
                     name: name,
@@ -452,19 +443,15 @@
                     userId: userId,
                 };
                 
-                // 1. Удаляем старую заявку пользователя или заполнитель, если они существуют
+                // Обновляем/добавляем заявку в MOCK-массив
                 mockTeammates = mockTeammates.filter(t => t.userId !== userId);
-
-                // 2. Добавляем новую заявку
                 mockTeammates.push(newTeammate);
                 
-                // 3. Сохраняем обновленный массив в localStorage
+                // Сохраняем в localStorage и перерисовываем
                 saveMockData(mockTeammates);
-
-                // 4. Мануально вызываем перерисовку списка
                 renderTeammates(mockTeammates); 
 
-                showMessage("Заявка успешно опубликована (локально в MOCK-режиме). Перезагрузите страницу, чтобы проверить сохранение!", "успех");
+                showMessage("Заявка успешно опубликована (локально в MOCK-режиме).", "успех");
                 clearForm();
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Опубликовать Заявку';
@@ -482,19 +469,19 @@
                     experience: experience,
                     contact: contact,
                     about: about,
-                    userId: userId, // ID пользователя, который создал запись
-                    createdAt: serverTimestamp() // Метка времени создания
+                    userId: userId, 
+                    createdAt: serverTimestamp() 
                 };
 
                 // Добавление нового документа в публичную коллекцию
                 await addDoc(collection(db, publicCollectionPath), teammateData);
 
-                showMessage("Ваша заявка успешно опубликована! Мы ищем вам команду.", "успех");
+                showMessage("Ваша заявка успешно опубликована! Теперь она синхронизирована.", "успех");
                 clearForm(); 
 
             } catch (error) {
                 console.error("Ошибка сохранения данных:", error);
-                showMessage(`Ошибка сохранения данных: ${error.message}. Проверьте правила Firestore.`, "ошибка");
+                showMessage(`Ошибка сохранения данных: ${error.message}.`, "ошибка");
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Опубликовать Заявку';
