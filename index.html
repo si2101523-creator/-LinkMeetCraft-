@@ -98,6 +98,17 @@
         .status-dot {
             animation: pulse-glow 2s infinite;
         }
+
+        /* Мобильные стили: скроллинг для боковой панели на малых экранах */
+        @media (max-width: 768px) {
+            .mobile-sidebar {
+                max-height: 35vh; /* Ограничиваем высоту навигации на мобильных */
+                overflow-y: auto;
+            }
+            .mobile-main {
+                height: 65vh; /* Основное содержимое занимает большую часть экрана */
+            }
+        }
     </style>
 </head>
 <body class="flex flex-col md:flex-row h-screen font-ui text-lg">
@@ -107,7 +118,8 @@
     <div id="error-display" class="hidden fixed top-0 left-0 w-full bg-red-600/90 backdrop-blur text-white p-4 z-[9999] font-bold text-center border-b-2 border-red-400"></div>
 
     <!-- Левая панель (Сайдбар) -->
-    <aside class="w-full md:w-72 glass-panel border-r border-gray-700/50 flex flex-col p-5 z-20 h-full md:h-auto relative">
+    <!-- h-auto max-h-[40vh] на моб. устройствах, h-screen на десктопе -->
+    <aside class="w-full md:w-72 glass-panel border-r border-gray-700/50 flex flex-col p-5 z-20 h-auto md:h-screen relative mobile-sidebar">
         <h1 class="text-3xl font-gamer font-bold text-transparent bg-clip-text bg-gradient-to-r from-neonOrange to-yellow-400 mb-8 tracking-wider drop-shadow-lg select-none">
             LinkMeet<span class="text-neonBlue">Craft</span>
         </h1>
@@ -155,7 +167,7 @@
         </nav>
 
         <!-- Мои Каналы -->
-        <div class="mt-auto pt-6 border-t border-gray-700">
+        <div class="mt-auto pt-6 border-t border-gray-700 hidden md:block">
             <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Сообщество</p>
             <div class="space-y-2">
                 <a href="https://t.me/LinkMeetCraft" target="_blank" class="block w-full p-2 rounded bg-[#2AABEE]/10 border border-[#2AABEE]/30 text-[#2AABEE] hover:bg-[#2AABEE]/20 hover:shadow-[0_0_10px_rgba(42,171,238,0.3)] transition-all flex items-center justify-center text-sm font-bold">
@@ -171,7 +183,7 @@
     </aside>
 
     <!-- Правая панель (Контент) -->
-    <main class="flex-1 relative overflow-hidden flex flex-col h-full bg-black/50 backdrop-blur-sm">
+    <main class="flex-1 relative overflow-hidden flex flex-col h-full bg-black/50 backdrop-blur-sm mobile-main">
         
         <!-- Уведомления -->
         <div id="toast" class="absolute top-4 right-4 bg-gray-800 border-l-4 border-neonBlue text-white px-6 py-4 rounded shadow-2xl transform translate-x-full transition-transform duration-300 z-50 flex items-center">
@@ -249,9 +261,10 @@
 
     <!-- СКРИПТ ПРИЛОЖЕНИЯ -->
     <script type="module">
+        // Добавлены 'where' и 'getDocs' для проверки уникальности
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, limit, onSnapshot, serverTimestamp, doc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, limit, onSnapshot, serverTimestamp, doc, setDoc, getDoc, deleteDoc, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         // --- ВАША РАБОЧАЯ КОНФИГУРАЦИЯ ---
         const firebaseConfig = {
@@ -273,9 +286,10 @@
         // --- ПУТИ ---
         const PATH_PROFILES = `/artifacts/${appId}/public/data/profiles`;
         const PATH_CHAT = `/artifacts/${appId}/public/data/chat`;
+        // Коллекция пользователей для хранения метаданных (ник, дата смены)
         const PATH_USERS = `/artifacts/${appId}/users`;
 
-        // --- ГЛОБАЛЬНОЕ УПРАВЛЕНИЕ ВИДАМИ (РЕШЕНИЕ ПРОБЛЕМЫ) ---
+        // --- ГЛОБАЛЬНОЕ УПРАВЛЕНИЕ ВИДАМИ ---
         window.app = {
             setView: (viewName) => {
                 // 1. Скрыть все секции контента
@@ -362,7 +376,8 @@
             document.body.appendChild(tempInput);
             tempInput.select();
             try {
-                document.execCommand('copy');
+                // Используем execCommand для совместимости с iFrame
+                document.execCommand('copy'); 
                 showToast("Скопировано в буфер!");
             } catch (err) {
                 showToast("Ошибка копирования");
@@ -402,7 +417,7 @@
             }
         }
 
-        // --- ОБРАБОТКА СМЕНЫ НИКА (30 ДНЕЙ) ---
+        // --- ОБРАБОТКА ВХОДА И СМЕНЫ НИКА (УНИКАЛЬНОСТЬ + 30 ДНЕЙ) ---
         async function handleLogin() {
             const nick = document.getElementById('nickname-input').value.trim();
             if(nick.length < 3) return showToast("Ник слишком короткий!");
@@ -413,6 +428,28 @@
                 }
                 
                 const uid = auth.currentUser.uid;
+
+                // --- 1. ПРОВЕРКА НА УНИКАЛЬНОСТЬ НИКА ---
+                const usersRef = collection(db, PATH_USERS);
+                const qUnique = query(usersRef, where("nickname", "==", nick));
+                const nickSnap = await getDocs(qUnique);
+                
+                if (!nickSnap.empty) {
+                    let isTaken = false;
+                    nickSnap.forEach(doc => {
+                        // Ник занят, если найден документ с этим ником, принадлежащий НЕ текущему пользователю
+                        if (doc.data().uid !== uid) {
+                            isTaken = true;
+                        }
+                    });
+                    
+                    if (isTaken) {
+                        return showToast(`Никнейм "${nick}" уже занят другим оператором.`);
+                    }
+                }
+                // --- КОНЕЦ ПРОВЕРКИ НА УНИКАЛЬНОСТЬ ---
+                
+                // --- 2. ПРОВЕРКА НА ТАЙМЕР 30 ДНЕЙ ---
                 const userRef = doc(db, PATH_USERS, uid);
                 const userSnap = await getDoc(userRef);
                 const now = Date.now();
@@ -422,19 +459,23 @@
                     const data = userSnap.data();
                     const currentDisplayName = auth.currentUser.displayName;
                     
+                    // Если ник не меняется, просто закрываем окно
                     if (currentDisplayName === nick) {
                          updateAuthUI(auth.currentUser);
                          cancelEditMode();
                          return;
                     }
 
+                    // Если ник другой, проверяем таймер
                     if (now - (data.lastChange || 0) < COOLDOWN) {
                          const daysLeft = Math.ceil((COOLDOWN - (now - (data.lastChange||0))) / (86400000));
                          return showToast(`Смена ника заблокирована. Ждать: ${daysLeft} д.`);
                     }
                 }
 
+                // --- 3. ОБНОВЛЕНИЕ ---
                 await updateProfile(auth.currentUser, { displayName: nick });
+                // Сохраняем ник и дату изменения
                 await setDoc(userRef, { nickname: nick, lastChange: now, uid }, { merge: true });
                 
                 updateAuthUI(auth.currentUser);
@@ -539,7 +580,6 @@
                 items.sort((a,b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
 
                 items.forEach(p => {
-                    // Используем currentUser для проверки владения
                     const isOwner = currentUser && p.uid === currentUser.uid;
                     const el = document.createElement('div');
                     el.className = `bg-gray-900/60 border ${isOwner ? 'border-neonOrange' : 'border-gray-700'} p-6 rounded-xl hover:bg-gray-800/60 transition-all duration-300 shadow-lg backdrop-blur-sm`;
@@ -614,10 +654,9 @@
             document.getElementById('chat-input').onkeypress = (e) => { if(e.key === 'Enter') sendMessage() };
             document.getElementById('create-form').onsubmit = createProfile;
 
-            // Привязка навигационных кнопок к новой функции setView
+            // Привязка навигационных кнопок к функции setView
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.onclick = () => {
-                    // Используем глобально определенный setView
                     window.app.setView(btn.dataset.view);
                 }
             });
