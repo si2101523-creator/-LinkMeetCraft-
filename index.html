@@ -229,7 +229,7 @@ if (userSnap.exists()) {
         canChange = false;
         // Если смена запрещена, но ник уже есть, просто используем его
         if(auth.currentUser.displayName && auth.currentUser.displayName !== nick) {
-            showToast(Вы используете текущий ник: ${auth.currentUser.displayName});
+            showToast(`Вы используете текущий ник: ${auth.currentUser.displayName}`);
             updateAuthUI(auth.currentUser);
             return;
         } else if (!auth.currentUser.displayName) {
@@ -238,7 +238,7 @@ if (userSnap.exists()) {
         }
         
         if (!canChange) {
-            showToast(Менять ник можно раз в месяц! Осталось: ${daysLeft} дней.);
+            showToast(`Менять ник можно раз в месяц! Осталось: ${daysLeft} дней.`);
         }
     }
 }
