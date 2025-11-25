@@ -81,7 +81,27 @@
         <div id="view-profiles" class="view-section h-full overflow-y-auto p-6">
             <h2 class="text-2xl font-bold text-white mb-4 border-b border-[#30363d] pb-2">Активные анкеты</h2>
             <div id="profiles-container" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div class="text-gray-500">Загрузка анкет...</div>
+                <!-- Статический заглушечный контент для режима без Firebase -->
+                <div class="text-gray-500 col-span-full text-center p-4">
+                    <p class="mb-2">Не удалось подключиться к базе данных. Отображаются тестовые данные.</p>
+                    <p class="text-sm">Попробуйте войти, чтобы увидеть, как работает интерфейс.</p>
+                </div>
+                <!-- Пример анкеты -->
+                <div class="bg-[#1f242d] p-4 rounded-xl border border-[#30363d] shadow-lg">
+                    <div class="font-bold text-orange-400 text-lg">Нужен Unity-разработчик для 2D-аркады</div>
+                    <div class="text-sm text-blue-300 mb-2">Ищет: Программист Unity/C#</div>
+                    <p class="text-gray-300 text-sm mb-3 whitespace-pre-wrap line-clamp-3">У нас есть концепт и арт, ищем того, кто сможет написать основную логику. Проект на энтузиазме. Стек: Unity, C#.</p>
+                    <div class="text-xs text-gray-500 border-t border-[#30363d] pt-2 flex flex-col sm:flex-row sm:justify-between sm:items-center mt-2 gap-2">
+                        <span class="font-medium text-gray-400">Автор: ТестовыйПользователь</span>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <button class="copy-link-btn text-xs text-white bg-green-600 hover:bg-green-700 px-3 py-1 rounded-full transition cursor-not-allowed opacity-50">
+                                🔗 Копировать ссылку
+                            </button>
+                            <span class="text-sm text-white bg-blue-700 px-3 py-1 rounded-full">@test_contact</span>
+                        </div>
+                    </div>
+                </div>
+                
             </div>
         </div>
 
@@ -89,7 +109,11 @@
         <div id="view-chat" class="view-section h-full flex flex-col p-4 hidden">
             <h2 class="text-xl font-bold text-white mb-2 border-b border-[#30363d] pb-2">Общий чат</h2>
             <div id="chat-container" class="flex-1 overflow-y-auto space-y-3 mb-4 pr-2">
-                <div class="text-center text-gray-600 mt-10">Загрузка сообщений...</div>
+                <!-- Статический заглушечный контент для режима без Firebase -->
+                <div class="text-center text-gray-600 mt-10">
+                    <p class="mb-2">Чат временно недоступен.</p>
+                    <p>Сообщения не будут отправлены, пока не восстановится соединение с Firebase.</p>
+                </div>
             </div>
             <div class="flex gap-2">
                 <input type="text" id="chat-input" placeholder="Напишите сообщение..." class="flex-1 bg-[#21262d] border border-[#30363d] rounded p-3 text-white focus:border-blue-500 outline-none">
@@ -141,7 +165,8 @@
                 // Автоскролл чата при открытии
                 if(viewId === 'chat') {
                     const container = document.getElementById('chat-container');
-                    setTimeout(() => container.scrollTop = container.scrollHeight, 100);
+                    // Даем время на рендеринг, затем скроллим
+                    setTimeout(() => container.scrollTop = container.scrollHeight, 100); 
                 }
             }
         };
@@ -149,14 +174,17 @@
         // Ловец ошибок, чтобы вы видели, если что-то пошло не так
         window.addEventListener('error', function(e) {
             const display = document.getElementById('error-display');
-            display.innerText = "КРИТИЧЕСКАЯ ОШИБКА: " + e.message + " (см. консоль для деталей)";
-            display.classList.remove('hidden');
+            if (!display.innerText.includes("ПРЕДУПРЕЖДЕНИЕ")) { // Не перезаписываем наше собственное предупреждение
+                 display.innerText = "КРИТИЧЕСКАЯ ОШИБКА: " + e.message + " (см. консоль для деталей)";
+                 display.classList.remove('hidden');
+            }
         });
     </script>
 
     <!-- СКРИПТ ПРИЛОЖЕНИЯ (Модуль) -->
     <script type="module">
         // ИМПОРТЫ FIREBASE
+        // Все импорты должны быть здесь, даже если не используются, чтобы не вызывать ошибку "Import outside module"
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -192,11 +220,6 @@
             firebaseApp = initializeApp(firebaseConfig);
             auth = getAuth(firebaseApp);
             db = getFirestore(firebaseApp);
-        } else {
-            // Отключаем кнопки, если Firebase не готов
-             document.getElementById('login-btn').classList.add('firebase-disabled');
-             document.getElementById('send-msg-btn').classList.add('firebase-disabled');
-             document.querySelector('.nav-btn[data-view="create"]').classList.add('firebase-disabled');
         }
 
         // --- ПУТИ К FIRESTORE ---
@@ -204,7 +227,7 @@
         const PATH_CHAT = `/artifacts/${appId}/public/data/chat`;
         const PATH_USERS = `/artifacts/${appId}/users`;
 
-        let currentUser = null;
+        let currentUser = null; // Будет содержать объект { uid, displayName }
 
         // --- ФУНКЦИИ ИНТЕРФЕЙСА ---
 
@@ -224,10 +247,19 @@
                 loginView.classList.add('hidden');
                 userView.classList.remove('hidden');
                 document.getElementById('current-nickname').innerText = user.displayName;
+                
+                // Включаем функциональные кнопки, если пользователь вошел (даже локально)
+                document.getElementById('send-msg-btn').classList.remove('firebase-disabled');
+                document.querySelector('.nav-btn[data-view="create"]').classList.remove('firebase-disabled');
+
             } else {
                 currentUser = null;
                 loginView.classList.remove('hidden');
                 userView.classList.add('hidden');
+
+                 // Отключаем кнопки, если пользователь не вошел
+                document.getElementById('send-msg-btn').classList.add('firebase-disabled');
+                document.querySelector('.nav-btn[data-view="create"]').classList.add('firebase-disabled');
             }
         }
         
@@ -249,59 +281,74 @@
         // --- ЛОГИКА АУТЕНТИФИКАЦИИ ---
 
         async function handleLogin() {
-            if (!isFirebaseReady) return showToast("Функции отключены из-за отсутствия ключа API.");
-            
             const nick = document.getElementById('nickname-input').value.trim();
             if(nick.length < 3) return showToast("Ник слишком короткий!");
             
-            try {
-                // Если не авторизован (или аноним), авторизуемся
-                if (!auth.currentUser) {
-                    await signInAnonymously(auth);
-                }
-                
-                // Проверка на смену ника (1 месяц)
-                const uid = auth.currentUser.uid;
-                const userRef = doc(db, PATH_USERS, uid);
-                const userSnap = await getDoc(userRef);
-                const now = Date.now();
+            if (isFirebaseReady) {
+                // *** РЕЖИМ FIREBASE (СИЛЬНЫЙ ВХОД) ***
+                try {
+                    if (!auth.currentUser) {
+                        await signInAnonymously(auth);
+                    }
+                    
+                    const uid = auth.currentUser.uid;
+                    const userRef = doc(db, PATH_USERS, uid);
+                    const userSnap = await getDoc(userRef);
+                    const now = Date.now();
 
-                let canChange = true;
-                if (userSnap.exists()) {
-                    const lastChange = userSnap.data().lastChange || 0;
-                    // 2592000000 мс = 30 дней
-                    if (now - lastChange < 2592000000) { 
-                        const daysLeft = Math.ceil((2592000000 - (now - lastChange)) / (1000 * 60 * 60 * 24));
-                        canChange = false;
-                        
-                        if (!canChange) {
+                    let canChange = true;
+                    if (userSnap.exists()) {
+                        const lastChange = userSnap.data().lastChange || 0;
+                        if (now - lastChange < 2592000000) { // 30 дней
+                            const daysLeft = Math.ceil((2592000000 - (now - lastChange)) / (1000 * 60 * 60 * 24));
+                            canChange = false;
                             showToast(`Менять ник можно раз в месяц! Осталось: ${daysLeft} дней.`);
                         }
                     }
-                }
-                
-                if (canChange) {
-                    await updateProfile(auth.currentUser, { displayName: nick });
-                    await setDoc(userRef, { nickname: nick, lastChange: now, uid: uid }, { merge: true });
-                }
-                
-                updateAuthUI(auth.currentUser);
-                showToast("Добро пожаловать, " + auth.currentUser.displayName);
-                
-                setupFirestoreListeners();
+                    
+                    if (canChange) {
+                        await updateProfile(auth.currentUser, { displayName: nick });
+                        await setDoc(userRef, { nickname: nick, lastChange: now, uid: uid }, { merge: true });
+                    }
+                    
+                    updateAuthUI(auth.currentUser);
+                    showToast("Добро пожаловать, " + auth.currentUser.displayName);
+                    setupFirestoreListeners();
 
-            } catch (e) {
-                console.error("Login error:", e);
-                showToast("Ошибка входа: " + e.message);
+                } catch (e) {
+                    console.error("Login error:", e);
+                    showToast("Ошибка входа: " + e.message);
+                }
+            } else {
+                 // *** РЕЖИМ ЛОКАЛЬНОГО ВХОДА (СЛАБЫЙ ВХОД) ***
+                const mockUser = {
+                    uid: 'mock-' + crypto.randomUUID(),
+                    displayName: nick
+                };
+                
+                localStorage.setItem('localNickname', nick);
+                localStorage.setItem('localUid', mockUser.uid);
+
+                updateAuthUI(mockUser);
+                showToast("Вы вошли локально. Онлайн-функции отключены.");
+                setupFirestoreListeners(); // Вызовет заглушки
             }
         }
 
         function handleLogout() {
-             document.getElementById('user-view').classList.add('hidden');
-             document.getElementById('login-view').classList.remove('hidden');
-             document.getElementById('nickname-input').value = currentUser ? currentUser.displayName : '';
+             localStorage.removeItem('localNickname');
+             localStorage.removeItem('localUid');
+             
+             // Если Firebase активен, просто сбрасываем UI (пользователь остается анонимным)
+             if (isFirebaseReady && auth.currentUser) {
+                // Для Firebase просто показываем форму ввода ника
+             }
+             
+             updateAuthUI(null);
+             document.getElementById('nickname-input').value = '';
         }
         
+        // Инициализация при загрузке: проверяем Firebase или Local Storage
         if (isFirebaseReady) {
             onAuthStateChanged(auth, (user) => {
                 if (user && user.uid) {
@@ -315,19 +362,35 @@
                      updateAuthUI(null);
                 }
             });
+        } else {
+             // Проверка локального входа, если Firebase неактивен
+             const localNick = localStorage.getItem('localNickname');
+             const localUid = localStorage.getItem('localUid');
+             if (localNick && localUid) {
+                 updateAuthUI({ uid: localUid, displayName: localNick });
+             } else {
+                 updateAuthUI(null);
+             }
         }
 
 
-        // --- ЧАТ ---
+        // --- ЧАТ (ЗАГЛУШКИ/ОНЛАЙН) ---
 
         async function sendMessage() {
-            if (!isFirebaseReady || !currentUser || !currentUser.displayName) return showToast("Функции отключены/Необходимо войти.");
+            if (!currentUser || !currentUser.displayName) return showToast("Необходимо войти.");
+
             const input = document.getElementById('chat-input');
             const text = input.value.trim();
             if (!text) return;
 
+            if (!isFirebaseReady) {
+                 showToast("Ошибка: Отправка сообщений отключена. Ключ API не загружен.");
+                 return;
+            }
+            
+            // Логика Firebase
             try {
-                input.value = ''; // Очистка сразу
+                input.value = ''; 
                 await addDoc(collection(db, PATH_CHAT), {
                     text: text,
                     author: currentUser.displayName,
@@ -335,16 +398,23 @@
                     createdAt: serverTimestamp()
                 });
             } catch (e) {
-                showToast("Ошибка отправки сообщения.");
-                input.value = text; // Возврат текста при ошибке
+                showToast("Ошибка отправки сообщения: " + e.message);
+                input.value = text; 
             }
         }
 
         function setupChatListener() {
-            if (!isFirebaseReady) return;
             const chatContainer = document.getElementById('chat-container');
+            if (!isFirebaseReady) {
+                chatContainer.innerHTML = `<div class="text-center text-red-400 mt-10">
+                    <p class="mb-2">Чат временно недоступен.</p>
+                    <p>Сообщения не будут отправлены/получены, пока не восстановится соединение с Firebase.</p>
+                </div>`;
+                return;
+            }
+            
+            // Логика Firebase
             const qChat = query(collection(db, PATH_CHAT), orderBy('createdAt', 'desc'), limit(50));
-
             const unsubscribeChat = onSnapshot(qChat, (snapshot) => {
                 chatContainer.innerHTML = '';
                 const msgs = [];
@@ -353,7 +423,9 @@
 
                 msgs.forEach(msg => {
                     const div = document.createElement('div');
-                    div.className = "bg-[#1f242d] p-2 rounded max-w-[80%]";
+                    // Добавляем класс для сообщений от текущего пользователя
+                    const isOwn = currentUser && msg.uid === currentUser.uid;
+                    div.className = `p-2 rounded max-w-[80%] ${isOwn ? 'bg-blue-900 ml-auto' : 'bg-[#1f242d] mr-auto'}`;
                     div.innerHTML = `<span class="text-blue-400 font-bold text-xs">${msg.author}</span>: <span class="text-gray-300">${msg.text}</span>`;
                     chatContainer.appendChild(div);
                 });
@@ -368,11 +440,16 @@
             return unsubscribeChat;
         }
 
-        // --- АНКЕТЫ ---
+        // --- АНКЕТЫ (ЗАГЛУШКИ/ОНЛАЙН) ---
 
         async function createProfile(e) {
             e.preventDefault();
-            if (!isFirebaseReady || !currentUser || !currentUser.displayName) return showToast("Функции отключены/Необходимо войти.");
+            if (!currentUser || !currentUser.displayName) return showToast("Необходимо войти.");
+
+            if (!isFirebaseReady) {
+                 showToast("Ошибка: Создание анкет отключено. Ключ API не загружен.");
+                 return;
+            }
 
             const title = document.getElementById('f-title').value.trim();
             const role = document.getElementById('f-role').value.trim();
@@ -395,13 +472,22 @@
                 window.app.setView('profiles');
             } catch (err) {
                 console.error("Create profile error:", err);
-                showToast("Ошибка создания анкеты.");
+                showToast("Ошибка создания анкеты: " + err.message);
             }
         }
 
         function setupProfilesListener() {
-            if (!isFirebaseReady) return;
             const profilesContainer = document.getElementById('profiles-container');
+            
+            if (!isFirebaseReady) {
+                // Если не готовы, оставляем статический контент, но очищаем старую надпись о загрузке
+                profilesContainer.querySelector('.text-gray-500').innerHTML = 
+                    `<p class="mb-2 text-red-400">Не удалось подключиться к базе данных. Отображаются тестовые данные.</p>
+                    <p class="text-sm">Чтобы увидеть реальные данные, необходимо восстановить соединение с Firebase.</p>`;
+                return;
+            }
+            
+            // Логика Firebase
             const qProfiles = query(collection(db, PATH_PROFILES), orderBy('createdAt', 'desc'), limit(20));
 
             const unsubscribeProfiles = onSnapshot(qProfiles, (snapshot) => {
@@ -451,13 +537,15 @@
         let unsubscribeListeners = [];
 
         function setupFirestoreListeners() {
-            if (!isFirebaseReady) return;
             unsubscribeListeners.forEach(unsub => unsub());
             unsubscribeListeners = [];
             
             if (currentUser && currentUser.displayName) {
-                 unsubscribeListeners.push(setupChatListener());
-                 unsubscribeListeners.push(setupProfilesListener());
+                 const chatUnsub = setupChatListener();
+                 if (chatUnsub) unsubscribeListeners.push(chatUnsub);
+                 
+                 const profilesUnsub = setupProfilesListener();
+                 if (profilesUnsub) unsubscribeListeners.push(profilesUnsub);
             }
         }
 
@@ -467,8 +555,8 @@
              // Навигационные кнопки
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    if (e.currentTarget.classList.contains('firebase-disabled')) {
-                         return showToast("Недоступно. Функции отключены из-за ошибки API.");
+                    if (e.currentTarget.classList.contains('firebase-disabled') && !currentUser) {
+                         return showToast("Недоступно. Войдите, чтобы использовать эту функцию.");
                     }
                     window.app.setView(btn.dataset.view);
                 });
@@ -481,7 +569,10 @@
             document.getElementById('logout-btn').addEventListener('click', handleLogout);
             
             // Кнопка Отправить сообщение
-            document.getElementById('send-msg-btn').addEventListener('click', sendMessage);
+            const sendMsgBtn = document.getElementById('send-msg-btn');
+            sendMsgBtn.addEventListener('click', sendMessage);
+            if (!isFirebaseReady) sendMsgBtn.classList.add('firebase-disabled'); // Остается disabled, пока не вошел (даже локально)
+
             document.getElementById('chat-input').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') sendMessage();
             });
@@ -490,6 +581,9 @@
             document.getElementById('create-form').addEventListener('submit', createProfile);
             
             window.app.setView('profiles');
+            
+            // Инициализация заглушек/данных
+            setupFirestoreListeners(); 
         });
     </script>
 </body>
