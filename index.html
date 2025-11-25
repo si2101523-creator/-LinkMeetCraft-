@@ -99,6 +99,8 @@
         let auth = null;
         let userId = null;
         let isAuthReady = false;
+        let isMockConfig = false; // Флаг для MOCK-режима
+        let currentMessages = []; // Локальное хранилище сообщений для MOCK-режима
 
         const authStatusEl = document.getElementById('auth-status');
         const userIdDisplayEl = document.getElementById('user-id-display');
@@ -114,7 +116,7 @@
             if (isAuthReady && userId) {
                 authStatusEl.textContent = 'Статус Auth: ✅ Подключено';
                 userIdDisplayEl.textContent = `ID Пользователя: ${userId}`;
-                dbStatusEl.textContent = 'Статус DB: ✅ Готово к работе';
+                dbStatusEl.textContent = isMockConfig ? 'Статус DB: ⚠️ MOCK: Локальная имитация.' : 'Статус DB: ✅ Готово к работе';
                 inputEl.disabled = false;
                 buttonEl.disabled = false;
                 errorEl.classList.add('hidden');
@@ -137,9 +139,7 @@
                 let configToUse = firebaseConfig;
 
                 if (!configToUse || Object.keys(configToUse).length === 0) {
-                    // Fix: The environment did not provide the Firebase configuration.
-                    // We log the error but proceed with a mock configuration to ensure the rest of the application
-                    // (UI, Auth flow listener) can initialize and be tested without a critical crash.
+                    // Активируем MOCK-режим
                     console.error("КРИТИЧЕСКАЯ ОШИБКА: Конфигурация Firebase отсутствует. Используется mock-конфигурация.");
                     configToUse = {
                         apiKey: "MOCK_KEY",
@@ -148,10 +148,12 @@
                         appId: "mock-app-id"
                     };
 
-                    // Update UI to show the error but allow it to continue
-                    authStatusEl.textContent = 'Статус Auth: ⚠️ Нет конфига (Ожидание входа)';
-                    dbStatusEl.textContent = 'Статус DB: ⚠️ Нет конфига (Ожидание Auth)';
-                    errorEl.textContent = `ВНИМАНИЕ! Конфигурация Firebase отсутствует. Инициализация продолжена с mock-настройками. Теперь проверьте "Статус Auth" ниже.`;
+                    isMockConfig = true; // Устанавливаем флаг MOCK-режима
+
+                    // Обновляем UI, чтобы показать предупреждение MOCK-режима
+                    authStatusEl.textContent = 'Статус Auth: ⚠️ MOCK (Ожидание входа)';
+                    dbStatusEl.textContent = 'Статус DB: ⚠️ MOCK (Ожидание Auth)';
+                    errorEl.textContent = `ВНИМАНИЕ! Конфигурация Firebase отсутствует. Инициализация продолжена в MOCK-режиме (нет записи/чтения в реальную БД).`;
                     errorEl.classList.remove('hidden');
                 }
 
@@ -210,6 +212,24 @@
                 dbStatusEl.textContent = 'Статус DB: Ожидание Auth...';
                 return;
             }
+            
+            if (isMockConfig) {
+                // Сценарий MOCK DATA: Обход реального подключения
+                dbStatusEl.textContent = 'Статус DB: ⚠️ MOCK: Локальная имитация данных.';
+                loadingTextEl.classList.add('hidden'); // Скрываем текст загрузки
+
+                // Инициализация сообщений-заглушек
+                if (currentMessages.length === 0) {
+                     currentMessages = [
+                        { id: 'm1', text: 'Привет! Это тестовое сообщение из MOCK-режима. Реальная база данных не подключена.', timestamp: new Date().toLocaleTimeString('ru-RU'), authorId: 'SYSTEM' },
+                        { id: 'm2', text: 'Чтобы проверить UI, введите сообщение и нажмите "Отправить".', timestamp: new Date().toLocaleTimeString('ru-RU'), authorId: userId },
+                    ];
+                }
+                
+                // Рендер текущих сообщений
+                renderMessages(currentMessages);
+                return; // Выход, не запускаем onSnapshot
+            }
 
             // Public collection path: /artifacts/{appId}/public/data/messages
             const messagesCollectionPath = `artifacts/${appId}/public/data/messages`;
@@ -256,6 +276,14 @@
          */
         function renderMessages(messages) {
             messageListEl.innerHTML = '';
+            
+            // Сортировка по времени (самые новые внизу для чата)
+            messages.sort((a, b) => {
+                const timeA = a.timestamp === 'Нет времени' ? 0 : new Date(`01/01/2000 ${a.timestamp}`).getTime();
+                const timeB = b.timestamp === 'Нет времени' ? 0 : new Date(`01/01/2000 ${b.timestamp}`).getTime();
+                return timeA - timeB; 
+            });
+
             if (messages.length === 0) {
                 messageListEl.innerHTML = '<p class="text-gray-500 italic">Пока нет сообщений. Отправьте первое!</p>';
                 return;
@@ -263,28 +291,50 @@
 
             messages.forEach(msg => {
                 const isMine = msg.authorId === userId;
-                const messageClass = isMine ? 'bg-indigo-200 text-indigo-900 self-end' : 'bg-white text-gray-800 self-start';
-                const alignmentClass = isMine ? 'justify-end' : 'justify-start';
+                // 'SYSTEM' - для системных сообщений в MOCK-режиме
+                const isSystem = msg.authorId === 'SYSTEM'; 
+
+                let messageClass = 'bg-white text-gray-800 self-start';
+                let alignmentClass = 'justify-start';
+
+                if (isMine) {
+                    messageClass = 'bg-indigo-600 text-white self-end';
+                    alignmentClass = 'justify-end';
+                } else if (isSystem) {
+                    messageClass = 'bg-gray-200 text-gray-700 self-center text-center';
+                    alignmentClass = 'justify-center';
+                } else {
+                    messageClass = 'bg-indigo-100 text-indigo-900 self-start';
+                    alignmentClass = 'justify-start';
+                }
+
 
                 const messageEl = document.createElement('div');
-                messageEl.className = `flex ${alignmentClass}`;
+                messageEl.className = `flex ${alignmentClass} w-full`;
+                
+                const content = isSystem ? 
+                    `<p class="text-xs italic">${msg.text}</p>` : 
+                    `<p class="font-medium">${msg.text}</p>
+                     <p class="text-xs mt-1 text-right opacity-70">
+                         ${msg.timestamp}
+                     </p>`;
+
                 messageEl.innerHTML = `
-                    <div class="max-w-[80%] rounded-xl px-4 py-2 my-1 shadow-sm ${messageClass}">
-                        <p class="font-medium">${msg.text}</p>
-                        <p class="text-xs mt-1 text-right opacity-70">
-                            ${msg.timestamp}
-                        </p>
+                    <div class="max-w-[80%] rounded-xl px-4 py-2 my-1 shadow-md ${messageClass}">
+                        ${content}
                     </div>
                 `;
                 messageListEl.appendChild(messageEl);
             });
+            // Прокручиваем вниз, чтобы видеть новые сообщения
+            messageListEl.scrollTop = messageListEl.scrollHeight; 
         }
 
         /**
-         * Sends a new message to Firestore.
+         * Sends a new message to Firestore (or local state in MOCK mode).
          */
         window.sendMessage = async function() {
-            if (!isAuthReady || !db || !userId) {
+            if (!isAuthReady || !userId) {
                 console.warn("Attempted to send message before Auth/DB was ready.");
                 return;
             }
@@ -294,7 +344,28 @@
 
             buttonEl.disabled = true;
             buttonEl.textContent = 'Отправка...';
+            
+            // Обработка записи в MOCK-режиме
+            if (isMockConfig) {
+                // Имитация успешной записи в локальное состояние
+                const newMessage = {
+                    id: crypto.randomUUID(), 
+                    text: messageText,
+                    timestamp: new Date().toLocaleTimeString('ru-RU'),
+                    authorId: userId
+                };
+                currentMessages.push(newMessage);
+                renderMessages(currentMessages); // Перерисовываем все сообщения
+                
+                inputEl.value = '';
+                buttonEl.disabled = false;
+                buttonEl.textContent = 'Отправить';
+                errorEl.classList.add('hidden');
+                dbStatusEl.textContent = 'Статус DB: ⚠️ MOCK: Сообщение добавлено локально.';
+                return;
+            }
 
+            // РЕАЛЬНАЯ ЛОГИКА ЗАПИСИ
             try {
                 const messagesCollectionPath = `artifacts/${appId}/public/data/messages`;
                 const messagesRef = collection(db, messagesCollectionPath);
@@ -302,14 +373,14 @@
                 await addDoc(messagesRef, {
                     text: messageText,
                     authorId: userId,
-                    timestamp: serverTimestamp() // Use serverTimestamp for reliable ordering
+                    timestamp: serverTimestamp()
                 });
 
                 inputEl.value = ''; // Clear input on success
                 errorEl.classList.add('hidden');
             } catch (e) {
                 console.error("Error writing document:", e);
-                errorEl.textContent = `Ошибка записи: ${e.message}.`;
+                errorEl.textContent = `Ошибка записи: ${e.message}. (Проверьте правила безопасности Firestore и консоль)`;
                 errorEl.classList.remove('hidden');
             } finally {
                 buttonEl.disabled = false;
