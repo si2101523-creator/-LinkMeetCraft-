@@ -93,7 +93,7 @@
 
         <!-- Экран: Чат -->
         <div id="view-chat" class="view-section h-full flex flex-col p-4 hidden">
-            <h2 class="text-xl font-bold text-white mb-2 border-b border-[#30363d] pb-2">Общий чат</h2>
+            <h2 class="xl font-bold text-white mb-2 border-b border-[#30363d] pb-2">Общий чат</h2>
             <div id="chat-container" class="flex-1 overflow-y-auto space-y-3 mb-4 pr-2">
                 <div class="text-center text-gray-600 mt-10">Ожидание сообщений...</div>
             </div>
@@ -413,7 +413,15 @@
                 const isOwn = currentUser && msg.uid === currentUser.uid;
                 div.className = `p-2 rounded max-w-[80%] ${isOwn ? 'bg-blue-900 ml-auto' : 'bg-[#1f242d] mr-auto'}`;
                 
-                const timeStr = msg.createdAt instanceof Date ? msg.createdAt.toLocaleTimeString() : new Date(msg.createdAt.seconds * 1000).toLocaleTimeString();
+                // В локальном режиме createdAt может быть объектом Date, а не Firebase Timestamp
+                let timeStr;
+                if (msg.createdAt instanceof Date) {
+                    timeStr = msg.createdAt.toLocaleTimeString();
+                } else if (msg.createdAt && msg.createdAt.seconds) {
+                    timeStr = new Date(msg.createdAt.seconds * 1000).toLocaleTimeString();
+                } else {
+                    timeStr = 'сейчас';
+                }
 
                 div.innerHTML = `<span class="text-blue-400 font-bold text-xs">${msg.author}</span> <span class="text-gray-500 text-xs ml-1">${timeStr}</span>: <span class="text-gray-300">${msg.text}</span>`;
                 chatContainer.appendChild(div);
@@ -486,7 +494,8 @@
                 }
             } else {
                  // Локальный режим: добавляем в массив
-                 localProfiles.unshift(profileData);
+                 // Добавляем в начало, чтобы новые анкеты были сверху
+                 localProfiles.unshift(profileData); 
                  setLocalData('lmc_profiles', localProfiles);
                  showToast("Анкета сохранена локально!");
                  setupProfilesListener(); // Обновляем список
@@ -562,9 +571,12 @@
                      showToast("Ошибка загрузки анкет. Проверьте правила безопасности.");
                 });
             } else {
-                // Локальный режим
+                // Локальный режим: сортировка данных, так как они не сортируются по серверному Timestamp
                 localProfiles = getLocalData('lmc_profiles', []);
+                // Сортировка по дате создания (новые сверху)
+                localProfiles.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                 renderProfiles(localProfiles);
+                
                 // Возвращаем пустую функцию для единообразия, подписки нет
                 return () => {};
             }
@@ -603,11 +615,14 @@
                     }
                 });
             } else {
-                 // Локальный режим: проверяем localStorage
+                 // ** ИСПРАВЛЕНИЕ: ЛОКАЛЬНЫЙ РЕЖИМ - УСТАНОВКА СОСТОЯНИЯ USER ПРИ ЗАГРУЗКЕ **
                  const localNick = localStorage.getItem('lmc_nick');
                  const localUid = localStorage.getItem('lmc_uid');
+                 
                  if (localNick && localUid) {
-                     updateAuthUI({ uid: localUid, displayName: localNick });
+                     // Устанавливаем mockUser в currentUser, чтобы кнопки работали
+                     const mockUser = { uid: localUid, displayName: localNick };
+                     updateAuthUI(mockUser);
                  } else {
                      updateAuthUI(null);
                  }
