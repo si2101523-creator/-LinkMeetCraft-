@@ -67,6 +67,7 @@
         .nav-btn {
             transition: all 0.3s ease;
             border-left: 3px solid transparent;
+            cursor: pointer; /* Явно указываем курсор */
         }
         .nav-btn:hover {
             background: linear-gradient(90deg, rgba(0, 243, 255, 0.1) 0%, transparent 100%);
@@ -80,10 +81,12 @@
             text-shadow: 0 0 8px rgba(255, 102, 0, 0.6);
         }
 
-        .firebase-disabled {
+        /* Класс для неактивных кнопок действий (но не навигации) */
+        .action-disabled {
             opacity: 0.5;
             cursor: not-allowed;
             filter: grayscale(100%);
+            pointer-events: none;
         }
         
         /* Анимация для статуса */
@@ -104,19 +107,19 @@
     <div id="error-display" class="hidden fixed top-0 left-0 w-full bg-red-600/90 backdrop-blur text-white p-4 z-[9999] font-bold text-center border-b-2 border-red-400"></div>
 
     <!-- Левая панель (Сайдбар) -->
-    <aside class="w-full md:w-72 glass-panel border-r border-gray-700/50 flex flex-col p-5 z-20 h-full md:h-auto">
-        <h1 class="text-3xl font-gamer font-bold text-transparent bg-clip-text bg-gradient-to-r from-neonOrange to-yellow-400 mb-8 tracking-wider drop-shadow-lg">
+    <aside class="w-full md:w-72 glass-panel border-r border-gray-700/50 flex flex-col p-5 z-20 h-full md:h-auto relative">
+        <h1 class="text-3xl font-gamer font-bold text-transparent bg-clip-text bg-gradient-to-r from-neonOrange to-yellow-400 mb-8 tracking-wider drop-shadow-lg select-none">
             LinkMeet<span class="text-neonBlue">Craft</span>
         </h1>
 
         <!-- Панель входа (Карточка Игрока) -->
-        <div id="auth-box" class="bg-black/40 p-4 rounded-xl border border-gray-700 mb-6 shadow-lg">
+        <div id="auth-box" class="bg-black/40 p-4 rounded-xl border border-gray-700 mb-6 shadow-lg transition-all duration-300">
             <!-- Если не вошел или меняет ник -->
             <div id="login-view">
                 <p class="text-sm text-neonBlue mb-2 font-bold uppercase tracking-widest" id="login-title">Идентификация</p>
                 <input type="text" id="nickname-input" placeholder="Введите Никнейм" class="w-full bg-gray-900/80 border border-gray-600 rounded p-2 text-white mb-3 focus:border-neonBlue focus:outline-none focus:shadow-neon-blue transition-all placeholder-gray-600 font-mono" maxlength="20">
-                <button data-action="login" id="login-btn" class="w-full bg-neonBlue/20 hover:bg-neonBlue/40 border border-neonBlue text-neonBlue font-bold py-2 rounded transition-all duration-300 hover:shadow-neon-blue uppercase text-sm">Сохранить</button>
-                <button id="cancel-edit-btn" class="w-full mt-2 text-gray-500 text-xs hover:text-white hidden">Отмена</button>
+                <button id="login-btn" class="w-full bg-neonBlue/20 hover:bg-neonBlue/40 border border-neonBlue text-neonBlue font-bold py-2 rounded transition-all duration-300 hover:shadow-neon-blue uppercase text-sm">Подключиться</button>
+                <button id="cancel-edit-btn" class="w-full mt-2 text-gray-500 text-xs hover:text-white hidden uppercase tracking-wider">Отмена</button>
             </div>
             <!-- Если вошел -->
             <div id="user-view" class="hidden">
@@ -131,7 +134,7 @@
                 </div>
                 <div class="h-px w-full bg-gray-700 my-2"></div>
                 <!-- Кнопка смены ника вместо выхода -->
-                <button id="edit-nick-btn" class="text-xs text-neonOrange hover:text-yellow-300 hover:underline w-full text-left flex items-center transition-colors">
+                <button id="edit-nick-btn" class="text-xs text-neonOrange hover:text-yellow-300 w-full text-left flex items-center transition-colors py-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                     Изменить ник (раз в 30 дней)
                 </button>
@@ -184,7 +187,6 @@
             </div>
             
             <div id="profiles-container" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Контент генерируется в JS -->
                 <div class="text-neonBlue col-span-full text-center p-10 border border-dashed border-gray-700 rounded-xl animate-pulse">
                     Загрузка данных...
                 </div>
@@ -202,12 +204,11 @@
             </div>
 
             <div id="chat-container" class="flex-1 overflow-y-auto space-y-3 mb-4 pr-2 custom-scrollbar bg-black/20 rounded-xl p-4 border border-gray-800">
-                <!-- Контент генерируется в JS -->
                 <div class="text-center text-gray-600 mt-10 font-mono">Загрузка сообщений...</div>
             </div>
             <div class="flex gap-3 bg-gray-900/80 p-3 rounded-xl border border-gray-700">
-                <input type="text" id="chat-input" placeholder="Отправить сообщение в эфир..." class="flex-1 bg-transparent border-none text-white focus:ring-0 placeholder-gray-600 outline-none">
-                <button data-action="send-msg" id="send-msg-btn" class="bg-gradient-to-r from-blue-600 to-neonBlue hover:from-blue-500 hover:to-cyan-300 text-black font-bold py-2 px-6 rounded-lg transition-all duration-200 shadow-neon-blue firebase-disabled">SEND</button>
+                <input type="text" id="chat-input" placeholder="Отправить сообщение в эфир..." class="flex-1 bg-transparent border-none text-white focus:ring-0 placeholder-gray-600 outline-none" disabled>
+                <button id="send-msg-btn" class="bg-gradient-to-r from-blue-600 to-neonBlue hover:from-blue-500 hover:to-cyan-300 text-black font-bold py-2 px-6 rounded-lg transition-all duration-200 shadow-neon-blue action-disabled">SEND</button>
             </div>
         </div>
 
@@ -215,7 +216,7 @@
         <div id="view-create" class="view-section h-full overflow-y-auto p-6 hidden custom-scrollbar">
             <h2 class="text-3xl font-gamer font-bold text-white mb-6">Новая <span class="text-neonOrange">Миссия</span></h2>
             <div class="bg-gray-900/80 border border-gray-700 p-8 rounded-2xl shadow-2xl max-w-3xl mx-auto">
-                <form data-action="create-profile" id="create-form" class="space-y-6">
+                <form id="create-form" class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-neonBlue text-sm font-bold mb-2 uppercase tracking-wide">Название проекта / Цель</label>
@@ -237,7 +238,7 @@
                             <input type="text" id="f-contact" required class="w-full bg-black/50 border border-gray-600 rounded-r p-3 text-white focus:border-neonOrange focus:outline-none focus:shadow-neon-orange transition-all" placeholder="username">
                         </div>
                     </div>
-                    <button type="submit" id="create-submit-btn" class="w-full bg-gradient-to-r from-orange-600 to-neonOrange hover:from-orange-500 hover:to-yellow-500 text-black font-bold py-4 rounded-lg mt-4 transition-all duration-200 shadow-neon-orange text-lg uppercase tracking-widest firebase-disabled">
+                    <button type="submit" id="create-submit-btn" class="w-full bg-gradient-to-r from-orange-600 to-neonOrange hover:from-orange-500 hover:to-yellow-500 text-black font-bold py-4 rounded-lg mt-4 transition-all duration-200 shadow-neon-orange text-lg uppercase tracking-widest action-disabled" disabled>
                         Опубликовать Анкету
                     </button>
                 </form>
@@ -283,10 +284,30 @@
             setTimeout(() => toast.style.transform = 'translateX(120%)', 4000);
         }
 
+        // Функция управления состоянием кнопок действий
+        function updateActionButtons(enabled) {
+            const btns = [
+                document.getElementById('send-msg-btn'),
+                document.getElementById('create-submit-btn')
+            ];
+            const inputs = [
+                document.getElementById('chat-input')
+            ];
+            
+            btns.forEach(btn => {
+                btn.disabled = !enabled;
+                if (enabled) btn.classList.remove('action-disabled');
+                else btn.classList.add('action-disabled');
+            });
+            
+            inputs.forEach(input => {
+                input.disabled = !enabled;
+            });
+        }
+
         function updateAuthUI(user) {
             const loginView = document.getElementById('login-view');
             const userView = document.getElementById('user-view');
-            const disableEls = document.querySelectorAll('.firebase-disabled');
             
             if (user && user.displayName) {
                 currentUser = user;
@@ -294,20 +315,12 @@
                 userView.classList.remove('hidden');
                 document.getElementById('current-nickname').innerText = user.displayName;
                 document.getElementById('avatar-letter').innerText = user.displayName.charAt(0).toUpperCase();
-                
-                disableEls.forEach(el => {
-                    el.classList.remove('firebase-disabled');
-                    el.disabled = false;
-                });
+                updateActionButtons(true);
             } else {
                 currentUser = null;
                 loginView.classList.remove('hidden');
                 userView.classList.add('hidden');
-
-                disableEls.forEach(el => {
-                    el.classList.add('firebase-disabled');
-                    el.disabled = true;
-                });
+                updateActionButtons(false);
             }
         }
 
@@ -335,15 +348,18 @@
                 isFirebaseReady = true;
 
                 onAuthStateChanged(auth, (user) => {
-                    if (user && user.uid) {
+                    if (user) {
+                        // Если пользователь есть, но нет имени (например, после первого анонимного входа)
                         if (user.displayName) {
                             updateAuthUI(user);
                             setupListeners();
                         } else {
-                            updateAuthUI(null); 
-                            setupProfilesListener(); 
+                            updateAuthUI(null); // Показываем форму входа
+                            setupProfilesListener(); // Анкеты все равно грузим
                         }
                     } else {
+                        // Пытаемся войти анонимно сразу при загрузке, чтобы подготовить сессию
+                        signInAnonymously(auth).catch(e => console.log("Anon auth pending user interaction"));
                         updateAuthUI(null); 
                         setupProfilesListener();
                     }
@@ -379,9 +395,7 @@
                     // Если пользователь пытается поставить тот же ник, что и сейчас - разрешаем (это не смена)
                     if (currentDisplayName === nick) {
                          updateAuthUI(auth.currentUser);
-                         // Выходим из режима редактирования
-                         document.getElementById('login-view').classList.add('hidden');
-                         document.getElementById('user-view').classList.remove('hidden');
+                         cancelEditMode();
                          return;
                     }
 
@@ -397,6 +411,7 @@
                 await setDoc(userRef, { nickname: nick, lastChange: now, uid }, { merge: true });
                 
                 updateAuthUI(auth.currentUser);
+                cancelEditMode(); // Возвращаем вид карточки
                 showToast(`Добро пожаловать, ${nick}!`);
                 setupListeners();
 
@@ -415,11 +430,11 @@
         }
 
         function cancelEditMode() {
-             if (currentUser) {
+             if (currentUser && currentUser.displayName) {
                 updateAuthUI(currentUser); // Возвращаем вид пользователя
-                document.getElementById('cancel-edit-btn').classList.add('hidden');
-                document.getElementById('login-title').textContent = "ИДЕНТИФИКАЦИЯ";
              }
+             document.getElementById('cancel-edit-btn').classList.add('hidden');
+             document.getElementById('login-title').textContent = "ИДЕНТИФИКАЦИЯ";
         }
 
         // --- ЧАТ ---
@@ -547,25 +562,33 @@
             
             setupProfilesListener();
         }
-
-        // Привязка событий
-        document.getElementById('login-btn').onclick = handleLogin;
-        document.getElementById('edit-nick-btn').onclick = enableEditMode;
-        document.getElementById('cancel-edit-btn').onclick = cancelEditMode;
         
-        document.getElementById('send-msg-btn').onclick = sendMessage;
-        document.getElementById('chat-input').onkeypress = (e) => { if(e.key === 'Enter') sendMessage() };
-        document.getElementById('create-form').onsubmit = createProfile;
+        // --- ГЛОБАЛЬНЫЕ ОБРАБОТЧИКИ ---
+        // Важно: выносим функции на глобальный уровень window для кнопок
+        window.handleLogin = handleLogin;
+        window.enableEditMode = enableEditMode;
+        window.cancelEditMode = cancelEditMode;
+        window.sendMessage = sendMessage;
+        window.createProfile = createProfile;
 
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.onclick = () => {
-                if(btn.classList.contains('firebase-disabled')) return;
-                window.app.setView(btn.dataset.view);
-            }
-        });
+        // Привязка событий (гарантируем после загрузки DOM)
+        window.onload = () => {
+            init();
 
-        // Запуск
-        init();
+            document.getElementById('login-btn').onclick = handleLogin;
+            document.getElementById('edit-nick-btn').onclick = enableEditMode;
+            document.getElementById('cancel-edit-btn').onclick = cancelEditMode;
+            
+            document.getElementById('send-msg-btn').onclick = sendMessage;
+            document.getElementById('chat-input').onkeypress = (e) => { if(e.key === 'Enter') sendMessage() };
+            document.getElementById('create-form').onsubmit = createProfile;
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.onclick = () => {
+                    window.app.setView(btn.dataset.view);
+                }
+            });
+        };
     </script>
 </body>
 </html>
