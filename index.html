@@ -93,6 +93,9 @@
 
         // Global variables provided by the Canvas environment
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        // Здесь происходит автоматический "обмен ключами":
+        // __firebase_config - это глобальная переменная, которая будет содержать вашу реальную конфигурацию
+        // если вы ее предоставите в настройках проекта.
         const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
@@ -139,7 +142,8 @@
             try {
                 let configToUse = firebaseConfig;
 
-                if (!configToUse || Object.keys(configToUse).length === 0) {
+                // Проверка: пуста ли реальная конфигурация?
+                if (Object.keys(firebaseConfig).length === 0) {
                     // Активируем MOCK-режим
                     // Используем минимальные MOCK-значения для инициализации, когда нет реальной конфигурации.
                     configToUse = { apiKey: "MOCK_KEY", authDomain: "mock.com", projectId: "mock", appId: "mock" };
@@ -335,7 +339,7 @@
         }
 
         /**
-         * Sends a new message to Firestore (or local state in MOCK mode).
+         * Sends a new message to Firestore (или local state in MOCK mode).
          */
         window.sendMessage = async function() {
             if (!isAuthReady || !userId) {
