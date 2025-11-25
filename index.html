@@ -141,13 +141,8 @@
 
                 if (!configToUse || Object.keys(configToUse).length === 0) {
                     // Активируем MOCK-режим
-                    console.error("КРИТИЧЕСКАЯ ОШИБКА: Конфигурация Firebase отсутствует. Используется mock-конфигурация.");
-                    configToUse = {
-                        apiKey: "MOCK_KEY",
-                        authDomain: "mock-auth.firebaseapp.com",
-                        projectId: "mock-project-id",
-                        appId: "mock-app-id"
-                    };
+                    // Используем минимальные MOCK-значения для инициализации, когда нет реальной конфигурации.
+                    configToUse = { apiKey: "MOCK_KEY", authDomain: "mock.com", projectId: "mock", appId: "mock" };
                     isMockConfig = true; // Устанавливаем флаг MOCK-режима
                     
                     // Обновляем UI, чтобы показать предупреждение MOCK-режима
