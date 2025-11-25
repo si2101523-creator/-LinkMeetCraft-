@@ -51,10 +51,6 @@
                 <div id="db-status" class="font-medium text-gray-600">
                     Статус DB: Ожидание инициализации...
                 </div>
-                <!-- Кнопка очистки MOCK-данных -->
-                <button onclick="window.clearMockData()" class="text-xs text-red-500 hover:text-red-700 font-medium transition duration-150">
-                    Очистить локальные MOCK-данные
-                </button>
             </div>
 
             <!-- Форма для подачи заявки -->
@@ -120,10 +116,10 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, addDoc, onSnapshot, collection, query, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // IMPORTANT: Enable debug logging for Firebase
+        // ВАЖНО: Включить отладку для Firebase
         setLogLevel('Debug');
 
-        // Global variables provided by the Canvas environment
+        // Глобальные переменные, предоставляемые средой Canvas
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
@@ -164,7 +160,6 @@
                 const storedData = localStorage.getItem(MOCK_STORAGE_KEY);
                 if (storedData) {
                     const data = JSON.parse(storedData);
-                    // Убеждаемся, что мы не возвращаем пустой массив, если он был сохранен
                     if (data.length > 0) return data;
                 }
             } catch (e) {
@@ -185,23 +180,11 @@
                 console.error("Error saving mock data to localStorage:", e);
             }
         }
-        
-        /** Очищает MOCK-данные из localStorage и перезагружает список. */
-        window.clearMockData = function() {
-            if (isMockConfig) {
-                localStorage.removeItem(MOCK_STORAGE_KEY);
-                mockTeammates = loadMockData(); // Перезагружаем данные по умолчанию
-                renderTeammates(mockTeammates);
-                showMessage("Локальные MOCK-данные удалены. Загружены данные по умолчанию.", 'info');
-            } else {
-                showMessage("Очистка MOCK-данных не требуется, вы работаете с реальной БД.", 'info');
-            }
-        }
         // --- Конец MOCK Persistence Functions ---
 
         // --- UI Feedback Functions ---
 
-        /** Shows transient message feedback (success/error/info) */
+        /** Показывает временное сообщение обратной связи (успех/ошибка/информация) */
         function showMessage(text, type = 'info') {
             messageAreaEl.textContent = text;
             messageAreaEl.classList.remove('text-green-600', 'text-red-600', 'text-gray-600');
@@ -215,12 +198,12 @@
             setTimeout(() => { messageAreaEl.textContent = ''; }, 5000);
         }
 
-        /** Clears the form fields */
+        /** Очищает поля формы */
         function clearForm() {
             formEl.reset();
         }
 
-        /** Disables/Enables form elements based on auth status */
+        /** Отключает/включает элементы формы в зависимости от статуса аутентификации */
         function updateFormState(enabled) {
             [nameInput, roleInput, experienceInput, contactInput, aboutInput, submitBtn].forEach(el => {
                 el.disabled = !enabled;
@@ -248,25 +231,26 @@
         }
 
         /**
-         * Initializes Firebase and sets up the authentication listener.
+         * Инициализирует Firebase и настраивает прослушиватель аутентификации.
          */
         function initializeFirebase() {
             try {
                 let configToUse = firebaseConfig;
 
-                // 1. Check for MOCK Configuration
+                // 1. Проверка конфигурации MOCK/REAL
                 if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.projectId) {
+                    // Если конфиг пуст, переходим в MOCK-режим для стабильности
                     configToUse = { apiKey: "MOCK_KEY", authDomain: "mock.com", projectId: "mock", appId: "mock" };
                     isMockConfig = true; 
-                    showMessage(`ВНИМАНИЕ! Конфигурация Firebase отсутствует. Инициализация в MOCK-режиме (нет записи/чтения в реальную БД).`, 'info');
+                    showMessage(`ВНИМАНИЕ! Конфигурация Firebase отсутствует. Инициализация в MOCK-режиме (локальное хранилище).`, 'info');
                 }
 
-                // Initialize App, Auth, and Firestore
+                // Инициализация App, Auth и Firestore
                 const app = initializeApp(configToUse);
                 auth = getAuth(app);
                 db = getFirestore(app);
 
-                // 2. Handle MOCK Mode (bypasses Auth listeners)
+                // 2. Обработка MOCK-режима
                 if (isMockConfig) {
                     userId = 'MOCK_USER_' + crypto.randomUUID();
                     isAuthReady = true;
@@ -275,7 +259,7 @@
                     return; 
                 }
 
-                // 3. Real Firebase Setup (runs only if NOT MOCK mode)
+                // 3. Реальная настройка Firebase (запускается, только если НЕ MOCK)
                 dbStatusEl.textContent = 'Статус DB: Инициализация Firestore...';
 
                 onAuthStateChanged(auth, async (user) => {
@@ -312,8 +296,8 @@
         }
 
         /**
-         * Renders the fetched teammates to the UI.
-         * @param {Array} teammates - List of teammate objects.
+         * Отображает полученные заявки в пользовательском интерфейсе.
+         * @param {Array} teammates - Список объектов заявок.
          */
         function renderTeammates(teammates) {
             teammateListEl.innerHTML = '';
@@ -360,7 +344,7 @@
 
 
         /**
-         * Sets up the real-time Firestore listener for teammates.
+         * Настраивает прослушиватель Firestore в реальном времени.
          */
         function setupFirestoreListener() {
             if (!db || !userId) {
@@ -369,6 +353,7 @@
             }
             
             const collectionName = 'teammates';
+            // Используем публичный путь для обмена данными между всеми пользователями
             const publicCollectionPath = `artifacts/${appId}/public/data/${collectionName}`;
 
             if (isMockConfig) {
@@ -378,7 +363,7 @@
                 // 1. Загружаем данные из localStorage
                 mockTeammates = loadMockData();
                 
-                // 2. Добавляем карточку-заполнитель для текущего пользователя (если он еще не отправил свою заявку)
+                // 2. Добавляем карточку-заполнитель для текущего пользователя
                 const isUserListed = mockTeammates.some(t => t.userId === userId);
                 if (!isUserListed) {
                     mockTeammates.push({ 
@@ -401,6 +386,7 @@
 
             dbStatusEl.textContent = 'Статус DB: Подключение к заявкам...';
 
+            // onSnapshot для получения данных в реальном времени
             onSnapshot(teammatesQuery, (snapshot) => {
                 dbStatusEl.textContent = `Статус DB: ✅ Подключено к ${publicCollectionPath}`;
 
@@ -428,7 +414,7 @@
         }
         
         /**
-         * Sends a new teammate submission to Firestore (or local state in MOCK mode).
+         * Отправляет новую заявку в Firestore (или в локальное состояние в режиме MOCK).
          */
         window.submitForm = async function(event) {
             if (event) event.preventDefault();
@@ -455,7 +441,7 @@
             submitBtn.disabled = true;
             submitBtn.textContent = 'Публикация...';
             
-            // MOCK LOGIC (Теперь использует localStorage)
+            // ЛОГИКА MOCK (Использует localStorage)
             if (isMockConfig) {
                  const newTeammate = {
                     name: name,
@@ -485,7 +471,7 @@
                 return;
             }
 
-            // РЕАЛЬНАЯ ЛОГИКА ЗАПИСИ
+            // РЕАЛЬНАЯ ЛОГИКА ЗАПИСИ (Cloud Firestore)
             try {
                 const collectionName = 'teammates';
                 const publicCollectionPath = `artifacts/${appId}/public/data/${collectionName}`;
@@ -516,7 +502,7 @@
         }
 
 
-        // Initialize the application on window load
+        // Инициализация приложения при загрузке окна
         window.onload = initializeFirebase;
     </script>
 </body>
