@@ -149,9 +149,9 @@
                     };
 
                     // Update UI to show the error but allow it to continue
-                    authStatusEl.textContent = 'Статус Auth: ⚠️ Нет конфига';
-                    dbStatusEl.textContent = 'Статус DB: ⚠️ Нет конфига';
-                    errorEl.textContent = `Внимание! Отсутствует конфигурация Firebase. Используется mock-настройка для продолжения.`;
+                    authStatusEl.textContent = 'Статус Auth: ⚠️ Нет конфига (Ожидание входа)';
+                    dbStatusEl.textContent = 'Статус DB: ⚠️ Нет конфига (Ожидание Auth)';
+                    errorEl.textContent = `ВНИМАНИЕ! Конфигурация Firebase отсутствует. Инициализация продолжена с mock-настройками. Теперь проверьте "Статус Auth" ниже.`;
                     errorEl.classList.remove('hidden');
                 }
 
