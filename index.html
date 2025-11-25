@@ -134,12 +134,29 @@
          */
         function initializeFirebase() {
             try {
-                if (!firebaseConfig || Object.keys(firebaseConfig).length === 0) {
-                    throw new Error("Firebase configuration is missing or empty.");
+                let configToUse = firebaseConfig;
+
+                if (!configToUse || Object.keys(configToUse).length === 0) {
+                    // Fix: The environment did not provide the Firebase configuration.
+                    // We log the error but proceed with a mock configuration to ensure the rest of the application
+                    // (UI, Auth flow listener) can initialize and be tested without a critical crash.
+                    console.error("КРИТИЧЕСКАЯ ОШИБКА: Конфигурация Firebase отсутствует. Используется mock-конфигурация.");
+                    configToUse = {
+                        apiKey: "MOCK_KEY",
+                        authDomain: "mock-auth.firebaseapp.com",
+                        projectId: "mock-project-id",
+                        appId: "mock-app-id"
+                    };
+
+                    // Update UI to show the error but allow it to continue
+                    authStatusEl.textContent = 'Статус Auth: ⚠️ Нет конфига';
+                    dbStatusEl.textContent = 'Статус DB: ⚠️ Нет конфига';
+                    errorEl.textContent = `Внимание! Отсутствует конфигурация Firebase. Используется mock-настройка для продолжения.`;
+                    errorEl.classList.remove('hidden');
                 }
 
                 // Initialize App, Auth, and Firestore
-                const app = initializeApp(firebaseConfig);
+                const app = initializeApp(configToUse);
                 auth = getAuth(app);
                 db = getFirestore(app);
 
