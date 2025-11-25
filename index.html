@@ -3,123 +3,254 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Link Meet Craft: Поиск Команды</title>
-    <!-- Tailwind CSS CDN -->
+    <title>LinkMeetCraft - Gamer Hub</title>
+    <!-- Подключение Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Шрифт Orbitron для геймерского стиля -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'gamer': ['Orbitron', 'sans-serif'],
+                        'ui': ['Rajdhani', 'sans-serif'],
+                    },
+                    colors: {
+                        neonBlue: '#00f3ff',
+                        neonOrange: '#ff6600',
+                        darkBg: '#0b0d17',
+                        panelBg: 'rgba(20, 24, 36, 0.85)',
+                    },
+                    boxShadow: {
+                        'neon-blue': '0 0 10px rgba(0, 243, 255, 0.5)',
+                        'neon-orange': '0 0 10px rgba(255, 102, 0, 0.5)',
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        /* Убедимся, что приложение выглядит хорошо на любом устройстве */
-        .app-container {
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 1rem;
-            background-color: #f7f9fb;
+        body {
+            background-image: url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop'); /* Геймерский фон */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: #e6edf3;
+            overflow: hidden;
         }
-        /* Стили для списка товарищей по команде */
-        #teammate-list {
-            max-height: 400px;
-            overflow-y: auto;
-            min-height: 150px;
+        /* Затемнение фона */
+        .bg-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 5, 10, 0.85);
+            backdrop-filter: blur(3px);
+            z-index: -1;
         }
-        /* Стили для заголовков форм */
-        input:disabled, textarea:disabled, button:disabled {
+        
+        /* Скроллбары */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0b0d17; }
+        ::-webkit-scrollbar-thumb { background: #00f3ff; border-radius: 3px; }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 243, 255, 0.1);
+        }
+
+        .nav-btn {
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+        .nav-btn:hover {
+            background: linear-gradient(90deg, rgba(0, 243, 255, 0.1) 0%, transparent 100%);
+            border-left-color: #00f3ff;
+            color: #00f3ff;
+        }
+        .nav-btn.active {
+            background: linear-gradient(90deg, rgba(255, 102, 0, 0.2) 0%, transparent 100%);
+            border-left-color: #ff6600;
+            color: #ff6600;
+            text-shadow: 0 0 8px rgba(255, 102, 0, 0.6);
+        }
+
+        .firebase-disabled {
+            opacity: 0.5;
             cursor: not-allowed;
-            opacity: 0.7;
-            background-color: #f3f4f6;
+            filter: grayscale(100%);
+        }
+        
+        /* Анимация для статуса */
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 0 0 rgba(0, 243, 255, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 243, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 243, 255, 0); }
+        }
+        .status-dot {
+            animation: pulse-glow 2s infinite;
         }
     </style>
 </head>
-<body>
-    <div class="app-container">
-        <div id="app" class="bg-white p-6 md:p-10 rounded-xl shadow-2xl w-full max-w-2xl space-y-8">
-            <h1 class="text-4xl font-extrabold text-center text-indigo-700">
-                Link Meet Craft 🚀
-            </h1>
-            <p class="text-base text-gray-600 text-center">
-                Найдите идеального товарища по команде для вашего следующего проекта.
-            </p>
+<body class="flex flex-col md:flex-row h-screen font-ui text-lg">
+    <div class="bg-overlay"></div>
 
-            <!-- Блок Статуса и ID (для отладки) -->
-            <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-200 space-y-2 text-sm">
-                <div id="auth-status" class="font-semibold text-yellow-800">
-                    Статус Auth: Загрузка...
-                </div>
-                <div id="user-id-display" class="font-mono text-gray-700 break-all text-xs">
-                    ID Пользователя: Ожидание...
-                </div>
-                <div id="db-status" class="font-medium text-gray-600">
-                    Статус DB: Подключение...
-                </div>
+    <!-- БЛОК ОТОБРАЖЕНИЯ КРИТИЧЕСКИХ ОШИБОК -->
+    <div id="error-display" class="hidden fixed top-0 left-0 w-full bg-red-600/90 backdrop-blur text-white p-4 z-[9999] font-bold text-center border-b-2 border-red-400"></div>
+
+    <!-- Левая панель (Сайдбар) -->
+    <aside class="w-full md:w-72 glass-panel border-r border-gray-700/50 flex flex-col p-5 z-20 h-full md:h-auto">
+        <h1 class="text-3xl font-gamer font-bold text-transparent bg-clip-text bg-gradient-to-r from-neonOrange to-yellow-400 mb-8 tracking-wider drop-shadow-lg">
+            LinkMeet<span class="text-neonBlue">Craft</span>
+        </h1>
+
+        <!-- Панель входа (Карточка Игрока) -->
+        <div id="auth-box" class="bg-black/40 p-4 rounded-xl border border-gray-700 mb-6 shadow-lg">
+            <!-- Если не вошел -->
+            <div id="login-view">
+                <p class="text-sm text-neonBlue mb-2 font-bold uppercase tracking-widest">Идентификация</p>
+                <input type="text" id="nickname-input" placeholder="Введите Никнейм" class="w-full bg-gray-900/80 border border-gray-600 rounded p-2 text-white mb-3 focus:border-neonBlue focus:outline-none focus:shadow-neon-blue transition-all placeholder-gray-600 font-mono" maxlength="20">
+                <button data-action="login" id="login-btn" class="w-full bg-neonBlue/20 hover:bg-neonBlue/40 border border-neonBlue text-neonBlue font-bold py-2 rounded transition-all duration-300 hover:shadow-neon-blue uppercase text-sm">Подключиться</button>
             </div>
-
-            <!-- Форма для подачи заявки -->
-            <form id="teammate-form" class="space-y-4" onsubmit="submitForm(event)">
-                <h2 class="text-2xl font-bold text-gray-700">
-                    Опубликовать свою заявку
-                </h2>
-                <div>
-                    <label for="name" class="block text-sm font-medium text-gray-700">Ваше Имя / Ник <span class="text-red-500">*</span></label>
-                    <input type="text" id="name" required placeholder="Например: Иван"
-                           class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" disabled>
+            <!-- Если вошел -->
+            <div id="user-view" class="hidden">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-neonOrange to-red-600 flex items-center justify-center text-white font-bold text-xl shadow-neon-orange">
+                        <span id="avatar-letter">U</span>
+                    </div>
+                    <div>
+                        <div class="text-gray-400 text-xs uppercase tracking-wider">Оператор</div>
+                        <div id="current-nickname" class="text-white font-bold text-lg tracking-wide">User</div>
+                    </div>
                 </div>
-
-                <div>
-                    <label for="role" class="block text-sm font-medium text-gray-700">Роль в Команде (что вы делаете) <span class="text-red-500">*</span></label>
-                    <input type="text" id="role" required placeholder="Например: Фронтенд-разработчик / Дизайнер / Менеджер"
-                           class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" disabled>
-                </div>
-
-                <div>
-                    <label for="experience" class="block text-sm font-medium text-gray-700">Опыт (ключевые навыки)</label>
-                    <textarea id="experience" rows="2" placeholder="Например: React, Tailwind, Figma, 3 года в геймдеве"
-                              class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" disabled></textarea>
-                </div>
-                
-                <div>
-                    <label for="contact" class="block text-sm font-medium text-gray-700">Контакт (Telegram, Email, Discord) <span class="text-red-500">*</span></label>
-                    <input type="text" id="contact" required placeholder="Ваш @nickname или email для связи"
-                           class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" disabled>
-                </div>
-
-                <div>
-                    <label for="about" class="block text-sm font-medium text-gray-700">О себе / Что ищете</label>
-                    <textarea id="about" rows="3" placeholder="Кратко расскажите о себе и о том, какой проект вы хотите найти или создать."
-                              class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" disabled></textarea>
-                </div>
-                
-                <button type="submit" id="submit-btn" 
-                        class="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold hover:bg-indigo-700 transition duration-150 ease-in-out shadow-md disabled:bg-indigo-400" disabled>
-                    Опубликовать Заявку
+                <div class="h-px w-full bg-gray-700 my-2"></div>
+                <button data-action="logout" id="logout-btn" class="text-xs text-red-400 hover:text-red-300 hover:underline w-full text-left flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                    Сменить аккаунт
                 </button>
-                <p id="message-area" class="text-center text-sm font-medium"></p>
-            </form>
+            </div>
+        </div>
 
+        <!-- Навигация -->
+        <nav id="main-nav" class="flex-1 space-y-3">
+            <button data-view="profiles" class="nav-btn active w-full text-left p-3 rounded text-gray-300 flex items-center">
+                <span class="mr-3 text-xl">📄</span> Анкеты
+            </button>
+            <button data-view="chat" class="nav-btn w-full text-left p-3 rounded text-gray-300 flex items-center">
+                <span class="mr-3 text-xl">💬</span> Общий чат
+            </button>
+            <button data-view="create" class="nav-btn w-full text-left p-3 rounded text-gray-300 flex items-center">
+                <span class="mr-3 text-xl">➕</span> Создать анкету
+            </button>
+        </nav>
 
-            <!-- Список доступных товарищей по команде -->
-            <div class="space-y-3 pt-6 border-t border-gray-200">
-                <h2 class="text-2xl font-bold text-gray-700">
-                    Активные Заявки (<span id="teammate-count">0</span>)
-                </h2>
-                <div id="teammate-list" class="bg-gray-100 p-4 rounded-lg border border-gray-300 shadow-inner space-y-3">
-                    <p class="text-gray-500 italic" id="loading-text">Загрузка заявок...</p>
-                    <!-- Teammate cards will be injected here -->
+        <!-- Мои Каналы -->
+        <div class="mt-auto pt-6 border-t border-gray-700">
+            <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Сообщество</p>
+            <div class="space-y-2">
+                <a href="https://t.me/LinkMeetCraft" target="_blank" class="block w-full p-2 rounded bg-[#2AABEE]/10 border border-[#2AABEE]/30 text-[#2AABEE] hover:bg-[#2AABEE]/20 hover:shadow-[0_0_10px_rgba(42,171,238,0.3)] transition-all flex items-center justify-center text-sm font-bold">
+                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+                    Telegram
+                </a>
+                <a href="https://www.youtube.com/@папгмобаил-д3э" target="_blank" class="block w-full p-2 rounded bg-[#FF0000]/10 border border-[#FF0000]/30 text-[#FF0000] hover:bg-[#FF0000]/20 hover:shadow-[0_0_10px_rgba(255,0,0,0.3)] transition-all flex items-center justify-center text-sm font-bold">
+                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+                    YouTube
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Правая панель (Контент) -->
+    <main class="flex-1 relative overflow-hidden flex flex-col h-full bg-black/50 backdrop-blur-sm">
+        
+        <!-- Уведомления -->
+        <div id="toast" class="absolute top-4 right-4 bg-gray-800 border-l-4 border-neonBlue text-white px-6 py-4 rounded shadow-2xl transform translate-x-full transition-transform duration-300 z-50 flex items-center">
+            <div class="mr-3 text-neonBlue">ℹ️</div>
+            <div id="toast-message"></div>
+        </div>
+
+        <!-- Экран: Анкеты -->
+        <div id="view-profiles" class="view-section h-full overflow-y-auto p-6 custom-scrollbar">
+            <div class="flex items-center justify-between mb-6 border-b border-gray-700 pb-4">
+                <h2 class="text-3xl font-gamer font-bold text-white">База <span class="text-neonOrange">Анкет</span></h2>
+                <div class="text-xs text-gray-500 font-mono">LIVE FEED</div>
+            </div>
+            
+            <div id="profiles-container" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Контент генерируется в JS -->
+                <div class="text-neonBlue col-span-full text-center p-10 border border-dashed border-gray-700 rounded-xl animate-pulse">
+                    Подключение к нейросети...
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Firebase Script Setup -->
+        <!-- Экран: Чат -->
+        <div id="view-chat" class="view-section h-full flex flex-col p-4 hidden">
+            <div class="flex items-center justify-between mb-4 border-b border-gray-700 pb-2">
+                <h2 class="text-2xl font-gamer font-bold text-white">Общий <span class="text-neonBlue">Чат</span></h2>
+                <div class="flex items-center">
+                    <div class="w-2 h-2 bg-green-500 rounded-full mr-2 status-dot"></div>
+                    <span class="text-xs text-green-400 font-mono">ONLINE</span>
+                </div>
+            </div>
+
+            <div id="chat-container" class="flex-1 overflow-y-auto space-y-3 mb-4 pr-2 custom-scrollbar bg-black/20 rounded-xl p-4 border border-gray-800">
+                <!-- Контент генерируется в JS -->
+                <div class="text-center text-gray-600 mt-10 font-mono">Ожидание сигнала...</div>
+            </div>
+            <div class="flex gap-3 bg-gray-900/80 p-3 rounded-xl border border-gray-700">
+                <input type="text" id="chat-input" placeholder="Отправить сообщение в эфир..." class="flex-1 bg-transparent border-none text-white focus:ring-0 placeholder-gray-600 outline-none">
+                <button data-action="send-msg" id="send-msg-btn" class="bg-gradient-to-r from-blue-600 to-neonBlue hover:from-blue-500 hover:to-cyan-300 text-black font-bold py-2 px-6 rounded-lg transition-all duration-200 shadow-neon-blue firebase-disabled">SEND</button>
+            </div>
+        </div>
+
+        <!-- Экран: Создание анкеты -->
+        <div id="view-create" class="view-section h-full overflow-y-auto p-6 hidden custom-scrollbar">
+            <h2 class="text-3xl font-gamer font-bold text-white mb-6">Новая <span class="text-neonOrange">Миссия</span></h2>
+            <div class="bg-gray-900/80 border border-gray-700 p-8 rounded-2xl shadow-2xl max-w-3xl mx-auto">
+                <form data-action="create-profile" id="create-form" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-neonBlue text-sm font-bold mb-2 uppercase tracking-wide">Название проекта / Цель</label>
+                            <input type="text" id="f-title" required class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white focus:border-neonOrange focus:outline-none focus:shadow-neon-orange transition-all" placeholder="Например: RPG Сервер">
+                        </div>
+                        <div>
+                            <label class="block text-neonBlue text-sm font-bold mb-2 uppercase tracking-wide">Кого ищете (Роль)</label>
+                            <input type="text" id="f-role" required class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white focus:border-neonOrange focus:outline-none focus:shadow-neon-orange transition-all" placeholder="Строитель / Кодер">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-neonBlue text-sm font-bold mb-2 uppercase tracking-wide">Описание / Стек</label>
+                        <textarea id="f-desc" required rows="5" class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white focus:border-neonOrange focus:outline-none focus:shadow-neon-orange transition-all" placeholder="Детали миссии..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-neonBlue text-sm font-bold mb-2 uppercase tracking-wide">Связь (Discord/TG)</label>
+                        <div class="flex">
+                            <span class="inline-flex items-center px-3 rounded-l border border-r-0 border-gray-600 bg-gray-800 text-gray-400 text-sm">@</span>
+                            <input type="text" id="f-contact" required class="w-full bg-black/50 border border-gray-600 rounded-r p-3 text-white focus:border-neonOrange focus:outline-none focus:shadow-neon-orange transition-all" placeholder="username">
+                        </div>
+                    </div>
+                    <button type="submit" id="create-submit-btn" class="w-full bg-gradient-to-r from-orange-600 to-neonOrange hover:from-orange-500 hover:to-yellow-500 text-black font-bold py-4 rounded-lg mt-4 transition-all duration-200 shadow-neon-orange text-lg uppercase tracking-widest firebase-disabled">
+                        Опубликовать Анкету
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- СКРИПТ ПРИЛОЖЕНИЯ -->
     <script type="module">
-        // Import necessary Firebase functions
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, addDoc, onSnapshot, collection, query, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // ВАЖНО: Включаем отладку для Firebase
-        setLogLevel('Debug');
-
-        // --- ВАШИ РЕАЛЬНЫЕ КЛЮЧИ (Теперь они внутри файла и будут работать везде) ---
+        import { getAuth, signInAnonymously, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, limit, onSnapshot, serverTimestamp, doc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // --- ВАША РАБОЧАЯ КОНФИГУРАЦИЯ ---
         const firebaseConfig = {
             apiKey: "AIzaSyA7EumEru2qfYcAyxAWLL4TY_dWfcU3Dfg",
             authDomain: "linkmeetcraft.firebaseapp.com",
@@ -129,257 +260,287 @@
             appId: "1:373052253470:web:a66afc67876f76dc1a550f",
             measurementId: "G-WSZL0NRHCQ"
         };
+
+        const appId = "linkmeetcraft";
         
-        const appId = "linkmeetcraft"; // ID для путей в базе данных
+        let firebaseApp, auth, db;
+        let currentUser = null;
+        let isFirebaseReady = false;
 
-        let db = null;
-        let auth = null;
-        let userId = null;
-        let isAuthReady = false;
+        // --- ПУТИ ---
+        const PATH_PROFILES = `/artifacts/${appId}/public/data/profiles`;
+        const PATH_CHAT = `/artifacts/${appId}/public/data/chat`;
+        const PATH_USERS = `/artifacts/${appId}/users`;
 
-        // UI Elements
-        const authStatusEl = document.getElementById('auth-status');
-        const userIdDisplayEl = document.getElementById('user-id-display');
-        const dbStatusEl = document.getElementById('db-status');
-        const teammateListEl = document.getElementById('teammate-list');
-        const loadingTextEl = document.getElementById('loading-text');
-        const submitBtn = document.getElementById('submit-btn');
-        const messageAreaEl = document.getElementById('message-area');
-        const teammateCountEl = document.getElementById('teammate-count');
+        // --- UI ФУНКЦИИ ---
 
-        // Form elements
-        const formEl = document.getElementById('teammate-form');
-        const nameInput = document.getElementById('name');
-        const roleInput = document.getElementById('role');
-        const experienceInput = document.getElementById('experience');
-        const contactInput = document.getElementById('contact');
-        const aboutInput = document.getElementById('about');
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            toast.style.transform = 'translateX(0)';
+            setTimeout(() => toast.style.transform = 'translateX(120%)', 4000);
+        }
 
-        // --- UI Feedback Functions ---
-
-        function showMessage(text, type = 'info') {
-            messageAreaEl.textContent = text;
-            messageAreaEl.classList.remove('text-green-600', 'text-red-600', 'text-gray-600');
-            if (type === 'успех') {
-                messageAreaEl.classList.add('text-green-600');
-            } else if (type === 'ошибка') {
-                messageAreaEl.classList.add('text-red-600');
+        function updateAuthUI(user) {
+            const loginView = document.getElementById('login-view');
+            const userView = document.getElementById('user-view');
+            const disableEls = document.querySelectorAll('.firebase-disabled');
+            
+            if (user && user.displayName) {
+                currentUser = user;
+                loginView.classList.add('hidden');
+                userView.classList.remove('hidden');
+                document.getElementById('current-nickname').innerText = user.displayName;
+                document.getElementById('avatar-letter').innerText = user.displayName.charAt(0).toUpperCase();
+                
+                disableEls.forEach(el => {
+                    el.classList.remove('firebase-disabled');
+                    el.disabled = false;
+                });
             } else {
-                messageAreaEl.classList.add('text-gray-600');
-            }
-            setTimeout(() => { messageAreaEl.textContent = ''; }, 5000);
-        }
+                currentUser = null;
+                loginView.classList.remove('hidden');
+                userView.classList.add('hidden');
 
-        function clearForm() {
-            formEl.reset();
-        }
-
-        function updateFormState(enabled) {
-            [nameInput, roleInput, experienceInput, contactInput, aboutInput, submitBtn].forEach(el => {
-                el.disabled = !enabled;
-            });
-        }
-
-        function updateUI() {
-            const isReady = isAuthReady && userId;
-            updateFormState(isReady);
-
-            if (isReady) {
-                authStatusEl.textContent = 'Статус Auth: ✅ Подключено';
-                userIdDisplayEl.textContent = `ID Пользователя: ${userId}`;
-            } else if (isAuthReady) {
-                authStatusEl.textContent = 'Статус Auth: 🟡 Неизвестный пользователь';
-                userIdDisplayEl.textContent = 'ID Пользователя: Анонимный вход';
-            } else {
-                authStatusEl.textContent = 'Статус Auth: 🔄 Инициализация...';
-                userIdDisplayEl.textContent = 'ID Пользователя: Ожидание...';
+                disableEls.forEach(el => {
+                    el.classList.add('firebase-disabled');
+                    el.disabled = true;
+                });
             }
         }
 
-        /**
-         * Инициализирует Firebase и настраивает аутентификацию.
-         */
-        function initializeFirebase() {
+        function copyToClipboard(text) {
+            const tempInput = document.createElement('input');
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
             try {
-                // Инициализация App, Auth и Firestore с ВАШИМИ КЛЮЧАМИ
-                const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
+                document.execCommand('copy');
+                showToast("Скопировано в буфер!");
+            } catch (err) {
+                showToast("Ошибка копирования");
+            }
+            document.body.removeChild(tempInput);
+        }
 
-                dbStatusEl.textContent = 'Статус DB: Подключение...';
+        // --- ЛОГИКА ---
 
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        // Успешный реальный вход
-                        userId = user.uid;
-                        isAuthReady = true;
-                        updateUI();
-                        setupFirestoreListener();
-                    } else {
-                        // Пользователь не вошел. Попытка анонимного входа.
-                        try {
-                            console.log("Попытка анонимного входа...");
-                            await signInAnonymously(auth);
-                        } catch (error) {
-                            console.error("Authentication failed:", error);
-                            showMessage(`Статус Auth: ❌ Ошибка (${error.code}). Включите Anonymous Auth в консоли Firebase!`, 'ошибка');
-                            isAuthReady = true;
-                            updateUI();
+        async function init() {
+            try {
+                firebaseApp = initializeApp(firebaseConfig);
+                auth = getAuth(firebaseApp);
+                db = getFirestore(firebaseApp);
+                isFirebaseReady = true;
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user && user.uid) {
+                        if (user.displayName) {
+                            updateAuthUI(user);
+                            setupListeners();
+                        } else {
+                            updateAuthUI(null); 
+                            setupProfilesListener(); 
                         }
+                    } else {
+                        updateAuthUI(null); 
+                        setupProfilesListener();
                     }
                 });
+            } catch(e) {
+                console.error(e);
+                document.getElementById('error-display').innerText = "Ошибка инициализации: " + e.message;
+                document.getElementById('error-display').classList.remove('hidden');
+            }
+        }
+
+        async function handleLogin() {
+            const nick = document.getElementById('nickname-input').value.trim();
+            if(nick.length < 3) return showToast("Ник слишком короткий!");
+            
+            try {
+                if (!auth.currentUser) {
+                    await signInAnonymously(auth);
+                }
+                
+                const uid = auth.currentUser.uid;
+                const userRef = doc(db, PATH_USERS, uid);
+                const userSnap = await getDoc(userRef);
+                const now = Date.now();
+                const COOLDOWN = 2592000000; // 30 дней
+
+                if (userSnap.exists()) {
+                    const data = userSnap.data();
+                    if (data.nickname === nick) {
+                        // Тот же ник, пропускаем
+                    } else if (now - (data.lastChange || 0) < COOLDOWN) {
+                         const daysLeft = Math.ceil((COOLDOWN - (now - (data.lastChange||0))) / (86400000));
+                         // Если нельзя сменить, ставим старый
+                         await updateProfile(auth.currentUser, { displayName: data.nickname || 'User' });
+                         updateAuthUI(auth.currentUser);
+                         return showToast(`Смена ника доступна через ${daysLeft} д.`);
+                    }
+                }
+
+                await updateProfile(auth.currentUser, { displayName: nick });
+                await setDoc(userRef, { nickname: nick, lastChange: now, uid }, { merge: true });
+                
+                updateAuthUI(auth.currentUser);
+                showToast(`Добро пожаловать, ${nick}!`);
+                setupListeners();
 
             } catch (e) {
-                console.error("Critical Firebase Initialization Error:", e);
-                showMessage(`Критическая ошибка: ${e.message}.`, 'ошибка');
+                showToast("Ошибка входа: " + e.message);
             }
         }
 
-        /**
-         * Отображает полученные заявки в пользовательском интерфейсе.
-         */
-        function renderTeammates(teammates) {
-            teammateListEl.innerHTML = '';
-            teammateCountEl.textContent = teammates.length;
-
-            if (teammates.length === 0) {
-                teammateListEl.innerHTML = '<p class="text-gray-500 italic">Пока нет активных заявок. Станьте первым!</p>';
-                return;
-            }
-            
-            // Сортировка по имени
-            teammates.sort((a, b) => a.name.localeCompare(b.name));
-
-            teammates.forEach(tm => {
-                const isMine = tm.userId === userId;
-                const cardClass = isMine ? 'bg-indigo-100 border-indigo-400' : 'bg-white border-gray-300';
-                
-                const teammateEl = document.createElement('div');
-                teammateEl.className = `p-4 border-2 rounded-xl shadow-sm ${cardClass}`;
-                
-                teammateEl.innerHTML = `
-                    <div class="flex justify-between items-start">
-                        <h3 class="text-lg font-bold text-indigo-800">${tm.name}</h3>
-                        <span class="text-xs font-semibold px-2 py-1 rounded-full ${isMine ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'}">
-                            ${isMine ? 'Ваша заявка' : tm.role}
-                        </span>
-                    </div>
-                    <p class="text-sm font-medium text-gray-700 mt-1">
-                        Роль: ${tm.role}
-                    </p>
-                    <p class="text-xs text-gray-500 mt-2">
-                        Опыт/Навыки: ${tm.experience || 'Не указан'}
-                    </p>
-                    <p class="text-xs text-gray-500">
-                        Ищет: ${tm.about || 'Не указано'}
-                    </p>
-                    <p class="text-sm font-semibold mt-3 text-indigo-600 break-all">
-                        Контакт: ${tm.contact}
-                    </p>
-                `;
-                teammateListEl.appendChild(teammateEl);
-            });
+        function handleLogout() {
+            // Просто сброс UI для анонимного пользователя
+            updateAuthUI(null);
+            document.getElementById('nickname-input').value = '';
         }
 
-
-        /**
-         * Настраивает прослушиватель Firestore в реальном времени.
-         */
-        function setupFirestoreListener() {
-            if (!db || !userId) return;
+        // --- ЧАТ ---
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
             
-            const collectionName = 'teammates';
-            const publicCollectionPath = `artifacts/${appId}/public/data/${collectionName}`;
-
-            // Real-time listener for the public teammates collection
-            const teammatesRef = collection(db, publicCollectionPath);
-            const teammatesQuery = query(teammatesRef);
-
-            dbStatusEl.textContent = 'Статус DB: Синхронизация...';
-
-            onSnapshot(teammatesQuery, (snapshot) => {
-                dbStatusEl.textContent = `Статус DB: ✅ Подключено (Онлайн)`;
-                loadingTextEl.classList.add('hidden');
-
-                const teammates = [];
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    teammates.push({
-                        id: doc.id,
-                        name: data.name || 'Аноним',
-                        role: data.role || 'Не указана',
-                        experience: data.experience || '',
-                        contact: data.contact || 'Нет контакта',
-                        about: data.about || '',
-                        userId: data.userId || 'Неизвестно'
-                    });
-                });
-
-                renderTeammates(teammates);
-            }, (error) => {
-                console.error("Error fetching documents:", error);
-                dbStatusEl.textContent = `Статус DB: ❌ Ошибка доступа`;
-                showMessage(`Ошибка доступа к базе: ${error.message}. Проверьте "Rules" в консоли Firebase.`, 'ошибка');
-                loadingTextEl.textContent = 'Не удалось загрузить заявки.';
-            });
-        }
-        
-        /**
-         * Отправляет новую заявку.
-         */
-        window.submitForm = async function(event) {
-            if (event) event.preventDefault();
-
-            if (!isAuthReady || !userId) {
-                showMessage("Сначала дождитесь подключения к базе данных.", 'ошибка');
-                return;
-            }
-
-            const name = nameInput.value.trim();
-            const role = roleInput.value.trim();
-            const experience = experienceInput.value.trim();
-            const contact = contactInput.value.trim();
-            const about = aboutInput.value.trim();
-
-            if (!name || !role || !contact) {
-                showMessage("Заполните обязательные поля!", "ошибка");
-                return;
-            }
-
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Публикация...';
-            
-            // РЕАЛЬНАЯ ЛОГИКА ЗАПИСИ
             try {
-                const collectionName = 'teammates';
-                const publicCollectionPath = `artifacts/${appId}/public/data/${collectionName}`;
-
-                const teammateData = {
-                    name: name,
-                    role: role,
-                    experience: experience,
-                    contact: contact,
-                    about: about,
-                    userId: userId, 
-                    createdAt: serverTimestamp() 
-                };
-
-                await addDoc(collection(db, publicCollectionPath), teammateData);
-
-                showMessage("Ваша заявка успешно опубликована и видна всем!", "успех");
-                clearForm(); 
-
-            } catch (error) {
-                console.error("Ошибка сохранения данных:", error);
-                showMessage(`Ошибка сохранения: ${error.message}.`, "ошибка");
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Опубликовать Заявку';
+                input.value = '';
+                await addDoc(collection(db, PATH_CHAT), {
+                    text,
+                    author: currentUser.displayName,
+                    uid: currentUser.uid,
+                    createdAt: serverTimestamp()
+                });
+            } catch(e) {
+                showToast("Ошибка: " + e.message);
             }
         }
 
-        // Initialize the application on window load
-        window.onload = initializeFirebase;
+        // --- АНКЕТЫ ---
+        async function createProfile(e) {
+            e.preventDefault();
+            const title = document.getElementById('f-title').value;
+            const role = document.getElementById('f-role').value;
+            const desc = document.getElementById('f-desc').value;
+            const contact = document.getElementById('f-contact').value;
+
+            if(!title || !role || !contact) return showToast("Заполните поля!");
+
+            try {
+                await addDoc(collection(db, PATH_PROFILES), {
+                    title, role, desc, contact,
+                    author: currentUser.displayName,
+                    uid: currentUser.uid,
+                    createdAt: serverTimestamp()
+                });
+                showToast("Миссия опубликована!");
+                e.target.reset();
+                window.app.setView('profiles');
+            } catch(e) {
+                showToast("Ошибка: " + e.message);
+            }
+        }
+
+        async function deleteProfile(id) {
+            if(!confirm("Удалить эту анкету?")) return;
+            try {
+                await deleteDoc(doc(db, PATH_PROFILES, id));
+                showToast("Удалено.");
+            } catch(e) {
+                showToast("Ошибка удаления.");
+            }
+        }
+
+        // --- ЛИСТЕНЕРЫ ---
+        function setupProfilesListener() {
+            const q = query(collection(db, PATH_PROFILES), limit(50));
+            onSnapshot(q, (snap) => {
+                const cont = document.getElementById('profiles-container');
+                cont.innerHTML = '';
+                if(snap.empty) {
+                    cont.innerHTML = '<div class="col-span-full text-gray-500 text-center">Нет активных миссий.</div>';
+                    return;
+                }
+                
+                const items = [];
+                snap.forEach(d => items.push({id: d.id, ...d.data()}));
+                // Сортировка JS
+                items.sort((a,b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+
+                items.forEach(p => {
+                    const isOwner = currentUser && p.uid === currentUser.uid;
+                    const el = document.createElement('div');
+                    el.className = `bg-gray-900/60 border ${isOwner ? 'border-neonOrange' : 'border-gray-700'} p-6 rounded-xl hover:bg-gray-800/60 transition-all duration-300 shadow-lg backdrop-blur-sm`;
+                    
+                    el.innerHTML = `
+                        <div class="flex justify-between items-start mb-3">
+                            <h3 class="text-xl font-bold text-white">${p.title}</h3>
+                            ${isOwner ? `<button class="del-btn text-red-500 hover:text-red-400" data-id="${p.id}">✕</button>` : ''}
+                        </div>
+                        <div class="text-neonBlue font-mono text-sm mb-2 uppercase tracking-wider">${p.role}</div>
+                        <p class="text-gray-400 text-sm mb-4 line-clamp-3">${p.desc}</p>
+                        <div class="flex justify-between items-center pt-4 border-t border-gray-800">
+                            <span class="text-xs text-gray-500 font-bold uppercase">${p.author}</span>
+                            <button class="copy-btn bg-gray-800 hover:bg-gray-700 text-white text-xs px-3 py-1 rounded border border-gray-600 transition" data-contact="${p.contact}">Связь</button>
+                        </div>
+                    `;
+                    
+                    el.querySelector('.copy-btn').onclick = () => copyToClipboard(p.contact);
+                    if(isOwner) el.querySelector('.del-btn').onclick = () => deleteProfile(p.id);
+                    
+                    cont.appendChild(el);
+                });
+            });
+        }
+
+        function setupListeners() {
+            // Чат
+            const qChat = query(collection(db, PATH_CHAT), limit(50));
+            onSnapshot(qChat, (snap) => {
+                const cont = document.getElementById('chat-container');
+                cont.innerHTML = '';
+                const msgs = [];
+                snap.forEach(d => msgs.push(d.data()));
+                msgs.sort((a,b) => (a.createdAt?.toMillis() || 0) - (b.createdAt?.toMillis() || 0));
+
+                msgs.forEach(m => {
+                    const isMe = m.uid === currentUser.uid;
+                    const div = document.createElement('div');
+                    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} mb-3`;
+                    div.innerHTML = `
+                        <div class="${isMe ? 'bg-neonBlue/20 border-neonBlue/50' : 'bg-gray-800 border-gray-600'} border px-4 py-2 rounded-xl max-w-[80%] backdrop-blur-sm">
+                            <div class="text-[10px] ${isMe ? 'text-neonBlue' : 'text-neonOrange'} font-bold mb-1 uppercase">${m.author}</div>
+                            <div class="text-white text-sm">${m.text}</div>
+                        </div>
+                    `;
+                    cont.appendChild(div);
+                });
+                if(!document.getElementById('view-chat').classList.contains('hidden')) {
+                    cont.scrollTop = cont.scrollHeight;
+                }
+            });
+            
+            setupProfilesListener();
+        }
+
+        // Привязка событий
+        document.getElementById('login-btn').onclick = handleLogin;
+        document.getElementById('logout-btn').onclick = handleLogout;
+        document.getElementById('send-msg-btn').onclick = sendMessage;
+        document.getElementById('chat-input').onkeypress = (e) => { if(e.key === 'Enter') sendMessage() };
+        document.getElementById('create-form').onsubmit = createProfile;
+
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.onclick = () => {
+                if(btn.classList.contains('firebase-disabled')) return;
+                window.app.setView(btn.dataset.view);
+            }
+        });
+
+        // Запуск
+        init();
     </script>
 </body>
 </html>
