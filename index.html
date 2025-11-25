@@ -1,569 +1,490 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LinkMeetCraft - Поиск команды</title>
-    <!-- Подключение Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            font-family: sans-serif;
-            background-color: #0d1117; /* Черный фон */
-            color: #e6edf3;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
-        }
-        /* Скроллбары */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #161b22; }
-        ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
-        
-        /* Класс для активной кнопки навигации */
-        .nav-btn.active {
-            background-color: #1f242d; /* Темно-серый фон */
-            color: #ffffff;
-            border-color: #3b82f6; /* Синяя рамка */
-        }
-        /* Блокировка кнопки при отключенном Firebase */
-        .firebase-disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-    </style>
-</head>
-<body class="flex flex-col md:flex-row h-full">
+import React, { useState, useEffect, useCallback } from 'react';
+import { initializeApp } from 'firebase/app';
+import { 
+  getAuth, 
+  signInAnonymously, 
+  signInWithCustomToken, 
+  onAuthStateChanged, 
+  signOut 
+} from 'firebase/auth';
+import { 
+  getFirestore, 
+  doc, 
+  setDoc, 
+  onSnapshot 
+} from 'firebase/firestore';
 
-    <!-- БЛОК ОТОБРАЖЕНИЯ КРИТИЧЕСКИХ ОШИБОК -->
-    <div id="error-display" class="hidden fixed top-0 left-0 w-full bg-red-600 text-white p-4 z-[9999] font-bold text-center"></div>
+// Глобальные переменные, предоставляемые средой Canvas
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-    <!-- Левая панель -->
-    <aside class="w-full md:w-64 bg-[#161b22] border-r border-[#30363d] flex flex-col p-4 z-20">
-        <h1 class="text-2xl font-bold text-orange-500 mb-6 tracking-wider">LinkMeetCraft</h1>
+// Константы времени
+const DAYS_IN_MILLIS = 30 * 24 * 60 * 60 * 1000; // 30 дней в миллисекундах
 
-        <!-- Панель входа -->
-        <div id="auth-box" class="bg-[#0d1117] p-4 rounded-xl border border-[#30363d] mb-4 shadow-lg">
-            <!-- Если не вошел -->
-            <div id="login-view">
-                <input type="text" id="nickname-input" placeholder="Ваш никнейм" class="w-full bg-[#21262d] border border-[#30363d] rounded p-2 text-white mb-2 focus:border-blue-500 outline-none">
-                <button data-action="login" id="login-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition">Войти</button>
-            </div>
-            <!-- Если вошел -->
-            <div id="user-view" class="hidden">
-                <div class="text-gray-400 text-xs">Вы вошли как:</div>
-                <div id="current-nickname" class="text-blue-400 font-bold text-lg truncate"></div>
-                <button data-action="logout" id="logout-btn" class="mt-2 text-xs text-red-400 hover:text-red-300 underline">Сменить ник</button>
-            </div>
-        </div>
+// Типы для данных
+/**
+ * @typedef {Object} UserProfile
+ * @property {string} [username]
+ * @property {string} [bio]
+ * @property {number} [lastUpdate]
+ * @property {number} [lastUsernameChange] - Unix timestamp последнего изменения ника
+ * @property {boolean} [requiresRegistration] - Флаг для первого входа
+ */
 
-        <!-- Навигация -->
-        <nav id="main-nav" class="flex-1 space-y-2">
-            <button data-view="profiles" class="nav-btn active w-full text-left p-3 rounded hover:bg-[#21262d] text-gray-300 hover:text-white transition flex items-center border border-transparent focus:border-blue-500">
-                📄 Анкеты
-            </button>
-            <button data-view="chat" class="nav-btn w-full text-left p-3 rounded hover:bg-[#21262d] text-gray-300 hover:text-white transition flex items-center border border-transparent focus:border-blue-500">
-                💬 Общий чат
-            </button>
-            <button data-view="create" class="nav-btn w-full text-left p-3 rounded bg-orange-900/20 text-orange-400 hover:bg-orange-900/40 hover:text-orange-300 transition flex items-center border border-orange-900/50 mt-4">
-                ➕ Создать анкету
-            </button>
-        </nav>
-    </aside>
+const LOADING_MESSAGE = "Загрузка Firebase и аутентификация...";
+const ERROR_MESSAGE = "Произошла ошибка при инициализации Firebase или аутентификации.";
 
-    <!-- Правая панель (Контент) -->
-    <main class="flex-1 relative bg-[#0d1117] overflow-hidden flex flex-col">
-        
-        <!-- Уведомления -->
-        <div id="toast" class="absolute top-4 right-4 bg-blue-600 text-white px-6 py-3 rounded shadow-xl transform translate-x-full transition-transform duration-300 z-50"></div>
+const App = () => {
+  const [db, setDb] = useState(null);
+  const [auth, setAuth] = useState(null);
+  const [userId, setUserId] = useState(null);
+  /** @type {[UserProfile, React.Dispatch<React.SetStateAction<UserProfile>>]} */
+  const [profile, setProfile] = useState({});
+  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [userMessage, setUserMessage] = useState(null); // Для сообщений пользователю (успех/ошибка)
 
-        <!-- Экран: Анкеты -->
-        <div id="view-profiles" class="view-section h-full overflow-y-auto p-6">
-            <h2 class="text-2xl font-bold text-white mb-4 border-b border-[#30363d] pb-2">Активные анкеты</h2>
-            <div id="profiles-container" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <!-- Контент генерируется в JS -->
-                <div class="text-gray-500 col-span-full text-center p-4">Подключение к базе данных...</div>
-            </div>
-        </div>
+  // 1. Инициализация Firebase и Аутентификация
+  useEffect(() => {
+    try {
+      if (Object.keys(firebaseConfig).length === 0) {
+        throw new Error("Конфигурация Firebase недоступна.");
+      }
 
-        <!-- Экран: Чат -->
-        <div id="view-chat" class="view-section h-full flex flex-col p-4 hidden">
-            <h2 class="text-xl font-bold text-white mb-2 border-b border-[#30363d] pb-2">Общий чат</h2>
-            <div id="chat-container" class="flex-1 overflow-y-auto space-y-3 mb-4 pr-2">
-                <!-- Контент генерируется в JS -->
-                <div class="text-center text-gray-600 mt-10">Ожидание сообщений...</div>
-            </div>
-            <div class="flex gap-2">
-                <input type="text" id="chat-input" placeholder="Напишите сообщение..." class="flex-1 bg-[#21262d] border border-[#30363d] rounded p-3 text-white focus:border-blue-500 outline-none">
-                <button data-action="send-msg" id="send-msg-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 rounded font-bold firebase-disabled">></button>
-            </div>
-        </div>
+      const app = initializeApp(firebaseConfig);
+      const firestore = getFirestore(app);
+      const userAuth = getAuth(app);
+      
+      setDb(firestore);
+      setAuth(userAuth);
 
-        <!-- Экран: Создание анкеты -->
-        <div id="view-create" class="view-section h-full overflow-y-auto p-6 hidden">
-            <h2 class="text-2xl font-bold text-orange-500 mb-6">Новая анкета</h2>
-            <form data-action="create-profile" id="create-form" class="max-w-2xl bg-[#161b22] p-6 rounded-xl border border-[#30363d] space-y-4">
-                <div>
-                    <label class="block text-gray-400 text-sm mb-1">Название проекта / Цель</label>
-                    <input type="text" id="f-title" required class="w-full bg-[#0d1117] border border-[#30363d] rounded p-2 text-white focus:border-orange-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-gray-400 text-sm mb-1">Кого ищете (Роль)</label>
-                    <input type="text" id="f-role" required class="w-full bg-[#0d1117] border border-[#30363d] rounded p-2 text-white focus:border-orange-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-gray-400 text-sm mb-1">Описание / Стек</label>
-                    <textarea id="f-desc" required rows="4" class="w-full bg-[#0d1117] border border-[#30363d] rounded p-2 text-white focus:border-orange-500 outline-none"></textarea>
-                </div>
-                <div>
-                    <label class="block text-gray-400 text-sm mb-1">Ваш контакт (Telegram/Discord)</label>
-                    <input type="text" id="f-contact" required class="w-full bg-[#0d1117] border border-[#30363d] rounded p-2 text-white focus:border-orange-500 outline-none">
-                </div>
-                <button type="submit" id="create-submit-btn" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded mt-4 transition firebase-disabled">Опубликовать</button>
-            </form>
-        </div>
-
-    </main>
-
-    <!-- ЛОВЕЦ ОШИБОК СКРИПТА И ГЛОБАЛЬНАЯ НАВИГАЦИЯ -->
-    <script>
-        // Глобальная функция для переключения вида
-        window.app = {
-            setView: (viewId) => {
-                document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-                const activeView = document.getElementById('view-' + viewId);
-                if (activeView) activeView.classList.remove('hidden');
-
-                document.querySelectorAll('.nav-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                const selectedBtn = document.querySelector(`.nav-btn[data-view="${viewId}"]`);
-                if (selectedBtn) selectedBtn.classList.add('active');
-
-                // Автоскролл чата при открытии
-                if(viewId === 'chat') {
-                    const container = document.getElementById('chat-container');
-                    setTimeout(() => container.scrollTop = container.scrollHeight, 100); 
-                }
+      // Обработка аутентификации
+      const unsubscribe = onAuthStateChanged(userAuth, async (user) => {
+        if (user) {
+          setUserId(user.uid);
+          console.log(`Пользователь вошел: ${user.uid}`);
+        } else {
+          try {
+            if (initialAuthToken) {
+              await signInWithCustomToken(userAuth, initialAuthToken);
+              console.log("Успешный вход через Custom Token.");
+            } else {
+              await signInAnonymously(userAuth);
+              console.log("Успешный анонимный вход.");
             }
+          } catch (e) {
+            console.error("Ошибка при попытке входа:", e);
+            setError("Не удалось войти в систему.");
+          }
+        }
+        setIsAuthReady(true);
+        setLoading(false);
+      });
+
+      return () => unsubscribe();
+    } catch (e) {
+      console.error("Ошибка инициализации:", e);
+      setError(e.message);
+      setLoading(false);
+    }
+  }, []);
+
+  // 2. Слушатель данных Профиля (после готовности аутентификации)
+  useEffect(() => {
+    if (!isAuthReady || !db || !userId) return;
+
+    // Путь к документу: /artifacts/{appId}/users/{userId}/profile/user_data
+    const profileDocRef = doc(db, 
+      'artifacts', appId, 
+      'users', userId, 
+      'profile', 'user_data'
+    );
+
+    const unsubscribe = onSnapshot(profileDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setProfile({
+          username: data.username || null, // Ник теперь может быть null
+          bio: data.bio || 'Напишите что-нибудь о себе...',
+          lastUpdate: data.lastUpdate || null,
+          lastUsernameChange: data.lastUsernameChange || null,
+          requiresRegistration: !data.username, // Требуется регистрация, если нет ника
+        });
+        console.log("Данные профиля обновлены из Firestore:", data);
+      } else {
+        // Если документа нет, это новый пользователь
+        setProfile({
+          username: null,
+          bio: 'Напишите что-нибудь о себе...',
+          lastUpdate: null,
+          lastUsernameChange: null,
+          requiresRegistration: true,
+        });
+        console.log("Документ профиля не найден, требуется регистрация.");
+      }
+    }, (error) => {
+      console.error("Ошибка получения данных профиля:", error);
+      setError("Не удалось загрузить профиль.");
+    });
+
+    return () => unsubscribe();
+  }, [isAuthReady, db, userId]);
+
+  // 3. Сохранение данных Профиля
+  const handleSaveProfile = useCallback(async (newUsername, newBio, isInitialRegistration = false) => {
+    if (!db || !userId) {
+      console.error("База данных или ID пользователя недоступны.");
+      return;
+    }
+    
+    // Очищаем сообщение перед сохранением
+    setUserMessage(null);
+
+    const isUsernameChanged = profile.username !== newUsername;
+    const now = Date.now();
+    const lastChange = profile.lastUsernameChange || 0;
+    const nextChangeTime = lastChange + DAYS_IN_MILLIS;
+    
+    // Проверка ограничения на смену ника (только если это не первая регистрация)
+    if (isUsernameChanged && !isInitialRegistration && now < nextChangeTime) {
+      const remainingTime = nextChangeTime - now;
+      const days = Math.ceil(remainingTime / (1000 * 60 * 60 * 24));
+      setUserMessage({ type: 'error', text: `Вы можете изменить Ник только через ${days} дней. Биография сохранена.` });
+      // Сохраняем только биографию
+      await saveOnlyBio(newBio);
+      return;
+    }
+
+    setLoading(true);
+
+    const profileDocRef = doc(db, 
+      'artifacts', appId, 
+      'users', userId, 
+      'profile', 'user_data'
+    );
+
+    const dataToSave = {
+      username: newUsername,
+      bio: newBio,
+      lastUpdate: now,
+      // Обновляем lastUsernameChange, только если ник действительно изменился или это первая регистрация
+      ...(isUsernameChanged || isInitialRegistration ? { lastUsernameChange: now } : {})
+    };
+
+    try {
+      await setDoc(profileDocRef, dataToSave, { merge: true });
+      setUserMessage({ type: 'success', text: `Профиль успешно ${isInitialRegistration ? 'зарегистрирован' : 'обновлен'}!` });
+    } catch (e) {
+      console.error("Ошибка сохранения профиля:", e);
+      setUserMessage({ type: 'error', text: "Не удалось сохранить профиль." });
+    } finally {
+      setLoading(false);
+    }
+  }, [db, userId, profile.username, profile.lastUsernameChange]);
+
+  // Вспомогательная функция для сохранения только биографии
+  const saveOnlyBio = async (newBio) => {
+    if (!db || !userId) return;
+    setLoading(true);
+    const profileDocRef = doc(db, 'artifacts', appId, 'users', userId, 'profile', 'user_data');
+    try {
+      await setDoc(profileDocRef, { bio: newBio, lastUpdate: Date.now() }, { merge: true });
+    } catch (e) {
+      console.error("Ошибка сохранения биографии:", e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // 4. Выход из системы
+  const handleSignOut = useCallback(async () => {
+    if (auth) {
+      try {
+        await signOut(auth);
+        setUserId(null);
+        setProfile({});
+        setUserMessage({ type: 'info', text: 'Вы вышли из системы.' });
+      } catch (e) {
+        console.error("Ошибка при выходе:", e);
+        setError("Не удалось выйти из системы.");
+      }
+    }
+  }, [auth]);
+
+  // Вспомогательный компонент для сообщений
+  const MessageBar = ({ message }) => {
+    if (!message) return null;
+    const baseClasses = "p-3 rounded-lg font-medium shadow-md transition-opacity duration-300 mb-4 w-full max-w-2xl";
+    let classes = '';
+
+    switch (message.type) {
+      case 'success':
+        classes = 'bg-green-100 text-green-800';
+        break;
+      case 'error':
+        classes = 'bg-red-100 text-red-800';
+        break;
+      case 'info':
+      default:
+        classes = 'bg-blue-100 text-blue-800';
+        break;
+    }
+
+    return (
+      <div className={`${baseClasses} ${classes}`}>
+        {message.text}
+      </div>
+    );
+  };
+
+
+  if (loading && !error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
+        <p className="text-xl text-indigo-600 font-semibold">{LOADING_MESSAGE}</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-red-100 p-4">
+        <p className="text-xl text-red-700 font-semibold">{ERROR_MESSAGE} ({error})</p>
+      </div>
+    );
+  }
+
+  // --- Компонент для Регистрации Ника (Первый Вход) ---
+  const RegistrationScreen = () => {
+    const [nickname, setNickname] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleRegister = async () => {
+      if (nickname.trim().length < 3) {
+        setUserMessage({ type: 'error', text: 'Ник должен быть не менее 3 символов.' });
+        return;
+      }
+      setIsSaving(true);
+      await handleSaveProfile(nickname.trim(), profile.bio, true); // true = isInitialRegistration
+      setIsSaving(false);
+    };
+
+    return (
+      <div className="bg-white p-6 md:p-10 rounded-xl shadow-2xl w-full max-w-xl text-center">
+        <h2 className="text-3xl font-extrabold text-indigo-700 mb-4">
+          Добро пожаловать!
+        </h2>
+        <p className="text-gray-600 mb-6">
+          Для начала работы, пожалуйста, придумайте уникальное Имя пользователя (Ник).
+        </p>
+        
+        <div className="space-y-4">
+          <input
+            type="text"
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+            className="w-full px-4 py-3 border border-indigo-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-lg"
+            placeholder="Введите ваш Ник"
+            disabled={isSaving}
+          />
+          <button
+            onClick={handleRegister}
+            disabled={isSaving}
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg shadow-xl transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSaving ? 'Регистрация...' : 'Зарегистрировать Ник'}
+          </button>
+        </div>
+      </div>
+    );
+  };
+  
+  // --- Компонент для Отображения и Редактирования Профиля ---
+  const ProfileSection = () => {
+    const [isEditing, setIsEditing] = useState(false);
+    const [newUsername, setNewUsername] = useState(profile.username || '');
+    const [newBio, setNewBio] = useState(profile.bio || '');
+
+    useEffect(() => {
+      // Обновляем локальные состояния при изменении profile (например, после сохранения)
+      setNewUsername(profile.username || '');
+      setNewBio(profile.bio || '');
+    }, [profile]);
+
+    // Определяем возможность смены ника
+    const now = Date.now();
+    const lastChange = profile.lastUsernameChange || 0;
+    const nextChangeTime = lastChange + DAYS_IN_MILLIS;
+    const canChangeUsername = now >= nextChangeTime;
+    
+    let timeUntilChange = null;
+    if (!canChangeUsername) {
+        const remainingTime = nextChangeTime - now;
+        const days = Math.ceil(remainingTime / (1000 * 60 * 60 * 24));
+        timeUntilChange = days;
+    }
+
+    const onSave = () => {
+      // Пользователь может сохранить ник, если он не менял его или если прошло 30 дней
+      // В противном случае, ник останется прежним, а био будет сохранено в handleSaveProfile
+      handleSaveProfile(newUsername, newBio, false);
+      setIsEditing(false);
+    };
+    
+    // Ctrl+Enter для сохранения
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter' && e.ctrlKey && isEditing) {
+            onSave();
+        }
+    };
+    
+    useEffect(() => {
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
         };
+    }, [isEditing, newUsername, newBio]);
 
-        // Ловец ошибок
-        window.addEventListener('error', function(e) {
-            const display = document.getElementById('error-display');
-            if (!display.innerText.includes("ПРЕДУПРЕЖДЕНИЕ")) {
-                 display.innerText = "КРИТИЧЕСКАЯ ОШИБКА: " + e.message + " (см. консоль для деталей)";
-                 display.classList.remove('hidden');
-            }
-        });
-    </script>
 
-    <!-- СКРИПТ ПРИЛОЖЕНИЯ (Модуль) -->
-    <script type="module">
-        // ИМПОРТЫ FIREBASE
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    return (
+      <div className="bg-white p-6 md:p-10 rounded-xl shadow-2xl w-full max-w-2xl transform hover:scale-[1.01] transition-transform duration-300">
+        <h2 className="text-3xl font-extrabold text-gray-800 mb-6 border-b-2 border-indigo-200 pb-2">
+          {isEditing ? 'Редактирование Профиля' : 'Ваш Профиль'}
+        </h2>
         
-        // --- КОНФИГУРАЦИЯ И ЗАЩИТА ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        let firebaseConfig = {};
-        let isFirebaseReady = false;
-        
-        try {
-            if (typeof __firebase_config === 'string' && __firebase_config.length > 0) {
-                firebaseConfig = JSON.parse(__firebase_config);
-            }
+        {isEditing ? (
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700">Имя пользователя (Ник)</label>
+              <input
+                id="username"
+                type="text"
+                value={newUsername}
+                onChange={(e) => setNewUsername(e.target.value)}
+                className={`mt-1 block w-full px-4 py-2 border rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ${canChangeUsername ? 'border-gray-300' : 'border-yellow-400 bg-yellow-50/50 cursor-not-allowed'}`}
+                placeholder="Введите ваш Ник"
+                disabled={!canChangeUsername}
+              />
+              {!canChangeUsername && (
+                <p className="mt-2 text-sm text-yellow-700 bg-yellow-100 p-2 rounded-lg">
+                  Смена Ника доступна через {timeUntilChange} дней. Биографию можно менять свободно.
+                </p>
+              )}
+            </div>
+            <div>
+              <label htmlFor="bio" className="block text-sm font-medium text-gray-700">О себе (Биография)</label>
+              <textarea
+                id="bio"
+                value={newBio}
+                onChange={(e) => setNewBio(e.target.value)}
+                rows="4"
+                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 resize-none"
+                placeholder="Расскажите о себе в нескольких словах"
+              />
+            </div>
+            <div className="flex space-x-4 pt-2">
+              <button
+                onClick={onSave}
+                disabled={loading}
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Сохранение...' : 'Сохранить Изменения (Ctrl+Enter)'}
+              </button>
+              <button
+                onClick={() => {
+                  setNewUsername(profile.username);
+                  setNewBio(profile.bio);
+                  setIsEditing(false);
+                }}
+                className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200"
+              >
+                Отмена
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="border-b pb-4">
+              <p className="text-sm font-medium text-indigo-600">Имя пользователя (Ник)</p>
+              <p className="text-xl font-bold text-gray-900">{profile.username}</p>
+            </div>
             
-            // Если конфигурация есть, пытаемся инициализировать
-            if (firebaseConfig && firebaseConfig.apiKey && firebaseConfig.projectId) {
-                isFirebaseReady = true;
-            } else {
-                 console.warn("Firebase configuration is missing vital keys. Disabling Firebase features.");
-                 document.getElementById('error-display').innerText = "ПРЕДУПРЕЖДЕНИЕ: Ключ Firebase API не загружен. Функции чата и анкет временно недоступны.";
-                 document.getElementById('error-display').classList.remove('hidden');
-            }
-        } catch (e) {
-            console.error("Failed to parse __firebase_config.", e);
-            document.getElementById('error-display').innerText = "КРИТИЧЕСКАЯ ОШИБКА: Не удалось прочитать конфигурацию Firebase. Функции отключены.";
-            document.getElementById('error-display').classList.remove('hidden');
-        }
-        
-        let firebaseApp, auth, db;
-        
-        if (isFirebaseReady) {
-            firebaseApp = initializeApp(firebaseConfig);
-            auth = getAuth(firebaseApp);
-            db = getFirestore(firebaseApp);
-        }
+            <div className="border-b pb-4">
+              <p className="text-sm font-medium text-indigo-600">О себе</p>
+              <p className="text-gray-600 whitespace-pre-wrap">{profile.bio}</p>
+            </div>
 
-        // --- ПУТИ К FIRESTORE (публичные и для пользователей) ---
-        const PATH_PROFILES = `/artifacts/${appId}/public/data/profiles`;
-        const PATH_CHAT = `/artifacts/${appId}/public/data/chat`;
-        const PATH_USERS = `/artifacts/${appId}/users`; // Для хранения данных о пользователе (например, когда менял ник)
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-indigo-600">Последнее обновление данных</p>
+              <p className="text-gray-500 text-xs">
+                {profile.lastUpdate ? new Date(profile.lastUpdate).toLocaleString('ru-RU') : 'Нет данных'}
+              </p>
+              <p className="text-sm font-medium text-indigo-600">Последнее изменение Ника</p>
+              <p className="text-gray-500 text-xs">
+                {profile.lastUsernameChange ? new Date(profile.lastUsernameChange).toLocaleDateString('ru-RU') : 'Ник не менялся'}
+              </p>
+            </div>
 
-        let currentUser = null; // Будет содержать объект { uid, displayName }
+            <button
+              onClick={() => setIsEditing(true)}
+              className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-3 rounded-lg shadow-lg transition duration-200"
+            >
+              Редактировать Профиль
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+  
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-100 to-purple-100 font-sans p-4 md:p-8 flex flex-col items-center">
+      
+      {/* Шапка/Навигация */}
+      <header className="w-full max-w-4xl flex justify-between items-center py-4 px-6 bg-white shadow-lg rounded-xl mb-8">
+        <h1 className="text-2xl font-bold text-indigo-700 hidden sm:block">
+          {profile.requiresRegistration ? 'Регистрация Ника' : 'Система Аутентификации и Профиля'}
+        </h1>
+        <div className="flex items-center space-x-4">
+          <span className="text-sm text-gray-600 truncate max-w-[150px] sm:max-w-none">
+            ID Пользователя: <code className="font-mono bg-gray-100 p-1 rounded text-xs text-indigo-800">{userId}</code>
+          </span>
+          <button 
+            onClick={handleSignOut}
+            className="bg-red-500 hover:bg-red-600 text-white text-sm font-medium py-2 px-4 rounded-lg transition duration-200 shadow-md"
+          >
+            Выход
+          </button>
+        </div>
+      </header>
+      
+      {/* Сообщения пользователю */}
+      <MessageBar message={userMessage} />
 
-        // --- ФУНКЦИИ ИНТЕРФЕЙСА ---
+      {/* Основное содержимое */}
+      <main className="w-full flex justify-center">
+        {profile.requiresRegistration && userId ? (
+          <RegistrationScreen />
+        ) : (
+          <ProfileSection />
+        )}
+      </main>
 
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            toast.innerText = msg;
-            toast.style.transform = 'translateX(0)';
-            setTimeout(() => toast.style.transform = 'translateX(120%)', 3000);
-        }
+      {/* Инструкция по 30-дневной аутентификации */}
+      <footer className="mt-8 p-4 bg-white/70 backdrop-blur-sm rounded-xl text-sm text-gray-700 max-w-4xl text-center shadow-md">
+        <p className="font-semibold text-indigo-700 mb-2">
+          Особенности работы приложения:
+        </p>
+        <ul className="list-disc list-inside text-left mx-auto max-w-lg space-y-1">
+            <li>**Долгосрочная Аутентификация:** Сессия сохраняется автоматически, пока вы не выйдете (аналогично 30 дням).</li>
+            <li>**Регистрация Ника:** При первом входе требуется указать Ник.</li>
+            <li>**Ограничение на Смену Ника:** Ник можно менять только один раз в 30 дней. Биографию можно менять в любое время.</li>
+        </ul>
+      </footer>
+    </div>
+  );
+};
 
-        function updateAuthUI(user) {
-            const loginView = document.getElementById('login-view');
-            const userView = document.getElementById('user-view');
-            const sendMsgBtn = document.getElementById('send-msg-btn');
-            const createBtn = document.getElementById('create-submit-btn');
-            const createNavBtn = document.querySelector('.nav-btn[data-view="create"]');
-            
-            if (user && user.displayName) {
-                currentUser = user;
-                loginView.classList.add('hidden');
-                userView.classList.remove('hidden');
-                document.getElementById('current-nickname').innerText = user.displayName;
-                
-                // Включаем функциональные кнопки
-                sendMsgBtn.classList.remove('firebase-disabled');
-                createBtn.classList.remove('firebase-disabled');
-                createNavBtn.classList.remove('firebase-disabled');
-
-            } else {
-                currentUser = null;
-                loginView.classList.remove('hidden');
-                userView.classList.add('hidden');
-
-                 // Отключаем кнопки
-                sendMsgBtn.classList.add('firebase-disabled');
-                createBtn.classList.add('firebase-disabled');
-                createNavBtn.classList.add('firebase-disabled');
-            }
-        }
-        
-        function copyToClipboard(text, message) {
-            const tempInput = document.createElement('input');
-            tempInput.value = text;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            try {
-                document.execCommand('copy');
-                showToast(message || "Скопировано!");
-            } catch (err) {
-                showToast("Не удалось скопировать.");
-                console.error('Copy failed:', err);
-            }
-            document.body.removeChild(tempInput);
-        }
-
-        // --- ЛОГИКА АУТЕНТИФИКАЦИИ (ТОЛЬКО FIREBASE) ---
-
-        async function handleLogin() {
-            const nick = document.getElementById('nickname-input').value.trim();
-            if(nick.length < 3) return showToast("Ник слишком короткий!");
-            
-            if (!isFirebaseReady) {
-                 return showToast("КРИТИЧЕСКАЯ ОШИБКА: Невозможно войти, подключение к Firebase отсутствует.");
-            }
-
-            try {
-                // 1. Обеспечить анонимный вход
-                if (!auth.currentUser) {
-                    await signInAnonymously(auth);
-                }
-                
-                const uid = auth.currentUser.uid;
-                const userRef = doc(db, PATH_USERS, uid);
-                const now = Date.now();
-                
-                let canChange = true;
-                let userData = {};
-
-                // 2. Проверить данные пользователя и кулдаун на смену ника (30 дней)
-                const userSnap = await getDoc(userRef);
-                if (userSnap.exists()) {
-                    userData = userSnap.data();
-                    const lastChange = userData.lastChange || 0;
-                    const COOLDOWN_MS = 2592000000; // 30 дней в мс
-                    
-                    // Если ник не менялся, пропускаем кулдаун
-                    if (userData.nickname === nick && auth.currentUser.displayName === nick) {
-                        canChange = false; 
-                    } else if (now - lastChange < COOLDOWN_MS) { 
-                        const daysLeft = Math.ceil((COOLDOWN_MS - (now - lastChange)) / (1000 * 60 * 60 * 24));
-                        canChange = false;
-                        showToast(`Менять ник можно раз в 30 дней! Осталось: ${daysLeft} д.`);
-                    }
-                }
-                
-                // 3. Обновить профиль
-                if (canChange || !userSnap.exists()) {
-                    await updateProfile(auth.currentUser, { displayName: nick });
-                    await setDoc(userRef, { 
-                        nickname: nick, 
-                        lastChange: now, 
-                        uid: uid 
-                    }, { merge: true });
-                } else if (auth.currentUser.displayName !== userData.nickname) {
-                     // Если сменить ник нельзя, но текущий в Auth отличается от сохраненного, возвращаем сохраненный
-                     await updateProfile(auth.currentUser, { displayName: userData.nickname || 'Anon' });
-                }
-                
-                // 4. Финальное обновление
-                updateAuthUI(auth.currentUser);
-                showToast(`Добро пожаловать, ${auth.currentUser.displayName}`);
-                setupFirestoreListeners();
-
-            } catch (e) {
-                console.error("Login error:", e);
-                showToast("Ошибка входа: " + e.message);
-            }
-        }
-
-        function handleLogout() {
-            // В режиме Firebase просто сбрасываем UI и ждем, пока onAuthStateChanged подхватит анонимного пользователя
-            updateAuthUI(null);
-            document.getElementById('nickname-input').value = '';
-            
-            // Останавливаем листенеры чата, но оставляем листенер анкет (он публичный)
-            unsubscribeListeners.forEach(unsub => { if (typeof unsub === 'function') unsub(); });
-            unsubscribeListeners = [];
-            
-            // Перерисовываем анкеты
-            setupProfilesListener(); 
-        }
-        
-        // --- ЧАТ ---
-
-        async function sendMessage() {
-            if (!currentUser || !currentUser.displayName) return showToast("Необходимо войти.");
-
-            const input = document.getElementById('chat-input');
-            const text = input.value.trim();
-            if (!text) return;
-            
-            // Логика Firebase
-            try {
-                input.value = ''; 
-                await addDoc(collection(db, PATH_CHAT), {
-                    text: text,
-                    author: currentUser.displayName,
-                    uid: currentUser.uid,
-                    createdAt: serverTimestamp()
-                });
-            } catch (e) {
-                showToast("Ошибка отправки сообщения: " + e.message);
-                input.value = text; 
-            }
-        }
-
-        function setupChatListener() {
-            const chatContainer = document.getElementById('chat-container');
-            
-            if (!currentUser || !currentUser.displayName) {
-                chatContainer.innerHTML = '<div class="text-center text-gray-600 mt-10">Войдите в систему, чтобы увидеть чат.</div>';
-                return;
-            }
-
-            // Логика Firebase
-            const qChat = query(collection(db, PATH_CHAT), orderBy('createdAt', 'desc'), limit(50));
-            const unsubscribeChat = onSnapshot(qChat, (snapshot) => {
-                chatContainer.innerHTML = '';
-                const msgs = [];
-                snapshot.forEach(d => msgs.push(d.data()));
-                msgs.reverse(); 
-
-                msgs.forEach(msg => {
-                    const div = document.createElement('div');
-                    const isOwn = currentUser && msg.uid === currentUser.uid;
-                    div.className = `p-2 rounded max-w-[80%] ${isOwn ? 'bg-blue-900 ml-auto' : 'bg-[#1f242d] mr-auto'}`;
-                    div.innerHTML = `<span class="text-blue-400 font-bold text-xs">${msg.author}</span>: <span class="text-gray-300">${msg.text}</span>`;
-                    chatContainer.appendChild(div);
-                });
-                
-                if (!document.getElementById('view-chat').classList.contains('hidden')) {
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                }
-            }, (error) => {
-                 console.error("Chat listener error:", error);
-                 showToast("Ошибка загрузки чата. Проверьте правила безопасности Firestore.");
-            });
-            return unsubscribeChat;
-        }
-
-        // --- АНКЕТЫ ---
-
-        async function createProfile(e) {
-            e.preventDefault();
-            if (!currentUser || !currentUser.displayName) return showToast("Необходимо войти.");
-
-            const title = document.getElementById('f-title').value.trim();
-            const role = document.getElementById('f-role').value.trim();
-            const desc = document.getElementById('f-desc').value.trim();
-            const contact = document.getElementById('f-contact').value.trim();
-
-            if (!title || !role || !desc || !contact) {
-                return showToast("Все поля обязательны!");
-            }
-
-            // Логика Firebase
-            try {
-                await addDoc(collection(db, PATH_PROFILES), {
-                    title, role, desc, contact,
-                    author: currentUser.displayName,
-                    uid: currentUser.uid,
-                    createdAt: serverTimestamp()
-                });
-                showToast("Анкета опубликована!");
-                e.target.reset();
-                window.app.setView('profiles');
-            } catch (err) {
-                console.error("Create profile error:", err);
-                showToast("Ошибка создания анкеты: " + err.message);
-            }
-        }
-
-        function renderProfiles(profiles) {
-            const profilesContainer = document.getElementById('profiles-container');
-            profilesContainer.innerHTML = '';
-
-            if (profiles.length === 0) {
-                profilesContainer.innerHTML = '<div class="text-gray-500 col-span-full text-center p-4">Анкет пока нет. Будьте первым!</div>';
-                return;
-            }
-
-            profiles.forEach(data => {
-                const card = document.createElement('div');
-                card.className = "bg-[#1f242d] p-4 rounded-xl border border-[#30363d] hover:border-blue-500 transition shadow-lg";
-                
-                const profileId = data.id; 
-                const profileURL = `${window.location.origin}${window.location.pathname}?profileId=${profileId}`; 
-                
-                card.innerHTML = `
-                    <div class="font-bold text-orange-400 text-lg">${data.title}</div>
-                    <div class="text-sm text-blue-300 mb-2">Ищет: ${data.role}</div>
-                    <p class="text-gray-300 text-sm mb-3 whitespace-pre-wrap line-clamp-3">${data.desc}</p>
-                    <div class="text-xs text-gray-500 border-t border-[#30363d] pt-2 flex flex-col sm:flex-row sm:justify-between sm:items-center mt-2 gap-2">
-                        <span class="font-medium text-gray-400">Автор: ${data.author}</span>
-                        <div class="flex flex-col sm:flex-row gap-2">
-                            <button data-url="${profileURL}" class="copy-link-btn text-xs text-white bg-green-600 hover:bg-green-700 px-3 py-1 rounded-full transition">
-                                🔗 Копировать ссылку
-                            </button>
-                            <span class="text-sm text-white bg-blue-700 px-3 py-1 rounded-full">${data.contact}</span>
-                        </div>
-                    </div>
-                `;
-                
-                const copyBtn = card.querySelector('.copy-link-btn');
-                copyBtn.addEventListener('click', (e) => {
-                    e.stopPropagation(); 
-                    const url = e.currentTarget.getAttribute('data-url');
-                    copyToClipboard(url, "Ссылка на анкету скопирована!");
-                });
-                
-                profilesContainer.appendChild(card);
-            });
-        }
-
-        function setupProfilesListener() {
-            const profilesContainer = document.getElementById('profiles-container');
-            profilesContainer.innerHTML = '<div class="text-gray-500 col-span-full text-center p-4">Подключение к базе данных...</div>';
-
-            if (!isFirebaseReady) {
-                 profilesContainer.innerHTML = '<div class="text-red-500 col-span-full text-center p-4">Не удалось инициализировать Firebase. Анкеты недоступны.</div>';
-                 return;
-            }
-            
-            // Логика Firebase
-            const qProfiles = query(collection(db, PATH_PROFILES), orderBy('createdAt', 'desc'), limit(20));
-
-            const unsubscribeProfiles = onSnapshot(qProfiles, (snapshot) => {
-                const profiles = [];
-                snapshot.forEach(doc => profiles.push({ id: doc.id, ...doc.data() }));
-                renderProfiles(profiles);
-
-            }, (error) => {
-                 console.error("Profiles listener error:", error);
-                 profilesContainer.innerHTML = '<div class="text-red-500 col-span-full text-center p-4">Ошибка загрузки анкет. Проверьте правила безопасности.</div>';
-                 showToast("Ошибка загрузки анкет.");
-            });
-            return unsubscribeProfiles;
-        }
-        
-        let unsubscribeListeners = [];
-
-        function setupFirestoreListeners() {
-            // Отписываемся от старых подписок
-            unsubscribeListeners.forEach(unsub => { if (typeof unsub === 'function') unsub(); });
-            unsubscribeListeners = [];
-            
-            // Анкеты всегда показываем
-            const profilesUnsub = setupProfilesListener(); 
-            if (profilesUnsub) unsubscribeListeners.push(profilesUnsub);
-
-            // Чат показываем, только если пользователь вошел
-            if (currentUser && currentUser.displayName) {
-                 const chatUnsub = setupChatListener();
-                 if (chatUnsub) unsubscribeListeners.push(chatUnsub);
-            }
-        }
-
-        // --- ЗАПУСК ---
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            if (isFirebaseReady) {
-                 // Инициализация при загрузке: проверяем Firebase Auth status
-                onAuthStateChanged(auth, (user) => {
-                    if (user && user.uid) {
-                        if (user.displayName) {
-                            updateAuthUI(user);
-                            setupFirestoreListeners();
-                        } else {
-                            // Анонимный вход без имени: показываем форму входа
-                            updateAuthUI(null); 
-                            setupProfilesListener(); // Анкеты публичные
-                        }
-                    } else {
-                        // Не вошел
-                         updateAuthUI(null); 
-                         setupProfilesListener(); // Анкеты публичные
-                    }
-                });
-            } else {
-                // Если Firebase не готов, нужно показать только ошибку в анкетах
-                setupProfilesListener();
-            }
-
-             // Навигационные кнопки
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    if (e.currentTarget.classList.contains('firebase-disabled') && !currentUser) {
-                         return showToast("Недоступно. Войдите, чтобы использовать эту функцию.");
-                    }
-                    window.app.setView(btn.dataset.view);
-                });
-            });
-
-            // Кнопка Вход
-            document.getElementById('login-btn').addEventListener('click', handleLogin);
-            
-            // Кнопка Сменить ник
-            document.getElementById('logout-btn').addEventListener('click', handleLogout);
-            
-            // Кнопка Отправить сообщение
-            const sendMsgBtn = document.getElementById('send-msg-btn');
-            sendMsgBtn.addEventListener('click', sendMessage);
-            document.getElementById('chat-input').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') sendMessage();
-            });
-
-            // Форма создания анкеты
-            document.getElementById('create-form').addEventListener('submit', createProfile);
-            
-            window.app.setView('profiles');
-        });
-    </script>
-</body>
-</html>
+export default App;
