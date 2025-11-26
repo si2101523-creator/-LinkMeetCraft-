@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -11,36 +11,16 @@
     <!-- ТЕГИ ПОДТВЕРЖДЕНИЯ (ОБЯЗАТЕЛЬНО!) -->
     <!-- GOOGLE SEARCH CONSOLE -->
     <meta name="google-site-verification" content="F3-qIwKF7rrBELT89F9YjqvQFiSNPg66pjBTJVJjsoM" />
-    <!-- YANDEX WEBMATER - ВСТАВЛЕНО! -->
+    <!-- YANDEX WEBMATER - Ваш код -->
     <meta name="yandex-verification" content="b631ed6c682d5bd3" />
 
-    <!-- Подключение Tailwind CSS -->
+    <!-- Подключение Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Шрифт Orbitron для геймерского стиля -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
     
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        'gamer': ['Orbitron', 'sans-serif'],
-                        'ui': ['Rajdhani', 'sans-serif'],
-                    },
-                    colors: {
-                        neonBlue: '#00f3ff',
-                        neonOrange: '#ff6600',
-                        darkBg: '#0b0d17',
-                        panelBg: 'rgba(20, 24, 36, 0.85)',
-                    },
-                    boxShadow: {
-                        'neon-blue': '0 0 10px rgba(0, 243, 255, 0.5)',
-                        'neon-orange': '0 0 10px rgba(255, 102, 0, 0.5)',
-                    }
-                }
-            }
-        }
-    </script>
+        // --- КОНФИГУРАЦИЯ TAILWIND CSS (объект JS внутри тега <script>) ---
         tailwind.config = {
             theme: {
                 extend: {
@@ -194,7 +174,7 @@
                 <span class="mr-3 text-xl">💬</span> Общий чат
             </button>
             <button data-view="create" class="nav-btn w-full text-left p-3 rounded text-gray-300 flex items-center">
-                <span class="mr-3 text-xl">➕</span> Создать анкету <!-- ИЗМЕНЕНО: Создать анкету -->
+                <span class="mr-3 text-xl">➕</span> Создать анкету
             </button>
         </nav>
 
@@ -215,7 +195,7 @@
     </aside>
 
     <!-- Правая панель (Контент) -->
-    <main class="flex-1 relative overflow-hidden flex flex-col h-full bg-black/50 backdrop-blur-sm mobile-main">
+    <main class="flex-1 relative overflow-hidden flex flex-col h-screen md:h-full bg-black/50 backdrop-blur-sm mobile-main">
         
         <!-- Уведомления -->
         <div id="toast" class="absolute top-4 right-4 bg-gray-800 border-l-4 border-neonBlue text-white px-6 py-4 rounded shadow-2xl transform translate-x-full transition-transform duration-300 z-50 flex items-center">
@@ -347,7 +327,10 @@
                 if (viewName === 'chat') {
                     const chatContainer = document.getElementById('chat-container');
                     if (chatContainer) {
-                        chatContainer.scrollTop = chatContainer.scrollHeight;
+                        // Используем setTimeout, чтобы убедиться, что DOM обновился
+                        setTimeout(() => {
+                           chatContainer.scrollTop = chatContainer.scrollHeight;
+                        }, 0);
                     }
                 }
             }
@@ -444,7 +427,7 @@
                     }
                 });
             } catch(e) {
-                console.error(e);
+                console.error("Ошибка инициализации Firebase:", e);
                 document.getElementById('error-display').innerText = "Ошибка инициализации: " + e.message;
                 document.getElementById('error-display').classList.remove('hidden');
             }
@@ -553,7 +536,7 @@
                     createdAt: serverTimestamp()
                 });
             } catch(e) {
-                showToast("Ошибка: " + e.message);
+                showToast("Ошибка отправки сообщения: " + e.message);
             }
         }
 
@@ -580,7 +563,7 @@
                 e.target.reset();
                 window.app.setView('profiles');
             } catch(e) {
-                showToast("Ошибка: " + e.message);
+                showToast("Ошибка создания анкеты: " + e.message);
             }
         }
 
@@ -598,8 +581,13 @@
 
         // --- ЛИСТЕНЕРЫ ---
         function setupProfilesListener() {
+            if (!db) return; // Проверка, что db инициализирован
             const q = query(collection(db, PATH_PROFILES), limit(50));
-            onSnapshot(q, (snap) => {
+            
+            // Отписываемся от предыдущего слушателя, если он есть
+            if (window.profilesUnsubscribe) window.profilesUnsubscribe();
+
+            window.profilesUnsubscribe = onSnapshot(q, (snap) => {
                 const cont = document.getElementById('profiles-container');
                 cont.innerHTML = '';
                 if(snap.empty) {
@@ -609,10 +597,11 @@
                 
                 const items = [];
                 snap.forEach(d => items.push({id: d.id, ...d.data()}));
-                // Сортировка JS
+                // Сортировка JS по дате создания
                 items.sort((a,b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
 
                 items.forEach(p => {
+                    // Используем currentUser для проверки владельца
                     const isOwner = currentUser && p.uid === currentUser.uid;
                     const el = document.createElement('div');
                     el.className = `bg-gray-900/60 border ${isOwner ? 'border-neonOrange' : 'border-gray-700'} p-6 rounded-xl hover:bg-gray-800/60 transition-all duration-300 shadow-lg backdrop-blur-sm`;
@@ -636,15 +625,19 @@
                     
                     cont.appendChild(el);
                 });
+            }, (error) => {
+                console.error("Ошибка получения анкет:", error);
             });
         }
 
-        function setupListeners() {
-            // Чат (добавлена проверка на currentUser)
-            if (!currentUser) return;
-
+        function setupChatListener() {
+            if (!db || !currentUser) return;
             const qChat = query(collection(db, PATH_CHAT), limit(50));
-            onSnapshot(qChat, (snap) => {
+            
+            // Отписываемся от предыдущего слушателя, если он есть
+            if (window.chatUnsubscribe) window.chatUnsubscribe();
+
+            window.chatUnsubscribe = onSnapshot(qChat, (snap) => {
                 const cont = document.getElementById('chat-container');
                 cont.innerHTML = '';
                 const msgs = [];
@@ -664,11 +657,20 @@
                     cont.appendChild(div);
                 });
                 if(!document.getElementById('view-chat').classList.contains('hidden')) {
-                    cont.scrollTop = cont.scrollHeight;
+                    // Прокрутка вниз
+                    setTimeout(() => {
+                        cont.scrollTop = cont.scrollHeight;
+                    }, 0);
                 }
+            }, (error) => {
+                 console.error("Ошибка получения сообщений чата:", error);
             });
-            
+        }
+        
+        function setupListeners() {
+            // Установка слушателей для чата и профилей после успешного входа
             setupProfilesListener();
+            setupChatListener();
         }
         
         // --- ГЛОБАЛЬНЫЕ ОБРАБОТЧИКИ ---
@@ -684,7 +686,12 @@
             
             // Привязка кнопок действий
             document.getElementById('send-msg-btn').onclick = sendMessage;
-            document.getElementById('chat-input').onkeypress = (e) => { if(e.key === 'Enter') sendMessage() };
+            document.getElementById('chat-input').onkeypress = (e) => { 
+                if(e.key === 'Enter') { 
+                    e.preventDefault(); // Предотвратить новую строку в поле ввода
+                    sendMessage(); 
+                } 
+            };
             document.getElementById('create-form').onsubmit = createProfile;
 
             // Привязка навигационных кнопок к функции setView
