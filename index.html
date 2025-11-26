@@ -7,6 +7,9 @@
     <title>Поиск Тиммейтов для Minecraft & CS2 | LinkMeetCraft</title>
     <!-- 2. МЕТА-ОПИСАНИЕ: Отображается в результатах поиска -->
     <meta name="description" content="Найдите идеальных тиммейтов для Minecraft, CS2, Dota 2 и других игр! Публикуйте свои анкеты и присоединяйтесь к миссиям на LinkMeetCraft.">
+    
+    <!-- GOOGLE SEARCH CONSOLE - ТЕГ ПОДТВЕРЖДЕНИЯ ВЛАДЕНИЯ (ОБЯЗАТЕЛЕН!) -->
+    <meta name="google-site-verification" content="F3-qIwKF7rrBELT89F9YjqvQFiSNPg66pjBTJVJjsoM" />
 
     <!-- Подключение Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -167,7 +170,7 @@
                 <span class="mr-3 text-xl">💬</span> Общий чат
             </button>
             <button data-view="create" class="nav-btn w-full text-left p-3 rounded text-gray-300 flex items-center">
-                <span class="mr-3 text-xl">➕</span> Создать анкету
+                <span class="mr-3 text-xl">➕</span> Создать анкету <!-- ИЗМЕНЕНО: Создать анкету -->
             </button>
         </nav>
 
@@ -253,7 +256,7 @@
                         <label class="block text-neonBlue text-sm font-bold mb-2 uppercase tracking-wide">Связь (Discord/TG)</label>
                         <div class="flex">
                             <span class="inline-flex items-center px-3 rounded-l border border-r-0 border-gray-600 bg-gray-800 text-gray-400 text-sm">@</span>
-                            <input type="text" id="f-contact" required class="w-full bg-black/50 border border-gray-600 rounded-r p-3 text-white focus:border-neonOrange focus:outline-none focus:shadow-neon-orange transition-all" placeholder="username">
+                            <input type="text" id="f-contact" required maxlength="25" class="w-full bg-black/50 border border-gray-600 rounded-r p-3 text-white focus:border-neonOrange focus:outline-none focus:shadow-neon-orange transition-all" placeholder="username">
                         </div>
                     </div>
                     <button type="submit" id="create-submit-btn" class="w-full bg-gradient-to-r from-orange-600 to-neonOrange hover:from-orange-500 hover:to-yellow-500 text-black font-bold py-4 rounded-lg mt-4 transition-all duration-200 shadow-neon-orange text-lg uppercase tracking-widest action-disabled" disabled>
@@ -277,7 +280,7 @@
             apiKey: "AIzaSyA7EumEru2qfYcAyxAWLL4TY_dWfcU3Dfg",
             authDomain: "linkmeetcraft.firebaseapp.com",
             projectId: "linkmeetcraft",
-            storageBucket: "linkmeetcraft.firebasestorage.app",
+            storageBucket: "linkmeetcraft.firebase-storage.app",
             messagingSenderId: "373052253470",
             appId: "1:373052253470:web:a66afc67876f76dc1a550f",
             measurementId: "G-WSZL0NRHCQ"
@@ -549,7 +552,7 @@
                     uid: currentUser.uid,
                     createdAt: serverTimestamp()
                 });
-                showToast("Миссия опубликована!");
+                showToast("Анкета опубликована!");
                 e.target.reset();
                 window.app.setView('profiles');
             } catch(e) {
