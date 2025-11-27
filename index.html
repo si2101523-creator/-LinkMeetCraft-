@@ -3,21 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- 1. САМЫЙ ВАЖНЫЙ ТЕГ: Title, содержит ключевую фразу -->
-    <title>Поиск Тиммейтов для Minecraft & CS2 | LinkMeetCraft</title>
-    <!-- 2. МЕТА-ОПИСАНИЕ: Отображается в результатах поиска -->
-    <meta name="description" content="Найдите идеальных тиммейтов для Minecraft, CS2, Dota 2 и других игр! Публикуйте свои анкеты и присоединяйтесь к миссиям на LinkMeetCraft.">
+    <!-- 1. TITLE: Усилен для поиска -->
+    <title>Тиммейты для Minecraft, CS2, Dota 2 | LinkMeetCraft - Быстрый поиск</title>
+    <!-- 2. МЕТА-ОПИСАНИЕ: Усилено для кликабельности -->
+    <meta name="description" content="Платформа для поиска тиммейтов и команды для Minecraft, CS2, Dota 2, RUST и других онлайн-игр. Найдите билдера, кодера или напарника для миссии за 5 минут.">
+    <!-- 3. КЛЮЧЕВЫЕ СЛОВА (Добавлено): Помогает Яндексу понять тематику -->
+    <meta name="keywords" content="тиммейты, minecraft, cs2, dota 2, поиск команды, найти напарника, кодер, билдер, гейминг, LinkMeetCraft">
     
-    <!-- ТЕГИ ПОДТВЕРЖДЕНИЯ (ОБЯЗАТЕЛЬНО!) -->
+    <!-- ТЕГИ ПОДТВЕРЖДЕНИЯ -->
     <!-- GOOGLE SEARCH CONSOLE -->
     <meta name="google-site-verification" content="F3-qIwKF7rrBELT89F9YjqvQFiSNPg66pjBTJVJjsoM" />
     <!-- YANDEX WEBMATER - Ваш код -->
     <meta name="yandex-verification" content="b631ed6c682d5bd3" />
 
+    <!-- Yandex.Metrika counter (Счетчик Яндекс.Метрики) - ДОБАВЛЕНО -->
+    <script type="text/javascript">
+        (function(m,e,t,r,i,k,a){
+            m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+            m[i].l=1*new Date();
+            for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+            k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+        })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=105532663', 'ym');
+
+        ym(105532663, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", accurateTrackBounce:true, trackLinks:true});
+    </script>
+    <noscript><div><img src="https://mc.yandex.ru/watch/105532663" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+    <!-- /Yandex.Metrika counter -->
+
     <!-- Подключение Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Шрифт Orbitron для геймерского стиля -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght400;600;700&display=swap" rel="stylesheet">
     
     <script>
         // --- КОНФИГУРАЦИЯ TAILWIND CSS (объект JS внутри тега <script>) ---
@@ -207,13 +223,20 @@
         <div id="view-profiles" class="view-section h-full overflow-y-auto p-6 custom-scrollbar">
             <div class="flex items-center justify-between mb-6 border-b border-gray-700 pb-4">
                 <!-- 3. ЗАГОЛОВОК КОНТЕНТА: Используем ключевое слово -->
-                <h2 class="text-3xl font-gamer font-bold text-white">Поиск <span class="text-neonOrange">Тиммейтов</span></h2>
+                <h2 class="text-3xl font-gamer font-bold text-white">Активные <span class="text-neonOrange">Миссии</span> и поиск тиммейтов</h2>
                 <div class="text-xs text-gray-500 font-mono">LIVE FEED</div>
             </div>
             
+            <!-- Добавлен статический текст для SEO. Робот увидит этот текст, даже если JS не отработает. -->
+            <div class="bg-gray-900/40 p-4 rounded-xl mb-6 text-sm text-gray-300 border border-gray-700/50">
+                <h3 class="text-lg font-bold text-neonBlue mb-2 font-ui">Платформа для геймеров:</h3>
+                <p>LinkMeetCraft — это ваш центр для поиска надежных тиммейтов. Независимо от того, нужен ли вам <span class="text-neonOrange">билдер для Minecraft</span>, точный <span class="text-neonOrange">снайпер для CS2</span> или слаженный саппорт для <span class="text-neonOrange">Dota 2</span>, вы найдете свою команду здесь. Все анкеты публикуются моментально и доступны в реальном времени. Вступайте в игру!</p>
+            </div>
+            <!-- Конец статического SEO-блока -->
+
             <div id="profiles-container" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="text-neonBlue col-span-full text-center p-10 border border-dashed border-gray-700 rounded-xl animate-pulse">
-                    Загрузка данных...
+                    Загрузка активных анкет...
                 </div>
             </div>
         </div>
@@ -245,16 +268,16 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-neonBlue text-sm font-bold mb-2 uppercase tracking-wide">Название проекта / Цель</label>
-                            <input type="text" id="f-title" required class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white focus:border-neonOrange focus:outline-none focus:shadow-neon-orange transition-all" placeholder="Например: RPG Сервер">
+                            <input type="text" id="f-title" required class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white focus:border-neonOrange focus:outline-none focus:shadow-neon-orange transition-all" placeholder="Например: RPG Сервер или Ищу 5-го для CS2">
                         </div>
                         <div>
                             <label class="block text-neonBlue text-sm font-bold mb-2 uppercase tracking-wide">Кого ищете (Роль)</label>
-                            <input type="text" id="f-role" required class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white focus:border-neonOrange focus:outline-none focus:shadow-neon-orange transition-all" placeholder="Строитель / Кодер">
+                            <input type="text" id="f-role" required class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white focus:border-neonOrange focus:outline-none focus:shadow-neon-orange transition-all" placeholder="Строитель / Кодер / Саппорт">
                         </div>
                     </div>
                     <div>
                         <label class="block text-neonBlue text-sm font-bold mb-2 uppercase tracking-wide">Описание / Стек</label>
-                        <textarea id="f-desc" required rows="5" class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white focus:border-neonOrange focus:outline-none focus:shadow-neon-orange transition-all" placeholder="Детали миссии..."></textarea>
+                        <textarea id="f-desc" required rows="5" class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white focus:border-neonOrange focus:outline-none focus:shadow-neon-orange transition-all" placeholder="Детали миссии, требования к игрокам, опыт..."></textarea>
                     </div>
                     <div>
                         <label class="block text-neonBlue text-sm font-bold mb-2 uppercase tracking-wide">Связь (Discord/TG)</label>
