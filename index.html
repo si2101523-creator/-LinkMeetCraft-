@@ -3,22 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LinkMeetCraft</title>
+    <title>LinkMeetCraft - Gamer Hub</title>
     
     <!-- SEO -->
     <meta name="description" content="Поиск тиммейтов для Minecraft, CS2, Dota 2.">
-    <meta name="keywords" content="тиммейты, minecraft, cs2, поиск команды">
     <meta name="google-site-verification" content="F3-qIwKF7rrBELT89F9YjqvQFiSNPg66pjBTJVJjsoM" />
     <meta name="yandex-verification" content="b631ed6c682d5bd3" />
-
-    <!-- Yandex.Metrika -->
-    <script type="text/javascript">
-        (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-        m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
-        (window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=105532663', 'ym');
-        ym(105532663, 'init', {ssr:true, webvisor:true, clickmap:true, trackLinks:true, accurateTrackBounce:true});
-    </script>
-    <noscript><div><img src="https://mc.yandex.ru/watch/105532663" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -30,8 +20,8 @@
             theme: {
                 extend: {
                     fontFamily: { 'gamer': ['Orbitron', 'sans-serif'], 'ui': ['Rajdhani', 'sans-serif'] },
-                    colors: { neonBlue: '#00f3ff', neonOrange: '#ff6600', darkBg: '#0b0d17', panelBg: 'rgba(20, 24, 36, 0.95)' },
-                    boxShadow: { 'neon': '0 0 10px rgba(0, 243, 255, 0.3)' }
+                    colors: { neonBlue: '#00f3ff', neonOrange: '#ff6600', darkBg: '#0b0d17' },
+                    boxShadow: { 'neon': '0 0 15px rgba(0, 243, 255, 0.4)' }
                 }
             }
         }
@@ -40,213 +30,200 @@
     <style>
         body {
             background-color: #0b0d17;
-            background-image: url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=60&w=1080&auto=format&fit=crop'); 
+            background-image: linear-gradient(rgba(11, 13, 23, 0.9), rgba(11, 13, 23, 0.95)), url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=60&w=1080&auto=format&fit=crop');
             background-size: cover;
-            background-position: center;
             background-attachment: fixed;
             color: #e6edf3;
-            overflow: hidden; /* Prevent body scroll, use inner containers */
-        }
-        .bg-overlay {
-            position: absolute; inset: 0; background: rgba(5, 5, 10, 0.85); backdrop-filter: blur(5px); z-index: -1;
+            overflow: hidden;
         }
         
-        /* Мобильная оптимизация скролла */
-        .custom-scrollbar { -webkit-overflow-scrolling: touch; }
+        .glass-panel {
+            background: rgba(20, 24, 36, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-btn { transition: all 0.2s; }
+        .nav-btn.active { color: #00f3ff; border-bottom: 2px solid #00f3ff; text-shadow: 0 0 8px rgba(0, 243, 255, 0.5); }
+        .desktop-nav-btn.active { background: rgba(0, 243, 255, 0.1); border-bottom: none; border-left: 3px solid #00f3ff; }
+
+        /* Кастомный скролл */
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #00f3ff; border-radius: 2px; }
-
-        /* Анимация загрузки */
-        .loader {
-            border: 4px solid rgba(255, 255, 255, 0.1);
-            border-left-color: #00f3ff;
-            border-radius: 50%;
-            width: 40px; height: 40px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* Стили кнопок навигации */
-        .nav-item.active { color: #00f3ff; border-bottom: 2px solid #00f3ff; }
-        .nav-item.active svg { transform: scale(1.1); filter: drop-shadow(0 0 5px #00f3ff); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
         
-        .desktop-nav-btn.active {
-            background: linear-gradient(90deg, rgba(0, 243, 255, 0.15) 0%, transparent 100%);
-            border-left: 3px solid #00f3ff;
-            color: #00f3ff;
+        .loader {
+            border: 3px solid rgba(255,255,255,0.1); border-top-color: #00f3ff; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite;
         }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="font-ui text-lg h-[100dvh] flex flex-col md:flex-row">
-    <div class="bg-overlay"></div>
 
-    <!-- ЭКРАН ЗАГРУЗКИ (Покрывает все пока не загрузится Firebase) -->
-    <div id="global-loader" class="fixed inset-0 z-[100] bg-[#0b0d17] flex flex-col items-center justify-center transition-opacity duration-500">
-        <div class="loader mb-4"></div>
-        <h2 class="text-xl font-gamer text-white tracking-widest">CONNECTING...</h2>
-        <p class="text-xs text-gray-500 mt-2" id="loader-status">Инициализация систем...</p>
+    <!-- ТОСТ УВЕДОМЛЕНИЯ -->
+    <div id="toast" class="absolute top-5 right-5 z-[100] bg-gray-900 border-l-4 border-neonBlue px-6 py-4 rounded shadow-2xl transform translate-x-[150%] transition-transform duration-300 max-w-sm text-sm">
+        <div class="font-bold text-neonBlue mb-1" id="toast-title">Info</div>
+        <div id="toast-message">...</div>
     </div>
 
-    <!-- УВЕДОМЛЕНИЯ -->
-    <div id="toast" class="absolute top-4 right-4 md:right-10 bg-gray-900 border border-neonBlue text-white px-4 py-3 rounded shadow-2xl transform translate-x-[150%] transition-transform duration-300 z-[90] max-w-xs text-sm flex items-center">
-        <span class="mr-2 text-xl">🤖</span>
-        <span id="toast-message">...</span>
-    </div>
-
-    <!-- === МОБИЛЬНАЯ ВЕРХНЯЯ ПАНЕЛЬ (Только мобильные) === -->
-    <header class="md:hidden h-14 bg-gray-900/90 backdrop-blur border-b border-gray-700 flex items-center justify-between px-4 z-40 shrink-0">
-        <h1 class="text-xl font-gamer font-bold text-white tracking-wider">
-            LMC<span class="text-neonBlue">.io</span>
-        </h1>
-        <div class="flex items-center gap-2">
-            <!-- Аватарка / Кнопка профиля -->
-            <button onclick="window.app.toggleProfileModal()" class="w-8 h-8 rounded-full bg-gradient-to-br from-neonOrange to-red-600 flex items-center justify-center text-white font-bold shadow-sm border border-white/20">
-                <span id="mobile-avatar-letter">?</span>
-            </button>
-        </div>
-    </header>
-
-    <!-- === ДЕСКТОПНЫЙ САЙДБАР (Скрыт на мобильных) === -->
-    <aside class="hidden md:flex w-72 bg-gray-900/80 backdrop-blur border-r border-gray-700 flex-col p-6 z-20">
-        <h1 class="text-3xl font-gamer font-bold text-white mb-8">LinkMeet<span class="text-neonBlue">Craft</span></h1>
-        
-        <!-- Десктопный Профиль -->
-        <div id="desktop-auth-box" class="bg-black/40 p-4 rounded-xl border border-gray-700 mb-6">
-            <div id="desk-login-view">
-                <p class="text-xs text-neonBlue mb-2 font-bold uppercase">Вход в систему</p>
-                <input type="text" id="desk-nick-input" placeholder="Ваш Никнейм" class="w-full bg-gray-800 border border-gray-600 rounded p-2 text-white text-sm mb-2 focus:border-neonBlue outline-none">
-                <button onclick="handleLogin('desk')" class="w-full bg-neonBlue/20 hover:bg-neonBlue/30 text-neonBlue border border-neonBlue/50 font-bold py-1.5 rounded text-sm transition">ВОЙТИ</button>
+    <!-- МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ -->
+    <div id="auth-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-gray-900 border border-gray-700 w-full max-w-md p-8 rounded-2xl shadow-2xl relative">
+            <button onclick="toggleAuthModal(false)" class="absolute top-4 right-4 text-gray-500 hover:text-white">✕</button>
+            
+            <!-- Табы: Вход / Регистрация -->
+            <div class="flex mb-6 border-b border-gray-700">
+                <button onclick="switchAuthTab('login')" id="tab-login" class="flex-1 pb-3 text-center text-neonBlue border-b-2 border-neonBlue font-bold transition">ВХОД</button>
+                <button onclick="switchAuthTab('register')" id="tab-register" class="flex-1 pb-3 text-center text-gray-500 hover:text-white transition">РЕГИСТРАЦИЯ</button>
             </div>
-            <div id="desk-user-view" class="hidden">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-neonOrange flex items-center justify-center text-white font-bold" id="desk-avatar">U</div>
-                    <div class="overflow-hidden">
-                        <div class="text-gray-400 text-[10px] uppercase">Оператор</div>
-                        <div id="desk-username" class="text-white font-bold truncate">User</div>
-                    </div>
+
+            <!-- Форма Входа -->
+            <form id="form-login" class="space-y-4">
+                <div>
+                    <label class="text-xs text-gray-400 uppercase">Email</label>
+                    <input type="email" id="login-email" class="w-full bg-black/40 border border-gray-600 rounded p-3 text-white focus:border-neonBlue outline-none" required>
                 </div>
-                <button onclick="openEditMode()" class="mt-3 text-xs text-gray-400 hover:text-white flex items-center">
-                    ✎ Сменить ник
-                </button>
+                <div>
+                    <label class="text-xs text-gray-400 uppercase">Пароль</label>
+                    <input type="password" id="login-pass" class="w-full bg-black/40 border border-gray-600 rounded p-3 text-white focus:border-neonBlue outline-none" required>
+                </div>
+                <button type="submit" class="w-full bg-neonBlue text-black font-bold py-3 rounded hover:bg-cyan-400 transition shadow-neon mt-2">ВОЙТИ</button>
+            </form>
+
+            <!-- Форма Регистрации -->
+            <form id="form-register" class="space-y-4 hidden">
+                <div>
+                    <label class="text-xs text-gray-400 uppercase">Никнейм</label>
+                    <input type="text" id="reg-nick" class="w-full bg-black/40 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" maxlength="15" required>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400 uppercase">Email</label>
+                    <input type="email" id="reg-email" class="w-full bg-black/40 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" required>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400 uppercase">Пароль (мин. 6 символов)</label>
+                    <input type="password" id="reg-pass" class="w-full bg-black/40 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" minlength="6" required>
+                </div>
+                <button type="submit" class="w-full bg-neonOrange text-black font-bold py-3 rounded hover:bg-orange-500 transition shadow-neon mt-2">СОЗДАТЬ АККАУНТ</button>
+            </form>
+            
+            <p id="auth-error" class="text-red-500 text-sm mt-4 text-center hidden"></p>
+        </div>
+    </div>
+
+    <!-- === ДЕСКТОП САЙДБАР === -->
+    <aside class="hidden md:flex w-72 glass-panel flex-col p-6 z-20">
+        <h1 class="text-2xl font-gamer font-bold text-white mb-10 tracking-widest text-center">
+            LMC<span class="text-neonBlue">.HUB</span>
+        </h1>
+        
+        <!-- Профиль Десктоп -->
+        <div id="desk-profile" class="mb-8 p-4 rounded-xl bg-black/30 border border-gray-700/50 text-center">
+            <div id="desk-user-info" class="hidden">
+                <div class="w-16 h-16 bg-gradient-to-br from-neonBlue to-purple-600 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-bold" id="desk-avatar">A</div>
+                <div class="font-bold text-lg text-white" id="desk-username">User</div>
+                <button onclick="doLogout()" class="text-xs text-red-400 mt-2 hover:underline">Выйти</button>
+            </div>
+            <div id="desk-guest-info">
+                <p class="text-sm text-gray-400 mb-3">Вы не вошли</p>
+                <button onclick="toggleAuthModal(true)" class="w-full bg-neonBlue/10 border border-neonBlue text-neonBlue py-2 rounded hover:bg-neonBlue/20 transition">ВОЙТИ</button>
             </div>
         </div>
 
-        <!-- Десктоп Меню -->
         <nav class="space-y-2 flex-1">
-            <button onclick="window.app.setView('profiles')" class="desktop-nav-btn active w-full text-left p-3 rounded text-gray-300 hover:text-white flex items-center" data-view="profiles">
-                <span class="mr-3">📄</span> Анкеты
+            <button onclick="app.setView('profiles')" class="desktop-nav-btn active w-full text-left p-3 rounded text-gray-400 hover:text-white flex items-center gap-3 transition" data-view="profiles">
+                <span>📄</span> Анкеты
             </button>
-            <button onclick="window.app.setView('chat')" class="desktop-nav-btn w-full text-left p-3 rounded text-gray-300 hover:text-white flex items-center" data-view="chat">
-                <span class="mr-3">💬</span> Чат
+            <button onclick="app.setView('chat')" class="desktop-nav-btn w-full text-left p-3 rounded text-gray-400 hover:text-white flex items-center gap-3 transition" data-view="chat">
+                <span>💬</span> Чат
             </button>
-            <button onclick="window.app.setView('create')" class="desktop-nav-btn w-full text-left p-3 rounded text-gray-300 hover:text-white flex items-center" data-view="create">
-                <span class="mr-3">➕</span> Создать
+            <button onclick="app.setView('create')" class="desktop-nav-btn w-full text-left p-3 rounded text-gray-400 hover:text-white flex items-center gap-3 transition" data-view="create">
+                <span>➕</span> Создать
             </button>
         </nav>
         
         <!-- Ссылки -->
-        <div class="mt-auto space-y-2 text-sm">
-            <a href="https://t.me/LinkMeetCraft" target="_blank" class="block text-blue-400 hover:underline">Telegram Канал</a>
-            <a href="https://www.youtube.com/@папгмобаил-д3э" target="_blank" class="block text-red-400 hover:underline">YouTube</a>
+        <div class="space-y-2 text-sm mt-4 border-t border-gray-700 pt-4">
+            <a href="https://t.me/LinkMeetCraft" target="_blank" class="flex items-center text-blue-400 hover:text-blue-300">
+                <span class="mr-2">✈️</span> Telegram
+            </a>
+            <a href="https://www.youtube.com/@папгмобаил-д3э" target="_blank" class="flex items-center text-red-400 hover:text-red-300">
+                <span class="mr-2">▶️</span> YouTube
+            </a>
         </div>
     </aside>
 
-    <!-- === ОСНОВНОЙ КОНТЕНТ (Адаптивный) === -->
-    <main class="flex-1 relative overflow-hidden flex flex-col h-full">
+    <!-- === ОСНОВНОЙ КОНТЕНТ === -->
+    <main class="flex-1 relative overflow-hidden flex flex-col h-full bg-black/40 backdrop-blur-md">
         
-        <!-- МОДАЛЬНОЕ ОКНО ПРОФИЛЯ (МОБИЛЬНОЕ) -->
-        <div id="mobile-profile-modal" class="hidden absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-6">
-            <button onclick="window.app.toggleProfileModal()" class="absolute top-4 right-4 text-gray-400 text-2xl">✕</button>
-            <h2 class="text-2xl font-gamer text-white mb-6">Профиль</h2>
-            
-            <div id="mob-login-view" class="w-full max-w-sm">
-                <input type="text" id="mob-nick-input" placeholder="Придумайте Никнейм" class="w-full bg-gray-800 border border-gray-600 rounded p-4 text-white mb-4 focus:border-neonBlue outline-none text-center text-lg">
-                <button onclick="handleLogin('mob')" class="w-full bg-neonBlue text-black font-bold py-3 rounded shadow-lg shadow-neon-blue/50">СОХРАНИТЬ</button>
+        <!-- Мобильный Header -->
+        <header class="md:hidden h-16 flex items-center justify-between px-4 border-b border-gray-700/50 bg-gray-900/50 backdrop-blur shrink-0">
+            <span class="text-xl font-gamer font-bold text-white">LMC</span>
+            <div id="mob-header-auth">
+                <button onclick="toggleAuthModal(true)" class="text-sm font-bold text-neonBlue border border-neonBlue px-3 py-1 rounded">ВХОД</button>
             </div>
-            
-            <div id="mob-user-view" class="hidden w-full max-w-sm text-center">
-                <div class="w-20 h-20 rounded-full bg-neonOrange mx-auto flex items-center justify-center text-3xl font-bold text-white mb-4" id="mob-avatar-big">U</div>
-                <p class="text-gray-400 text-sm uppercase">Вы вошли как</p>
-                <h3 class="text-3xl font-bold text-white mb-8" id="mob-username">User</h3>
-                <button onclick="openEditMode(); window.app.toggleProfileModal()" class="text-neonBlue underline">Сменить аккаунт</button>
-            </div>
-        </div>
+        </header>
 
-        <!-- ЭКРАН: АНКЕТЫ -->
+        <!-- VIEW: АНКЕТЫ -->
         <div id="view-profiles" class="view-section h-full flex flex-col">
-            <div class="p-4 md:p-6 border-b border-gray-700/50 bg-gray-900/30">
-                <h2 class="text-2xl md:text-3xl font-gamer font-bold text-white">База <span class="text-neonOrange">Миссий</span></h2>
+            <div class="p-4 md:p-6 pb-2">
+                <h2 class="text-2xl font-gamer font-bold text-white">База <span class="text-neonOrange">Миссий</span></h2>
             </div>
-            <div id="profiles-container" class="flex-1 overflow-y-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-2 gap-4 pb-20 md:pb-6 custom-scrollbar">
-                <!-- Анкеты -->
+            <div id="profiles-container" class="flex-1 overflow-y-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-2 gap-4 pb-20 custom-scrollbar">
+                <div class="text-center text-gray-500 mt-10">Загрузка базы данных...</div>
             </div>
         </div>
 
-        <!-- ЭКРАН: ЧАТ -->
+        <!-- VIEW: ЧАТ -->
         <div id="view-chat" class="view-section h-full flex flex-col hidden">
-            <div class="p-4 border-b border-gray-700/50 bg-gray-900/30 flex justify-between items-center">
-                <h2 class="text-2xl font-gamer font-bold text-white">Чат <span class="text-neonBlue">LIVE</span></h2>
-                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <div class="p-4 border-b border-gray-700/50 bg-gray-900/30 flex justify-between items-center shrink-0">
+                <h2 class="text-2xl font-gamer font-bold text-white">Чат</h2>
+                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]"></div>
             </div>
-            <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar pb-20 md:pb-4">
-                <!-- Сообщения -->
+            <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar pb-20">
+                <div class="text-center text-gray-600 mt-10">Сообщений нет</div>
             </div>
-            <!-- Поле ввода (приклеено к низу на десктопе, над меню на мобилке) -->
-            <div class="p-3 bg-gray-900 border-t border-gray-700 flex gap-2 absolute bottom-[60px] md:bottom-0 left-0 right-0 md:relative">
-                <input type="text" id="chat-input" class="flex-1 bg-gray-800 text-white rounded px-4 py-2 border border-gray-600 focus:border-neonBlue outline-none" placeholder="Сообщение..." disabled>
-                <button id="send-msg-btn" class="bg-neonBlue text-black font-bold px-4 py-2 rounded opacity-50" disabled>></button>
+            <div class="p-3 bg-gray-900 border-t border-gray-700 flex gap-2 absolute bottom-[60px] md:bottom-0 left-0 right-0 md:relative z-20">
+                <input type="text" id="chat-input" class="flex-1 bg-gray-800 text-white rounded px-4 py-3 border border-gray-600 focus:border-neonBlue outline-none" placeholder="Сообщение..." disabled>
+                <button id="send-msg-btn" class="bg-neonBlue text-black font-bold px-4 rounded opacity-50" disabled>></button>
             </div>
         </div>
 
-        <!-- ЭКРАН: СОЗДАТЬ -->
-        <div id="view-create" class="view-section h-full overflow-y-auto p-4 hidden custom-scrollbar pb-24 md:pb-6">
-            <h2 class="text-2xl font-gamer font-bold text-white mb-6 text-center">Новая Анкета</h2>
-            <form id="create-form" class="max-w-xl mx-auto space-y-4 bg-gray-900/80 p-6 rounded-xl border border-gray-700">
-                <div>
-                    <label class="text-neonBlue text-xs font-bold uppercase">Заголовок</label>
-                    <input type="text" id="f-title" class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white mt-1" required placeholder="Например: Ищу команду CS2">
-                </div>
-                <div>
-                    <label class="text-neonBlue text-xs font-bold uppercase">Роль</label>
-                    <input type="text" id="f-role" class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white mt-1" required placeholder="Кого ищете?">
-                </div>
-                <div>
-                    <label class="text-neonBlue text-xs font-bold uppercase">Описание</label>
-                    <textarea id="f-desc" rows="4" class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white mt-1" required placeholder="Подробности..."></textarea>
-                </div>
-                <div>
-                    <label class="text-neonBlue text-xs font-bold uppercase">Связь (Discord/TG)</label>
-                    <input type="text" id="f-contact" maxlength="25" class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white mt-1" required placeholder="@username">
-                </div>
-                <button type="submit" id="create-submit-btn" class="w-full bg-neonOrange text-black font-bold py-3 rounded mt-2 opacity-50" disabled>ОПУБЛИКОВАТЬ</button>
-            </form>
+        <!-- VIEW: СОЗДАТЬ -->
+        <div id="view-create" class="view-section h-full overflow-y-auto p-4 hidden custom-scrollbar pb-24">
+            <div class="max-w-xl mx-auto bg-gray-900/80 p-6 rounded-xl border border-gray-700 mt-4 md:mt-10">
+                <h2 class="text-2xl font-gamer font-bold text-white mb-6 text-center">Новая Анкета</h2>
+                <form id="create-form" class="space-y-4">
+                    <input type="text" id="f-title" class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" required placeholder="Название проекта / Цель">
+                    <input type="text" id="f-role" class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" required placeholder="Кого ищете (Роль)">
+                    <textarea id="f-desc" rows="4" class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" required placeholder="Описание задачи..."></textarea>
+                    <input type="text" id="f-contact" maxlength="25" class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" required placeholder="Ваш контакт (@tg / ds)">
+                    <button type="submit" id="create-btn" class="w-full bg-gradient-to-r from-orange-600 to-neonOrange text-black font-bold py-3 rounded mt-2 opacity-50 cursor-not-allowed" disabled>ОПУБЛИКОВАТЬ</button>
+                    <p class="text-xs text-gray-500 text-center mt-2" id="create-status">Войдите, чтобы создать анкету</p>
+                </form>
+            </div>
         </div>
-
     </main>
 
-    <!-- === МОБИЛЬНАЯ НАВИГАЦИЯ (НИЖНЯЯ ПАНЕЛЬ) === -->
-    <nav class="md:hidden fixed bottom-0 left-0 w-full h-14 bg-gray-900 border-t border-gray-700 flex justify-around items-center z-50">
-        <button class="nav-item active flex flex-col items-center justify-center w-full h-full text-gray-500" onclick="window.app.setView('profiles')" data-view="profiles">
-            <span class="text-xl">📄</span>
-            <span class="text-[10px] uppercase mt-1">Анкеты</span>
+    <!-- МОБИЛЬНАЯ НАВИГАЦИЯ -->
+    <nav class="md:hidden fixed bottom-0 left-0 w-full h-16 bg-gray-900/95 backdrop-blur border-t border-gray-700 flex justify-around items-center z-50 pb-safe">
+        <button class="nav-item active flex flex-col items-center justify-center w-full h-full text-gray-500" onclick="app.setView('profiles')" data-view="profiles">
+            <span class="text-xl mb-1">📄</span> <span class="text-[10px] font-bold">АНКЕТЫ</span>
         </button>
-        <button class="nav-item flex flex-col items-center justify-center w-full h-full text-gray-500" onclick="window.app.setView('create')" data-view="create">
-            <span class="text-2xl font-bold text-neonOrange">+</span>
-            <span class="text-[10px] uppercase mt-1">Создать</span>
+        <button class="nav-item flex flex-col items-center justify-center w-full h-full text-gray-500" onclick="app.setView('create')" data-view="create">
+            <span class="text-2xl font-bold text-neonOrange mb-1">+</span> <span class="text-[10px] font-bold text-neonOrange">СОЗДАТЬ</span>
         </button>
-        <button class="nav-item flex flex-col items-center justify-center w-full h-full text-gray-500" onclick="window.app.setView('chat')" data-view="chat">
-            <span class="text-xl">💬</span>
-            <span class="text-[10px] uppercase mt-1">Чат</span>
+        <button class="nav-item flex flex-col items-center justify-center w-full h-full text-gray-500" onclick="app.setView('chat')" data-view="chat">
+            <span class="text-xl mb-1">💬</span> <span class="text-[10px] font-bold">ЧАТ</span>
         </button>
     </nav>
 
-    <!-- СКРИПТ -->
+    <!-- СКРИПТ ПРИЛОЖЕНИЯ -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, limit, onSnapshot, serverTimestamp, doc, setDoc, getDoc, deleteDoc, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // КОНФИГУРАЦИЯ
+        // КОНФИГУРАЦИЯ FIREBASE (ВАШИ КЛЮЧИ)
         const firebaseConfig = {
             apiKey: "AIzaSyA7EumEru2qfYcAyxAWLL4TY_dWfcU3Dfg",
             authDomain: "linkmeetcraft.firebaseapp.com",
@@ -258,214 +235,214 @@
         };
         const appId = "linkmeetcraft";
 
-        let db, auth, currentUser;
+        let auth, db, currentUser;
 
         // UI HELPERS
-        function showToast(msg) {
+        window.toggleAuthModal = (show) => {
+            document.getElementById('auth-modal').classList.toggle('hidden', !show);
+            document.getElementById('auth-error').classList.add('hidden');
+        };
+        
+        window.switchAuthTab = (tab) => {
+            const loginForm = document.getElementById('form-login');
+            const regForm = document.getElementById('form-register');
+            const tabLogin = document.getElementById('tab-login');
+            const tabReg = document.getElementById('tab-register');
+            
+            if (tab === 'login') {
+                loginForm.classList.remove('hidden');
+                regForm.classList.add('hidden');
+                tabLogin.classList.add('border-neonBlue', 'text-neonBlue');
+                tabLogin.classList.remove('text-gray-500');
+                tabReg.classList.remove('border-neonBlue', 'text-neonBlue');
+                tabReg.classList.add('text-gray-500');
+            } else {
+                loginForm.classList.add('hidden');
+                regForm.classList.remove('hidden');
+                tabReg.classList.add('border-neonBlue', 'text-neonBlue');
+                tabReg.classList.remove('text-gray-500');
+                tabLogin.classList.remove('border-neonBlue', 'text-neonBlue');
+                tabLogin.classList.add('text-gray-500');
+            }
+        };
+
+        function showToast(title, msg) {
             const t = document.getElementById('toast');
+            document.getElementById('toast-title').innerText = title;
             document.getElementById('toast-message').innerText = msg;
             t.style.transform = 'translateX(0)';
-            setTimeout(() => t.style.transform = 'translateX(150%)', 3000);
+            setTimeout(() => t.style.transform = 'translateX(150%)', 4000);
         }
 
-        function setLoader(text) {
-            const l = document.getElementById('global-loader');
-            if(text) {
-                document.getElementById('loader-status').innerText = text;
-                l.classList.remove('opacity-0', 'pointer-events-none');
-            } else {
-                l.classList.add('opacity-0', 'pointer-events-none');
-            }
-        }
-
-        // VIEW MANAGER
         window.app = {
             setView: (view) => {
                 document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
                 document.getElementById(`view-${view}`).classList.remove('hidden');
-                
-                // Update buttons (desktop & mobile)
-                document.querySelectorAll('.nav-btn, .nav-item').forEach(btn => {
-                    btn.classList.remove('active', 'text-neonBlue');
-                    if(btn.dataset.view === view) {
-                        btn.classList.add('active', 'text-neonBlue');
-                        if(btn.classList.contains('nav-item')) btn.style.color = '#00f3ff';
-                    } else {
-                        if(btn.classList.contains('nav-item')) btn.style.color = '';
-                    }
+                document.querySelectorAll('.nav-btn, .nav-item').forEach(b => {
+                    b.classList.remove('active', 'text-neonBlue');
+                    if(b.dataset.view === view) b.classList.add('active', 'text-neonBlue');
                 });
-
-                if(view === 'chat') {
-                    setTimeout(() => {
-                        const c = document.getElementById('chat-container');
-                        c.scrollTop = c.scrollHeight;
-                    }, 100);
-                }
-            },
-            toggleProfileModal: () => {
-                const m = document.getElementById('mobile-profile-modal');
-                m.classList.toggle('hidden');
+                if(view === 'chat') setTimeout(() => document.getElementById('chat-container').scrollTop = 9999, 100);
             }
         };
 
-        // AUTH UI
-        function updateAuthUI(user) {
-            const isAuth = !!(user && user.displayName);
-            currentUser = user;
-
-            // Desktop
-            const dLogin = document.getElementById('desk-login-view');
-            const dUser = document.getElementById('desk-user-view');
-            if(isAuth) {
-                dLogin.classList.add('hidden');
-                dUser.classList.remove('hidden');
-                document.getElementById('desk-username').innerText = user.displayName;
-                document.getElementById('desk-avatar').innerText = user.displayName[0].toUpperCase();
-            } else {
-                dLogin.classList.remove('hidden');
-                dUser.classList.add('hidden');
-            }
-
-            // Mobile Modal
-            const mLogin = document.getElementById('mob-login-view');
-            const mUser = document.getElementById('mob-user-view');
-            const mAvatarBtn = document.getElementById('mobile-avatar-letter');
-            
-            if(isAuth) {
-                mLogin.classList.add('hidden');
-                mUser.classList.remove('hidden');
-                document.getElementById('mob-username').innerText = user.displayName;
-                document.getElementById('mob-avatar-big').innerText = user.displayName[0].toUpperCase();
-                mAvatarBtn.innerText = user.displayName[0].toUpperCase();
-            } else {
-                mLogin.classList.remove('hidden');
-                mUser.classList.add('hidden');
-                mAvatarBtn.innerText = '?';
-            }
-
-            // Enable/Disable Actions
-            const els = [
-                document.getElementById('chat-input'),
-                document.getElementById('send-msg-btn'),
-                document.getElementById('create-submit-btn')
-            ];
-            els.forEach(el => {
-                el.disabled = !isAuth;
-                if(isAuth) el.classList.remove('opacity-50', 'cursor-not-allowed');
-                else el.classList.add('opacity-50', 'cursor-not-allowed');
-            });
-        }
-
         // FIREBASE LOGIC
         async function init() {
-            setLoader("Подключение к серверу...");
             try {
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
 
                 onAuthStateChanged(auth, (user) => {
-                    setLoader(false);
-                    if (user) {
-                        updateAuthUI(user.displayName ? user : null);
-                        setupListeners();
-                    } else {
-                        // Silent anon login to prepare connection
-                        signInAnonymously(auth).catch(e => console.error(e));
-                        updateAuthUI(null);
-                        setupPublicListeners();
+                    currentUser = user;
+                    updateUIState();
+                    if(user) {
+                        toggleAuthModal(false);
+                        showToast('Вход выполнен', `Привет, ${user.displayName}!`);
                     }
                 });
+
+                // Listeners start immediately
+                setupDataListeners();
             } catch (e) {
-                setLoader(false);
-                alert("Ошибка инициализации: " + e.message);
+                console.error(e);
+                alert("Ошибка подключения к Firebase: " + e.message);
             }
         }
 
-        // LOGIN / RENAME
-        window.handleLogin = async (source) => {
-            const inputId = source === 'desk' ? 'desk-nick-input' : 'mob-nick-input';
-            const nick = document.getElementById(inputId).value.trim();
-            const btn = document.getElementById(source === 'desk' ? 'login-btn' : ''); // Mobile btn inline
-
-            if(nick.length < 3) return showToast("Ник слишком короткий (мин 3)");
-
-            // Loader on button?
+        function updateUIState() {
+            const isAuth = !!currentUser;
             
-            try {
-                if (!auth.currentUser) await signInAnonymously(auth);
-                const uid = auth.currentUser.uid;
-                
-                // Check Uniqueness
-                const q = query(collection(db, `artifacts/${appId}/users`), where("nickname", "==", nick));
-                const snap = await getDocs(q);
-                let taken = false;
-                snap.forEach(d => { if(d.data().uid !== uid) taken = true; });
-                
-                if(taken) return showToast("Этот ник уже занят!");
-
-                // Check 30 days
-                const userDocRef = doc(db, `artifacts/${appId}/users`, uid);
-                const userDoc = await getDoc(userDocRef);
-                const now = Date.now();
-                
-                if (userDoc.exists() && auth.currentUser.displayName !== nick) {
-                    const last = userDoc.data().lastChange || 0;
-                    if (now - last < 2592000000) { // 30 days
-                         return showToast(`Смена ника недоступна. Ждите.`);
-                    }
-                }
-
-                await updateProfile(auth.currentUser, { displayName: nick });
-                await setDoc(userDocRef, { nickname: nick, lastChange: now, uid }, { merge: true });
-                
-                updateAuthUI(auth.currentUser);
-                window.app.toggleProfileModal(); // Close mob modal if open
-                showToast(`Добро пожаловать, ${nick}!`);
-                
-            } catch(e) {
-                showToast("Ошибка: " + e.message);
+            // Desk Profile
+            const dGuest = document.getElementById('desk-guest-info');
+            const dUser = document.getElementById('desk-user-info');
+            if(isAuth) {
+                dGuest.classList.add('hidden');
+                dUser.classList.remove('hidden');
+                document.getElementById('desk-username').innerText = currentUser.displayName;
+                document.getElementById('desk-avatar').innerText = currentUser.displayName[0].toUpperCase();
+            } else {
+                dGuest.classList.remove('hidden');
+                dUser.classList.add('hidden');
             }
+
+            // Mobile Header Auth
+            const mAuth = document.getElementById('mob-header-auth');
+            if(isAuth) {
+                mAuth.innerHTML = `<div class="w-8 h-8 rounded-full bg-gradient-to-br from-neonBlue to-purple-600 flex items-center justify-center text-white font-bold text-sm" onclick="doLogout()">${currentUser.displayName[0].toUpperCase()}</div>`;
+            } else {
+                mAuth.innerHTML = `<button onclick="toggleAuthModal(true)" class="text-sm font-bold text-neonBlue border border-neonBlue px-3 py-1 rounded">ВХОД</button>`;
+            }
+
+            // Enable/Disable Inputs
+            document.getElementById('chat-input').disabled = !isAuth;
+            document.getElementById('send-msg-btn').disabled = !isAuth;
+            document.getElementById('send-msg-btn').classList.toggle('opacity-50', !isAuth);
+            
+            document.getElementById('create-submit-btn').disabled = !isAuth;
+            document.getElementById('create-submit-btn').classList.toggle('opacity-50', !isAuth);
+            document.getElementById('create-status').innerText = isAuth ? '' : 'Войдите, чтобы создать анкету';
         }
 
-        window.openEditMode = () => {
-             // Reset UI to show login inputs again
-             updateAuthUI(null); 
-             if(currentUser) {
-                document.getElementById('desk-nick-input').value = currentUser.displayName;
-                document.getElementById('mob-nick-input').value = currentUser.displayName;
-             }
-        }
+        // AUTH FUNCTIONS
+        document.getElementById('form-login').onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-pass').value;
+            const errEl = document.getElementById('auth-error');
+            errEl.classList.add('hidden');
 
-        // CHAT & PROFILES
-        function setupPublicListeners() {
-            // Profiles load even if not logged in
-            const q = query(collection(db, `artifacts/${appId}/public/data/profiles`), limit(50));
-            onSnapshot(q, (snap) => {
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+            } catch (err) {
+                errEl.innerText = "Ошибка: Неверный email или пароль.";
+                errEl.classList.remove('hidden');
+            }
+        };
+
+        document.getElementById('form-register').onsubmit = async (e) => {
+            e.preventDefault();
+            const nick = document.getElementById('reg-nick').value;
+            const email = document.getElementById('reg-email').value;
+            const pass = document.getElementById('reg-pass').value;
+            const errEl = document.getElementById('auth-error');
+            errEl.classList.add('hidden');
+
+            try {
+                const cred = await createUserWithEmailAndPassword(auth, email, pass);
+                await updateProfile(cred.user, { displayName: nick });
+                // Force UI update manually since onAuthStateChanged triggers before updateProfile completes sometimes
+                currentUser = { ...cred.user, displayName: nick };
+                updateUIState();
+                toggleAuthModal(false);
+                showToast('Регистрация', 'Аккаунт успешно создан!');
+            } catch (err) {
+                let msg = "Ошибка регистрации.";
+                if(err.code === 'auth/email-already-in-use') msg = "Этот Email уже занят.";
+                if(err.code === 'auth/weak-password') msg = "Пароль слишком простой (мин. 6 символов).";
+                errEl.innerText = msg;
+                errEl.classList.remove('hidden');
+            }
+        };
+
+        window.doLogout = async () => {
+            await signOut(auth);
+            showToast('Выход', 'Вы вышли из системы');
+        };
+
+        // DATA LISTENERS
+        function setupDataListeners() {
+            // Chat
+            const qChat = query(collection(db, `artifacts/${appId}/public/data/chat`), orderBy('createdAt', 'desc'), limit(50));
+            onSnapshot(qChat, (snap) => {
+                const cont = document.getElementById('chat-container');
+                cont.innerHTML = '';
+                const msgs = [];
+                snap.forEach(d => msgs.push(d.data()));
+                msgs.reverse(); // Show oldest first for chat flow
+
+                if(msgs.length === 0) cont.innerHTML = '<div class="text-center text-gray-500 mt-4">Нет сообщений</div>';
+
+                msgs.forEach(m => {
+                    const isMe = currentUser && m.uid === currentUser.uid;
+                    const el = document.createElement('div');
+                    el.className = `flex ${isMe ? 'justify-end' : 'justify-start'}`;
+                    el.innerHTML = `
+                        <div class="${isMe ? 'bg-neonBlue/20 text-white' : 'bg-gray-800 text-gray-200'} px-3 py-2 rounded-lg max-w-[85%] text-sm break-words">
+                            <div class="text-[10px] font-bold opacity-70 mb-0.5 ${isMe ? 'text-neonBlue' : 'text-neonOrange'}">${m.author}</div>
+                            ${m.text}
+                        </div>
+                    `;
+                    cont.appendChild(el);
+                });
+                // Auto scroll if near bottom logic omitted for simplicity, just force scroll on open
+            });
+
+            // Profiles
+            const qProf = query(collection(db, `artifacts/${appId}/public/data/profiles`), orderBy('createdAt', 'desc'), limit(50));
+            onSnapshot(qProf, (snap) => {
                 const cont = document.getElementById('profiles-container');
                 cont.innerHTML = '';
                 if(snap.empty) {
-                    cont.innerHTML = '<div class="col-span-full text-center text-gray-500">Анкет пока нет.</div>';
+                    cont.innerHTML = '<div class="col-span-full text-center text-gray-500">Нет активных анкет</div>';
                     return;
                 }
-                const data = [];
-                snap.forEach(d => data.push({id: d.id, ...d.data()}));
-                data.sort((a,b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
-
-                data.forEach(p => {
-                    const el = document.createElement('div');
+                
+                snap.forEach(d => {
+                    const p = d.data();
                     const isMine = currentUser && p.uid === currentUser.uid;
+                    const el = document.createElement('div');
                     el.className = `bg-gray-800/80 border ${isMine ? 'border-neonOrange' : 'border-gray-700'} p-4 rounded-xl shadow-lg`;
                     el.innerHTML = `
-                        <div class="flex justify-between">
+                        <div class="flex justify-between items-start mb-2">
                             <h3 class="font-bold text-white text-lg">${p.title}</h3>
-                            ${isMine ? `<button onclick="deleteProfile('${p.id}')" class="text-red-500">✕</button>` : ''}
+                            ${isMine ? `<button onclick="deleteProfile('${d.id}')" class="text-red-500 hover:text-red-300">✕</button>` : ''}
                         </div>
                         <div class="text-neonBlue text-sm font-bold uppercase mb-2">${p.role}</div>
                         <p class="text-gray-400 text-sm mb-3 line-clamp-3">${p.desc}</p>
                         <div class="flex justify-between items-center border-t border-gray-700 pt-2">
                             <span class="text-xs text-gray-500">${p.author}</span>
-                            <button onclick="copyContact('${p.contact}')" class="bg-gray-700 hover:bg-gray-600 text-white text-xs px-2 py-1 rounded">Связь</button>
+                            <span class="text-white text-xs bg-gray-700 px-2 py-1 rounded select-all">${p.contact}</span>
                         </div>
                     `;
                     cont.appendChild(el);
@@ -473,70 +450,44 @@
             });
         }
 
-        function setupListeners() {
-            setupPublicListeners();
-            // Chat
-            const qChat = query(collection(db, `artifacts/${appId}/public/data/chat`), limit(50));
-            onSnapshot(qChat, (snap) => {
-                const cont = document.getElementById('chat-container');
-                cont.innerHTML = '';
-                const msgs = [];
-                snap.forEach(d => msgs.push(d.data()));
-                msgs.sort((a,b) => (a.createdAt?.toMillis() || 0) - (b.createdAt?.toMillis() || 0));
-                
-                msgs.forEach(m => {
-                    const isMe = currentUser && m.uid === currentUser.uid;
-                    const div = document.createElement('div');
-                    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'}`;
-                    div.innerHTML = `
-                        <div class="${isMe ? 'bg-neonBlue/20 text-white' : 'bg-gray-700 text-gray-200'} px-3 py-2 rounded-lg max-w-[85%] text-sm mb-1">
-                            <div class="text-[10px] font-bold opacity-70 mb-0.5">${m.author}</div>
-                            ${m.text}
-                        </div>
-                    `;
-                    cont.appendChild(div);
-                });
-                cont.scrollTop = cont.scrollHeight;
-            });
-        }
-
         // ACTIONS
-        window.deleteProfile = async (id) => {
-            if(confirm("Удалить?")) await deleteDoc(doc(db, `artifacts/${appId}/public/data/profiles`, id));
-        }
-        window.copyContact = (txt) => {
-            navigator.clipboard.writeText(txt);
-            showToast("Скопировано!");
-        }
-
-        // EVT LISTENERS
         document.getElementById('send-msg-btn').onclick = async () => {
             const inp = document.getElementById('chat-input');
             const txt = inp.value.trim();
             if(!txt) return;
             inp.value = '';
-            await addDoc(collection(db, `artifacts/${appId}/public/data/chat`), {
-                text: txt, author: currentUser.displayName, uid: currentUser.uid, createdAt: serverTimestamp()
-            });
-        }
-        
+            try {
+                await addDoc(collection(db, `artifacts/${appId}/public/data/chat`), {
+                    text: txt, author: currentUser.displayName, uid: currentUser.uid, createdAt: serverTimestamp()
+                });
+            } catch(e) { showToast('Ошибка', e.message); }
+        };
+
         document.getElementById('create-form').onsubmit = async (e) => {
             e.preventDefault();
-            await addDoc(collection(db, `artifacts/${appId}/public/data/profiles`), {
+            const data = {
                 title: document.getElementById('f-title').value,
                 role: document.getElementById('f-role').value,
                 desc: document.getElementById('f-desc').value,
                 contact: document.getElementById('f-contact').value,
                 author: currentUser.displayName, uid: currentUser.uid, createdAt: serverTimestamp()
-            });
-            showToast("Опубликовано!");
-            e.target.reset();
-            window.app.setView('profiles');
-        }
+            };
+            try {
+                await addDoc(collection(db, `artifacts/${appId}/public/data/profiles`), data);
+                showToast('Успех', 'Анкета опубликована!');
+                document.getElementById('create-form').reset();
+                window.app.setView('profiles');
+            } catch(e) { showToast('Ошибка', e.message); }
+        };
+
+        window.deleteProfile = async (id) => {
+            if(confirm('Удалить анкету?')) {
+                await deleteDoc(doc(db, `artifacts/${appId}/public/data/profiles`, id));
+            }
+        };
 
         // Start
         init();
-
     </script>
 </body>
 </html>
