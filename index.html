@@ -3,20 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- 1. TITLE: Усилен для поиска -->
+    
+    <!-- 1. TITLE: Заголовок для поисковиков -->
     <title>Тиммейты для Minecraft, CS2, Dota 2 | LinkMeetCraft - Быстрый поиск</title>
-    <!-- 2. МЕТА-ОПИСАНИЕ: Усилено для кликабельности -->
+    
+    <!-- 2. МЕТА-ОПИСАНИЕ -->
     <meta name="description" content="Платформа для поиска тиммейтов и команды для Minecraft, CS2, Dota 2, RUST и других онлайн-игр. Найдите билдера, кодера или напарника для миссии за 5 минут.">
-    <!-- 3. КЛЮЧЕВЫЕ СЛОВА (Добавлено): Помогает Яндексу понять тематику -->
+    
+    <!-- 3. КЛЮЧЕВЫЕ СЛОВА -->
     <meta name="keywords" content="тиммейты, minecraft, cs2, dota 2, поиск команды, найти напарника, кодер, билдер, гейминг, LinkMeetCraft">
     
-    <!-- ТЕГИ ПОДТВЕРЖДЕНИЯ -->
-    <!-- GOOGLE SEARCH CONSOLE -->
+    <!-- ТЕГИ ПОДТВЕРЖДЕНИЯ ВЛАДЕНИЯ -->
     <meta name="google-site-verification" content="F3-qIwKF7rrBELT89F9YjqvQFiSNPg66pjBTJVJjsoM" />
-    <!-- YANDEX WEBMATER - Ваш код -->
     <meta name="yandex-verification" content="b631ed6c682d5bd3" />
 
-    <!-- Yandex.Metrika counter (Счетчик Яндекс.Метрики) - ДОБАВЛЕНО -->
+    <!-- Yandex.Metrika counter (Счетчик Яндекс.Метрики) -->
     <script type="text/javascript">
         (function(m,e,t,r,i,k,a){
             m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
@@ -30,13 +31,12 @@
     <noscript><div><img src="https://mc.yandex.ru/watch/105532663" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
     <!-- /Yandex.Metrika counter -->
 
-    <!-- Подключение Tailwind CSS CDN -->
+    <!-- Подключение Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Шрифт Orbitron для геймерского стиля -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght400;600;700&display=swap" rel="stylesheet">
+    <!-- Шрифт Orbitron -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
     
     <script>
-        // --- КОНФИГУРАЦИЯ TAILWIND CSS (объект JS внутри тега <script>) ---
         tailwind.config = {
             theme: {
                 extend: {
@@ -61,14 +61,13 @@
 
     <style>
         body {
-            background-image: url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop'); /* Геймерский фон */
+            background-image: url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop'); 
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
             color: #e6edf3;
             overflow: hidden;
         }
-        /* Затемнение фона */
         .bg-overlay {
             position: absolute;
             top: 0;
@@ -80,7 +79,6 @@
             z-index: -1;
         }
         
-        /* Скроллбары */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #0b0d17; }
         ::-webkit-scrollbar-thumb { background: #00f3ff; border-radius: 3px; }
@@ -108,7 +106,6 @@
             text-shadow: 0 0 8px rgba(255, 102, 0, 0.6);
         }
 
-        /* Класс для неактивных кнопок действий (но не навигации) */
         .action-disabled {
             opacity: 0.5;
             cursor: not-allowed;
@@ -116,24 +113,22 @@
             pointer-events: none;
         }
         
-        /* Анимация для статуса */
+        .status-dot {
+            animation: pulse-glow 2s infinite;
+        }
         @keyframes pulse-glow {
             0% { box-shadow: 0 0 0 0 rgba(0, 243, 255, 0.4); }
             70% { box-shadow: 0 0 0 10px rgba(0, 243, 255, 0); }
             100% { box-shadow: 0 0 0 0 rgba(0, 243, 255, 0); }
         }
-        .status-dot {
-            animation: pulse-glow 2s infinite;
-        }
 
-        /* Мобильные стили: скроллинг для боковой панели на малых экранах */
         @media (max-width: 768px) {
             .mobile-sidebar {
-                max-height: 35vh; /* Ограничиваем высоту навигации на мобильных */
+                max-height: 35vh;
                 overflow-y: auto;
             }
             .mobile-main {
-                height: 65vh; /* Основное содержимое занимает большую часть экрана */
+                height: 65vh;
             }
         }
     </style>
@@ -141,27 +136,22 @@
 <body class="flex flex-col md:flex-row h-screen font-ui text-lg">
     <div class="bg-overlay"></div>
 
-    <!-- БЛОК ОТОБРАЖЕНИЯ КРИТИЧЕСКИХ ОШИБОК -->
     <div id="error-display" class="hidden fixed top-0 left-0 w-full bg-red-600/90 backdrop-blur text-white p-4 z-[9999] font-bold text-center border-b-2 border-red-400"></div>
 
-    <!-- Левая панель (Сайдбар) -->
-    <!-- h-auto max-h-[40vh] на моб. устройствах, h-screen на десктопе -->
+    <!-- Левая панель -->
     <aside class="w-full md:w-72 glass-panel border-r border-gray-700/50 flex flex-col p-5 z-20 h-auto md:h-screen relative mobile-sidebar">
-        <!-- ГЛАВНЫЙ H1 САЙТА (БРЕНДИНГ) -->
         <h1 class="text-3xl font-gamer font-bold text-transparent bg-clip-text bg-gradient-to-r from-neonOrange to-yellow-400 mb-8 tracking-wider drop-shadow-lg select-none">
             LinkMeet<span class="text-neonBlue">Craft</span>
         </h1>
 
-        <!-- Панель входа (Карточка Игрока) -->
+        <!-- Панель входа -->
         <div id="auth-box" class="bg-black/40 p-4 rounded-xl border border-gray-700 mb-6 shadow-lg transition-all duration-300">
-            <!-- Если не вошел или меняет ник -->
             <div id="login-view">
                 <p class="text-sm text-neonBlue mb-2 font-bold uppercase tracking-widest" id="login-title">Идентификация</p>
                 <input type="text" id="nickname-input" placeholder="Введите Никнейм" class="w-full bg-gray-900/80 border border-gray-600 rounded p-2 text-white mb-3 focus:border-neonBlue focus:outline-none focus:shadow-neon-blue transition-all placeholder-gray-600 font-mono" maxlength="20">
                 <button id="login-btn" class="w-full bg-neonBlue/20 hover:bg-neonBlue/40 border border-neonBlue text-neonBlue font-bold py-2 rounded transition-all duration-300 hover:shadow-neon-blue uppercase text-sm">Подключиться</button>
                 <button id="cancel-edit-btn" class="w-full mt-2 text-gray-500 text-xs hover:text-white hidden uppercase tracking-wider">Отмена</button>
             </div>
-            <!-- Если вошел -->
             <div id="user-view" class="hidden">
                 <div class="flex items-center gap-3 mb-2">
                     <div class="w-10 h-10 rounded-full bg-gradient-to-br from-neonOrange to-red-600 flex items-center justify-center text-white font-bold text-xl shadow-neon-orange">
@@ -173,7 +163,6 @@
                     </div>
                 </div>
                 <div class="h-px w-full bg-gray-700 my-2"></div>
-                <!-- Кнопка смены ника вместо выхода -->
                 <button id="edit-nick-btn" class="text-xs text-neonOrange hover:text-yellow-300 w-full text-left flex items-center transition-colors py-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                     Изменить ник (раз в 30 дней)
@@ -181,7 +170,6 @@
             </div>
         </div>
 
-        <!-- Навигация -->
         <nav id="main-nav" class="flex-1 space-y-3">
             <button data-view="profiles" class="nav-btn active w-full text-left p-3 rounded text-gray-300 flex items-center">
                 <span class="mr-3 text-xl">📄</span> Анкеты
@@ -194,7 +182,6 @@
             </button>
         </nav>
 
-        <!-- Мои Каналы -->
         <div class="mt-auto pt-6 border-t border-gray-700 hidden md:block">
             <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Сообщество</p>
             <div class="space-y-2">
@@ -213,7 +200,6 @@
     <!-- Правая панель (Контент) -->
     <main class="flex-1 relative overflow-hidden flex flex-col h-screen md:h-full bg-black/50 backdrop-blur-sm mobile-main">
         
-        <!-- Уведомления -->
         <div id="toast" class="absolute top-4 right-4 bg-gray-800 border-l-4 border-neonBlue text-white px-6 py-4 rounded shadow-2xl transform translate-x-full transition-transform duration-300 z-50 flex items-center">
             <div class="mr-3 text-neonBlue">ℹ️</div>
             <div id="toast-message"></div>
@@ -222,17 +208,15 @@
         <!-- Экран: Анкеты -->
         <div id="view-profiles" class="view-section h-full overflow-y-auto p-6 custom-scrollbar">
             <div class="flex items-center justify-between mb-6 border-b border-gray-700 pb-4">
-                <!-- 3. ЗАГОЛОВОК КОНТЕНТА: Используем ключевое слово -->
                 <h2 class="text-3xl font-gamer font-bold text-white">Активные <span class="text-neonOrange">Миссии</span> и поиск тиммейтов</h2>
                 <div class="text-xs text-gray-500 font-mono">LIVE FEED</div>
             </div>
             
-            <!-- Добавлен статический текст для SEO. Робот увидит этот текст, даже если JS не отработает. -->
+            <!-- SEO Text -->
             <div class="bg-gray-900/40 p-4 rounded-xl mb-6 text-sm text-gray-300 border border-gray-700/50">
                 <h3 class="text-lg font-bold text-neonBlue mb-2 font-ui">Платформа для геймеров:</h3>
                 <p>LinkMeetCraft — это ваш центр для поиска надежных тиммейтов. Независимо от того, нужен ли вам <span class="text-neonOrange">билдер для Minecraft</span>, точный <span class="text-neonOrange">снайпер для CS2</span> или слаженный саппорт для <span class="text-neonOrange">Dota 2</span>, вы найдете свою команду здесь. Все анкеты публикуются моментально и доступны в реальном времени. Вступайте в игру!</p>
             </div>
-            <!-- Конец статического SEO-блока -->
 
             <div id="profiles-container" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="text-neonBlue col-span-full text-center p-10 border border-dashed border-gray-700 rounded-xl animate-pulse">
@@ -297,17 +281,16 @@
 
     <!-- СКРИПТ ПРИЛОЖЕНИЯ -->
     <script type="module">
-        // Добавлены 'where' и 'getDocs' для проверки уникальности
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, limit, onSnapshot, serverTimestamp, doc, setDoc, getDoc, deleteDoc, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
-        // --- ВАША РАБОЧАЯ КОНФИГУРАЦИЯ ---
+        // --- ВАША РАБОЧАЯ КОНФИГУРАЦИЯ FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyA7EumEru2qfYcAyxAWLL4TY_dWfcU3Dfg",
             authDomain: "linkmeetcraft.firebaseapp.com",
             projectId: "linkmeetcraft",
-            storageBucket: "linkmeetcraft.firebase-storage.app",
+            storageBucket: "linkmeetcraft.firebasestorage.app",
             messagingSenderId: "373052253470",
             appId: "1:373052253470:web:a66afc67876f76dc1a550f",
             measurementId: "G-WSZL0NRHCQ"
@@ -322,46 +305,28 @@
         // --- ПУТИ ---
         const PATH_PROFILES = `/artifacts/${appId}/public/data/profiles`;
         const PATH_CHAT = `/artifacts/${appId}/public/data/chat`;
-        // Коллекция пользователей для хранения метаданных (ник, дата смены)
         const PATH_USERS = `/artifacts/${appId}/users`;
 
         // --- ГЛОБАЛЬНОЕ УПРАВЛЕНИЕ ВИДАМИ ---
         window.app = {
             setView: (viewName) => {
-                // 1. Скрыть все секции контента
-                document.querySelectorAll('.view-section').forEach(el => {
-                    el.classList.add('hidden');
-                });
-                // 2. Показать нужную секцию
+                document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
                 const targetView = document.getElementById(`view-${viewName}`);
-                if (targetView) {
-                    targetView.classList.remove('hidden');
-                }
+                if (targetView) targetView.classList.remove('hidden');
                 
-                // 3. Обновить активный класс на кнопках навигации
                 document.querySelectorAll('.nav-btn').forEach(btn => {
                     btn.classList.remove('active');
-                    if (btn.dataset.view === viewName) {
-                        btn.classList.add('active');
-                    }
+                    if (btn.dataset.view === viewName) btn.classList.add('active');
                 });
 
-                // 4. Прокрутка чата вниз при открытии
                 if (viewName === 'chat') {
                     const chatContainer = document.getElementById('chat-container');
-                    if (chatContainer) {
-                        // Используем setTimeout, чтобы убедиться, что DOM обновился
-                        setTimeout(() => {
-                           chatContainer.scrollTop = chatContainer.scrollHeight;
-                        }, 0);
-                    }
+                    if (chatContainer) setTimeout(() => chatContainer.scrollTop = chatContainer.scrollHeight, 0);
                 }
             }
         };
 
-
         // --- UI ФУНКЦИИ ---
-
         function showToast(msg) {
             const toast = document.getElementById('toast');
             document.getElementById('toast-message').innerText = msg;
@@ -369,25 +334,16 @@
             setTimeout(() => toast.style.transform = 'translateX(120%)', 4000);
         }
 
-        // Функция управления состоянием кнопок действий
         function updateActionButtons(enabled) {
-            const btns = [
-                document.getElementById('send-msg-btn'),
-                document.getElementById('create-submit-btn')
-            ];
-            const inputs = [
-                document.getElementById('chat-input')
-            ];
+            const btns = [document.getElementById('send-msg-btn'), document.getElementById('create-submit-btn')];
+            const inputs = [document.getElementById('chat-input')];
             
             btns.forEach(btn => {
                 btn.disabled = !enabled;
                 if (enabled) btn.classList.remove('action-disabled');
                 else btn.classList.add('action-disabled');
             });
-            
-            inputs.forEach(input => {
-                input.disabled = !enabled;
-            });
+            inputs.forEach(input => input.disabled = !enabled);
         }
 
         function updateAuthUI(user) {
@@ -415,7 +371,6 @@
             document.body.appendChild(tempInput);
             tempInput.select();
             try {
-                // Используем execCommand для совместимости с iFrame
                 document.execCommand('copy'); 
                 showToast("Скопировано в буфер!");
             } catch (err) {
@@ -425,7 +380,6 @@
         }
 
         // --- ЛОГИКА ---
-
         async function init() {
             try {
                 firebaseApp = initializeApp(firebaseConfig);
@@ -443,91 +397,68 @@
                             setupProfilesListener(); 
                         }
                     } else {
-                        // Пытаемся войти анонимно сразу при загрузке
                         signInAnonymously(auth).catch(e => console.log("Anon auth pending user interaction"));
                         updateAuthUI(null); 
                         setupProfilesListener();
                     }
                 });
             } catch(e) {
-                console.error("Ошибка инициализации Firebase:", e);
+                console.error(e);
                 document.getElementById('error-display').innerText = "Ошибка инициализации: " + e.message;
                 document.getElementById('error-display').classList.remove('hidden');
             }
         }
 
-        // --- ОБРАБОТКА ВХОДА И СМЕНЫ НИКА (УНИКАЛЬНОСТЬ + 30 ДНЕЙ) ---
         async function handleLogin() {
             const nick = document.getElementById('nickname-input').value.trim();
             if(nick.length < 3) return showToast("Ник слишком короткий!");
             
             try {
-                if (!auth.currentUser) {
-                    await signInAnonymously(auth);
-                }
-                
+                if (!auth.currentUser) await signInAnonymously(auth);
                 const uid = auth.currentUser.uid;
 
-                // --- 1. ПРОВЕРКА НА УНИКАЛЬНОСТЬ НИКА ---
+                // 1. Проверка уникальности
                 const usersRef = collection(db, PATH_USERS);
                 const qUnique = query(usersRef, where("nickname", "==", nick));
                 const nickSnap = await getDocs(qUnique);
                 
                 if (!nickSnap.empty) {
                     let isTaken = false;
-                    nickSnap.forEach(doc => {
-                        // Ник занят, если найден документ с этим ником, принадлежащий НЕ текущему пользователю
-                        if (doc.data().uid !== uid) {
-                            isTaken = true;
-                        }
-                    });
-                    
-                    if (isTaken) {
-                        return showToast(`Никнейм "${nick}" уже занят другим оператором.`);
-                    }
+                    nickSnap.forEach(doc => { if (doc.data().uid !== uid) isTaken = true; });
+                    if (isTaken) return showToast(`Никнейм "${nick}" уже занят.`);
                 }
-                // --- КОНЕЦ ПРОВЕРКИ НА УНИКАЛЬНОСТЬ ---
                 
-                // --- 2. ПРОВЕРКА НА ТАЙМЕР 30 ДНЕЙ ---
+                // 2. Проверка таймера
                 const userRef = doc(db, PATH_USERS, uid);
                 const userSnap = await getDoc(userRef);
                 const now = Date.now();
-                const COOLDOWN = 2592000000; // 30 дней в миллисекундах
+                const COOLDOWN = 2592000000; // 30 дней
 
                 if (userSnap.exists()) {
                     const data = userSnap.data();
-                    const currentDisplayName = auth.currentUser.displayName;
-                    
-                    // Если ник не меняется, просто закрываем окно
-                    if (currentDisplayName === nick) {
+                    if (auth.currentUser.displayName === nick) {
                          updateAuthUI(auth.currentUser);
                          cancelEditMode();
                          return;
                     }
-
-                    // Если ник другой, проверяем таймер
                     if (now - (data.lastChange || 0) < COOLDOWN) {
                          const daysLeft = Math.ceil((COOLDOWN - (now - (data.lastChange||0))) / (86400000));
                          return showToast(`Смена ника заблокирована. Ждать: ${daysLeft} д.`);
                     }
                 }
 
-                // --- 3. ОБНОВЛЕНИЕ ---
+                // 3. Обновление
                 await updateProfile(auth.currentUser, { displayName: nick });
-                // Сохраняем ник и дату изменения
                 await setDoc(userRef, { nickname: nick, lastChange: now, uid }, { merge: true });
-                
                 updateAuthUI(auth.currentUser);
                 cancelEditMode();
                 showToast(`Добро пожаловать, ${nick}!`);
                 setupListeners();
-
             } catch (e) {
                 showToast("Ошибка входа/смены: " + e.message);
             }
         }
 
-        // --- РЕЖИМ РЕДАКТИРОВАНИЯ НИКА ---
         function enableEditMode() {
             document.getElementById('user-view').classList.add('hidden');
             document.getElementById('login-view').classList.remove('hidden');
@@ -537,19 +468,15 @@
         }
 
         function cancelEditMode() {
-             if (currentUser && currentUser.displayName) {
-                updateAuthUI(currentUser);
-             }
+             if (currentUser && currentUser.displayName) updateAuthUI(currentUser);
              document.getElementById('cancel-edit-btn').classList.add('hidden');
              document.getElementById('login-title').textContent = "ИДЕНТИФИКАЦИЯ";
         }
 
-        // --- ЧАТ ---
         async function sendMessage() {
             const input = document.getElementById('chat-input');
             const text = input.value.trim();
             if (!text || !currentUser) return;
-            
             try {
                 input.value = '';
                 await addDoc(collection(db, PATH_CHAT), {
@@ -559,20 +486,17 @@
                     createdAt: serverTimestamp()
                 });
             } catch(e) {
-                showToast("Ошибка отправки сообщения: " + e.message);
+                showToast("Ошибка: " + e.message);
             }
         }
 
-        // --- АНКЕТЫ ---
         async function createProfile(e) {
             e.preventDefault();
             if(!currentUser) return showToast("Нужно войти, чтобы создавать анкеты!");
-
             const title = document.getElementById('f-title').value;
             const role = document.getElementById('f-role').value;
             const desc = document.getElementById('f-desc').value;
             const contact = document.getElementById('f-contact').value;
-
             if(!title || !role || !contact) return showToast("Заполните поля!");
 
             try {
@@ -586,14 +510,12 @@
                 e.target.reset();
                 window.app.setView('profiles');
             } catch(e) {
-                showToast("Ошибка создания анкеты: " + e.message);
+                showToast("Ошибка: " + e.message);
             }
         }
 
         async function deleteProfile(id) {
-            // Используем пользовательское модальное окно вместо confirm()
-            const shouldDelete = window.confirm("Удалить эту анкету?");
-            if(!shouldDelete) return;
+            if(!confirm("Удалить эту анкету?")) return;
             try {
                 await deleteDoc(doc(db, PATH_PROFILES, id));
                 showToast("Удалено.");
@@ -602,33 +524,23 @@
             }
         }
 
-        // --- ЛИСТЕНЕРЫ ---
         function setupProfilesListener() {
-            if (!db) return; // Проверка, что db инициализирован
             const q = query(collection(db, PATH_PROFILES), limit(50));
-            
-            // Отписываемся от предыдущего слушателя, если он есть
-            if (window.profilesUnsubscribe) window.profilesUnsubscribe();
-
-            window.profilesUnsubscribe = onSnapshot(q, (snap) => {
+            onSnapshot(q, (snap) => {
                 const cont = document.getElementById('profiles-container');
                 cont.innerHTML = '';
                 if(snap.empty) {
-                    cont.innerHTML = '<div class="col-span-full text-gray-500 text-center">Нет активных миссий.</div>';
+                    cont.innerHTML = '<div class="col-span-full text-gray-500 text-center">Нет активных анкет.</div>';
                     return;
                 }
-                
                 const items = [];
                 snap.forEach(d => items.push({id: d.id, ...d.data()}));
-                // Сортировка JS по дате создания
                 items.sort((a,b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
 
                 items.forEach(p => {
-                    // Используем currentUser для проверки владельца
                     const isOwner = currentUser && p.uid === currentUser.uid;
                     const el = document.createElement('div');
                     el.className = `bg-gray-900/60 border ${isOwner ? 'border-neonOrange' : 'border-gray-700'} p-6 rounded-xl hover:bg-gray-800/60 transition-all duration-300 shadow-lg backdrop-blur-sm`;
-                    
                     el.innerHTML = `
                         <div class="flex justify-between items-start mb-3">
                             <h3 class="text-xl font-bold text-white">${p.title}</h3>
@@ -641,32 +553,22 @@
                             <button class="copy-btn bg-gray-800 hover:bg-gray-700 text-white text-xs px-3 py-1 rounded border border-gray-600 transition" data-contact="${p.contact}">Связь</button>
                         </div>
                     `;
-                    
                     el.querySelector('.copy-btn').onclick = () => copyToClipboard(p.contact);
-                    const delBtn = el.querySelector('.del-btn');
-                    if(delBtn) delBtn.onclick = () => deleteProfile(p.id);
-                    
+                    if(isOwner) el.querySelector('.del-btn').onclick = () => deleteProfile(p.id);
                     cont.appendChild(el);
                 });
-            }, (error) => {
-                console.error("Ошибка получения анкет:", error);
             });
         }
 
-        function setupChatListener() {
-            if (!db || !currentUser) return;
+        function setupListeners() {
+            if (!currentUser) return;
             const qChat = query(collection(db, PATH_CHAT), limit(50));
-            
-            // Отписываемся от предыдущего слушателя, если он есть
-            if (window.chatUnsubscribe) window.chatUnsubscribe();
-
-            window.chatUnsubscribe = onSnapshot(qChat, (snap) => {
+            onSnapshot(qChat, (snap) => {
                 const cont = document.getElementById('chat-container');
                 cont.innerHTML = '';
                 const msgs = [];
                 snap.forEach(d => msgs.push(d.data()));
                 msgs.sort((a,b) => (a.createdAt?.toMillis() || 0) - (b.createdAt?.toMillis() || 0));
-
                 msgs.forEach(m => {
                     const isMe = currentUser && m.uid === currentUser.uid;
                     const div = document.createElement('div');
@@ -679,52 +581,22 @@
                     `;
                     cont.appendChild(div);
                 });
-                if(!document.getElementById('view-chat').classList.contains('hidden')) {
-                    // Прокрутка вниз
-                    setTimeout(() => {
-                        cont.scrollTop = cont.scrollHeight;
-                    }, 0);
-                }
-            }, (error) => {
-                 console.error("Ошибка получения сообщений чата:", error);
+                if(!document.getElementById('view-chat').classList.contains('hidden')) cont.scrollTop = cont.scrollHeight;
             });
-        }
-        
-        function setupListeners() {
-            // Установка слушателей для чата и профилей после успешного входа
             setupProfilesListener();
-            setupChatListener();
         }
-        
-        // --- ГЛОБАЛЬНЫЕ ОБРАБОТЧИКИ ---
-        
-        // Привязка событий (гарантируем после загрузки DOM)
+
         window.onload = () => {
             init();
-
-            // Привязка кнопок авторизации/смены ника
             document.getElementById('login-btn').onclick = handleLogin;
             document.getElementById('edit-nick-btn').onclick = enableEditMode;
             document.getElementById('cancel-edit-btn').onclick = cancelEditMode;
-            
-            // Привязка кнопок действий
             document.getElementById('send-msg-btn').onclick = sendMessage;
-            document.getElementById('chat-input').onkeypress = (e) => { 
-                if(e.key === 'Enter') { 
-                    e.preventDefault(); // Предотвратить новую строку в поле ввода
-                    sendMessage(); 
-                } 
-            };
+            document.getElementById('chat-input').onkeypress = (e) => { if(e.key === 'Enter') sendMessage() };
             document.getElementById('create-form').onsubmit = createProfile;
-
-            // Привязка навигационных кнопок к функции setView
             document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.onclick = () => {
-                    window.app.setView(btn.dataset.view);
-                }
+                btn.onclick = () => window.app.setView(btn.dataset.view);
             });
-
-            // Инициализируем первый вид
             window.app.setView('profiles');
         };
     </script>
