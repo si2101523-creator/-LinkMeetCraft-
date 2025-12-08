@@ -1,625 +1,731 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LinkMeetCraft - Gamer Hub</title>
-    
-    <!-- SEO -->
-    <meta name="description" content="Поиск тиммейтов для Minecraft, CS2, Dota 2.">
-    <meta name="google-site-verification" content="F3-qIwKF7rrBELT89F9YjqvQFiSNPg66pjBTJVJjsoM" />
-    <meta name="yandex-verification" content="b631ed6c682d5bd3" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LinkMeetCraft - Gamer Hub</title>
+    
+    <!-- SEO -->
+    <meta name="description" content="Поиск тиммейтов для Minecraft, CS2, Dota 2.">
+    <meta name="google-site-verification" content="F3-qIwKF7rrBELT89F9YjqvQFiSNPg66pjBTJVJjsoM" />
+    <meta name="yandex-verification" content="b631ed6c682d5bd3" />
 
-    <!-- Yandex.Metrika -->
-    <script type="text/javascript">
-        (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-        m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
-        (window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=105532663', 'ym');
-        ym(105532663, 'init', {ssr:true, webvisor:true, clickmap:true, trackLinks:true, accurateTrackBounce:true});
-    </script>
-    <noscript><div><img src="https://mc.yandex.ru/watch/105532663" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+    <!-- Yandex.Metrika (Оставлено как пример, хотя в реальной среде может быть заблокировано) -->
+    <script type="text/javascript">
+        (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+        m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+        (window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=105532663', 'ym');
+        ym(105532663, 'init', {ssr:true, webvisor:true, clickmap:true, trackLinks:true, accurateTrackBounce:true});
+    </script>
+    <noscript><div><img src="https://mc.yandex.ru/watch/105532663" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { 'gamer': ['Orbitron', 'sans-serif'], 'ui': ['Rajdhani', 'sans-serif'] },
-                    colors: { neonBlue: '#00f3ff', neonOrange: '#ff6600', darkBg: '#0b0d17' },
-                    boxShadow: { 'neon': '0 0 15px rgba(0, 243, 255, 0.4)' }
-                }
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        // Настройка кастомных цветов и шрифтов для Tailwind
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { 'gamer': ['Orbitron', 'sans-serif'], 'ui': ['Rajdhani', 'sans-serif'] },
+                    colors: { neonBlue: '#00f3ff', neonOrange: '#ff6600', darkBg: '#0b0d17' },
+                    boxShadow: { 'neon': '0 0 15px rgba(0, 243, 255, 0.4)' }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0b0d17;
+            /* Убран хардкод изображения для фона, используем placeholder */
+            background-image: linear-gradient(rgba(11, 13, 23, 0.9), rgba(11, 13, 23, 0.95)), url('https://placehold.co/1080x720/0a0c14/4a4d5e?text=GAMER+BACKGROUND');
+            background-size: cover;
+            background-attachment: fixed;
+            color: #e6edf3;
+            overflow: hidden;
+        }
+        
+        .glass-panel {
+            background: rgba(20, 24, 36, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-btn { transition: all 0.2s; }
+        .nav-btn.active { color: #00f3ff; border-bottom: 2px solid #00f3ff; text-shadow: 0 0 8px rgba(0, 243, 255, 0.5); }
+        .desktop-nav-btn.active { background: rgba(0, 243, 255, 0.1); border-bottom: none; border-left: 3px solid #00f3ff; }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+        
+        .loader {
+            border: 3px solid rgba(255,255,255,0.1); border-top-color: #00f3ff; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        
+        .status-dot.error { background-color: #ef4444; box-shadow: 0 0 8px #ef4444; }
+        .status-dot.success { background-color: #22c55e; box-shadow: 0 0 8px #22c55e; }
+
+        /* Фикс для мобильного чата, чтобы инпут не перекрывал контент */
+        @media (max-width: 767px) {
+            #view-chat .p-3 {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+            }
+            #chat-container {
+                padding-bottom: 5rem !important; /* Увеличиваем паддинг, чтобы было видно последнее сообщение */
             }
         }
-    </script>
-
-    <style>
-        body {
-            background-color: #0b0d17;
-            background-image: linear-gradient(rgba(11, 13, 23, 0.9), rgba(11, 13, 23, 0.95)), url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=60&w=1080&auto=format&fit=crop');
-            background-size: cover;
-            background-attachment: fixed;
-            color: #e6edf3;
-            overflow: hidden;
-        }
-        
-        .glass-panel {
-            background: rgba(20, 24, 36, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .nav-btn { transition: all 0.2s; }
-        .nav-btn.active { color: #00f3ff; border-bottom: 2px solid #00f3ff; text-shadow: 0 0 8px rgba(0, 243, 255, 0.5); }
-        .desktop-nav-btn.active { background: rgba(0, 243, 255, 0.1); border-bottom: none; border-left: 3px solid #00f3ff; }
-
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
-        
-        .loader {
-            border: 3px solid rgba(255,255,255,0.1); border-top-color: #00f3ff; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        
-        .status-dot.error { background-color: #ef4444; box-shadow: 0 0 8px #ef4444; }
-        .status-dot.success { background-color: #22c55e; box-shadow: 0 0 8px #22c55e; }
-    </style>
+    </style>
 </head>
 <body class="font-ui text-lg h-[100dvh] flex flex-col md:flex-row">
 
-    <!-- ЭКРАН ЗАГРУЗКИ -->
-    <div id="global-loader" class="fixed inset-0 z-[100] bg-[#0b0d17] flex flex-col items-center justify-center transition-opacity duration-500">
-        <div class="loader mb-4"></div>
-        <h2 class="text-xl font-gamer text-white tracking-widest">CONNECTING...</h2>
-        <p class="text-xs text-gray-500 mt-2" id="loader-status">Подключение к базе данных...</p>
-        <p class="text-xs text-red-500 mt-4 hidden text-center px-4" id="loader-error"></p>
-    </div>
+    <!-- ЭКРАН ЗАГРУЗКИ -->
+    <div id="global-loader" class="fixed inset-0 z-[100] bg-[#0b0d17] flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="loader mb-4"></div>
+        <h2 class="text-xl font-gamer text-white tracking-widest">CONNECTING...</h2>
+        <p class="text-xs text-gray-500 mt-2" id="loader-status">Подключение к базе данных...</p>
+        <p class="text-xs text-red-500 mt-4 hidden text-center px-4" id="loader-error"></p>
+    </div>
 
-    <!-- ТОСТ УВЕДОМЛЕНИЯ -->
-    <div id="toast" class="absolute top-5 right-5 z-[100] bg-gray-900 border-l-4 border-neonBlue px-6 py-4 rounded shadow-2xl transform translate-x-[150%] transition-transform duration-300 max-w-sm text-sm">
-        <div class="font-bold text-neonBlue mb-1" id="toast-title">Info</div>
-        <div id="toast-message">...</div>
-    </div>
+    <!-- ТОСТ УВЕДОМЛЕНИЯ -->
+    <div id="toast" class="absolute top-5 right-5 z-[100] bg-gray-900 border-l-4 border-neonBlue px-6 py-4 rounded shadow-2xl transform translate-x-[150%] transition-transform duration-300 max-w-sm text-sm">
+        <div class="font-bold text-neonBlue mb-1" id="toast-title">Info</div>
+        <div id="toast-message">...</div>
+    </div>
 
-    <!-- МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ -->
-    <div id="auth-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-        <div class="bg-gray-900 border border-gray-700 w-full max-w-md p-8 rounded-2xl shadow-2xl relative">
-            <button onclick="toggleAuthModal(false)" class="absolute top-4 right-4 text-gray-500 hover:text-white">✕</button>
-            
-            <h2 class="text-2xl font-gamer text-neonBlue mb-6 text-center">Аккаунт</h2>
+    <!-- МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ -->
+    <div id="auth-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-gray-900 border border-gray-700 w-full max-w-md p-8 rounded-2xl shadow-2xl relative">
+            <button onclick="toggleAuthModal(false)" class="absolute top-4 right-4 text-gray-500 hover:text-white">✕</button>
+            
+            <h2 class="text-2xl font-gamer text-neonBlue mb-6 text-center">Аккаунт</h2>
 
-            <div class="flex mb-6 border-b border-gray-700">
-                <button onclick="switchAuthTab('login')" id="tab-login" class="flex-1 pb-3 text-center text-neonBlue border-b-2 border-neonBlue font-bold transition">ВХОД</button>
-                <button onclick="switchAuthTab('register')" id="tab-register" class="flex-1 pb-3 text-center text-gray-500 hover:text-white transition">РЕГИСТРАЦИЯ</button>
-            </div>
-            
-            <p class="text-xs text-gray-400 mb-4 text-center" id="auth-info-text">
-                Войдите или создайте постоянный аккаунт.
-            </p>
+            <div class="flex mb-6 border-b border-gray-700">
+                <button onclick="switchAuthTab('login')" id="tab-login" class="flex-1 pb-3 text-center text-neonBlue border-b-2 border-neonBlue font-bold transition">ВХОД</button>
+                <button onclick="switchAuthTab('register')" id="tab-register" class="flex-1 pb-3 text-center text-gray-500 hover:text-white transition">РЕГИСТРАЦИЯ</button>
+            </div>
+            
+            <p class="text-xs text-gray-400 mb-4 text-center" id="auth-info-text">
+                Войдите или создайте постоянный аккаунт.
+            </p>
 
-            <form id="form-login" class="space-y-4">
-                <div>
-                    <label class="text-xs text-gray-400 uppercase">Email</label>
-                    <input type="email" id="login-email" class="w-full bg-black/40 border border-gray-600 rounded p-3 text-white focus:border-neonBlue outline-none" required>
-                </div>
-                <div>
-                    <label class="text-xs text-gray-400 uppercase">Пароль</label>
-                    <input type="password" id="login-pass" class="w-full bg-black/40 border border-gray-600 rounded p-3 text-white focus:border-neonBlue outline-none" required>
-                </div>
-                <button type="submit" id="login-btn" class="w-full bg-neonBlue text-black font-bold py-3 rounded hover:bg-cyan-400 transition shadow-neon mt-2">ВОЙТИ</button>
-            </form>
+            <form id="form-login" class="space-y-4">
+                <div>
+                    <label class="text-xs text-gray-400 uppercase">Email</label>
+                    <input type="email" id="login-email" class="w-full bg-black/40 border border-gray-600 rounded p-3 text-white focus:border-neonBlue outline-none" required>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400 uppercase">Пароль</label>
+                    <input type="password" id="login-pass" class="w-full bg-black/40 border border-gray-600 rounded p-3 text-white focus:border-neonBlue outline-none" required>
+                </div>
+                <button type="submit" id="login-btn" class="w-full bg-neonBlue text-black font-bold py-3 rounded hover:bg-cyan-400 transition shadow-neon mt-2">ВОЙТИ</button>
+            </form>
 
-            <form id="form-register" class="space-y-4 hidden">
-                <div>
-                    <label class="text-xs text-gray-400 uppercase">Никнейм</label>
-                    <input type="text" id="reg-nick" class="w-full bg-black/40 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" maxlength="15" required>
-                </div>
-                <div>
-                    <label class="text-xs text-gray-400 uppercase">Email</label>
-                    <input type="email" id="reg-email" class="w-full bg-black/40 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" required>
-                </div>
-                <div>
-                    <label class="text-xs text-gray-400 uppercase">Пароль (мин. 6 символов)</label>
-                    <input type="password" id="reg-pass" class="w-full bg-black/40 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" minlength="6" required>
-                </div>
-                <button type="submit" id="register-btn" class="w-full bg-neonOrange text-black font-bold py-3 rounded hover:bg-orange-500 transition shadow-neon mt-2">СОЗДАТЬ АККАУНТ</button>
-            </form>
-            
-            <p id="auth-error" class="text-red-500 text-sm mt-4 text-center hidden"></p>
-        </div>
-    </div>
+            <form id="form-register" class="space-y-4 hidden">
+                <div>
+                    <label class="text-xs text-gray-400 uppercase">Никнейм</label>
+                    <input type="text" id="reg-nick" class="w-full bg-black/40 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" maxlength="15" required>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400 uppercase">Email</label>
+                    <input type="email" id="reg-email" class="w-full bg-black/40 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" required>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400 uppercase">Пароль (мин. 6 символов)</label>
+                    <input type="password" id="reg-pass" class="w-full bg-black/40 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" minlength="6" required>
+                </div>
+                <button type="submit" id="register-btn" class="w-full bg-neonOrange text-black font-bold py-3 rounded hover:bg-orange-500 transition shadow-neon mt-2">СОЗДАТЬ АККАУНТ</button>
+            </form>
+            
+            <p id="auth-error" class="text-red-500 text-sm mt-4 text-center hidden"></p>
+        </div>
+    </div>
 
-    <!-- === ДЕСКТОП САЙДБАР === -->
-    <aside class="hidden md:flex w-72 glass-panel flex-col p-6 z-20">
-        <h1 class="text-2xl font-gamer font-bold text-white mb-10 tracking-widest text-center">
-            LMC<span class="text-neonBlue">.HUB</span>
-        </h1>
-        
-        <div id="desk-profile" class="mb-8 p-4 rounded-xl bg-black/30 border border-gray-700/50 text-center">
-            <div id="desk-user-info" class="hidden">
-                <div class="w-16 h-16 bg-gradient-to-br from-neonBlue to-purple-600 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-bold" id="desk-avatar">L</div>
-                <div class="font-bold text-lg text-white" id="desk-username">Loading...</div>
-                <button onclick="doLogout()" class="text-xs text-red-400 mt-2 hover:underline cursor-pointer relative z-50">Выйти / Сменить</button>
-            </div>
-            <div id="desk-guest-info" class="hidden">
-                <p class="text-sm text-gray-400 mb-3">Гостевой режим</p>
-                <button onclick="toggleAuthModal(true)" class="w-full bg-neonBlue/10 border border-neonBlue text-neonBlue py-2 rounded hover:bg-neonBlue/20 transition">ВОЙТИ</button>
-            </div>
-        </div>
+    <!-- === ДЕСКТОП САЙДБАР === -->
+    <aside class="hidden md:flex w-72 glass-panel flex-col p-6 z-20">
+        <h1 class="text-2xl font-gamer font-bold text-white mb-10 tracking-widest text-center">
+            LMC<span class="text-neonBlue">.HUB</span>
+        </h1>
+        
+        <div id="desk-profile" class="mb-8 p-4 rounded-xl bg-black/30 border border-gray-700/50 text-center">
+            <div id="desk-user-info" class="hidden">
+                <div class="w-16 h-16 bg-gradient-to-br from-neonBlue to-purple-600 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-bold" id="desk-avatar">L</div>
+                <!-- Здесь будет никнейм и UID -->
+                <div class="font-bold text-lg text-white" id="desk-username">Loading...</div>
+                <button onclick="doLogout()" class="text-xs text-red-400 mt-2 hover:underline cursor-pointer relative z-50">Выйти / Сменить</button>
+            </div>
+            <div id="desk-guest-info" class="hidden">
+                <p class="text-sm text-gray-400 mb-3">Гостевой режим</p>
+                <button onclick="toggleAuthModal(true)" class="w-full bg-neonBlue/10 border border-neonBlue text-neonBlue py-2 rounded hover:bg-neonBlue/20 transition">ВОЙТИ</button>
+            </div>
+        </div>
 
-        <nav class="space-y-2 flex-1">
-            <button onclick="app.setView('profiles')" class="desktop-nav-btn active w-full text-left p-3 rounded text-gray-400 hover:text-white flex items-center gap-3 transition" data-view="profiles">
-                <span>📄</span> Анкеты
-            </button>
-            <button onclick="app.setView('chat')" class="desktop-nav-btn w-full text-left p-3 rounded text-gray-400 hover:text-white flex items-center gap-3 transition" data-view="chat">
-                <span>💬</span> Чат
-            </button>
-            <button onclick="app.setView('create')" class="desktop-nav-btn w-full text-left p-3 rounded text-gray-400 hover:text-white flex items-center gap-3 transition" data-view="create">
-                <span>➕</span> Создать
-            </button>
-        </nav>
-        
-        <div class="space-y-2 text-sm mt-4 border-t border-gray-700 pt-4">
-            <a href="https://t.me/LinkMeetCraft" target="_blank" class="flex items-center text-blue-400 hover:text-blue-300">
-                <span class="mr-2">✈️</span> Telegram
-            </a>
-            <a href="https://www.youtube.com/@папгмобаил-д3э" target="_blank" class="flex items-center text-red-400 hover:text-red-300">
-                <span class="mr-2">▶️</span> YouTube
-            </a>
-        </div>
-    </aside>
+        <nav class="space-y-2 flex-1">
+            <button onclick="app.setView('profiles')" class="desktop-nav-btn active w-full text-left p-3 rounded text-gray-400 hover:text-white flex items-center gap-3 transition" data-view="profiles">
+                <span>📄</span> Анкеты
+            </button>
+            <button onclick="app.setView('chat')" class="desktop-nav-btn w-full text-left p-3 rounded text-gray-400 hover:text-white flex items-center gap-3 transition" data-view="chat">
+                <span>💬</span> Чат
+            </button>
+            <button onclick="app.setView('create')" class="desktop-nav-btn w-full text-left p-3 rounded text-gray-400 hover:text-white flex items-center gap-3 transition" data-view="create">
+                <span>➕</span> Создать
+            </button>
+        </nav>
+        
+        <div class="space-y-2 text-sm mt-4 border-t border-gray-700 pt-4">
+            <a href="https://t.me/LinkMeetCraft" target="_blank" class="flex items-center text-blue-400 hover:text-blue-300">
+                <span class="mr-2">✈️</span> Telegram
+            </a>
+            <a href="https://www.youtube.com/@папгмобаил-д3э" target="_blank" class="flex items-center text-red-400 hover:text-red-300">
+                <span class="mr-2">▶️</span> YouTube
+            </a>
+        </div>
+    </aside>
 
-    <!-- === ОСНОВНОЙ КОНТЕНТ === -->
-    <main class="flex-1 relative overflow-hidden flex flex-col h-full bg-black/40 backdrop-blur-md">
-        
-        <header class="md:hidden h-16 flex items-center justify-between px-4 border-b border-gray-700/50 bg-gray-900/50 backdrop-blur shrink-0">
-            <span class="text-xl font-gamer font-bold text-white">LMC</span>
-            <div id="mob-header-auth">
-                <button onclick="toggleAuthModal(true)" class="text-sm font-bold text-neonBlue border border-neonBlue px-3 py-1 rounded">ВХОД</button>
-            </div>
-        </header>
+    <!-- === ОСНОВНОЙ КОНТЕНТ === -->
+    <main class="flex-1 relative overflow-hidden flex flex-col h-full bg-black/40 backdrop-blur-md">
+        
+        <header class="md:hidden h-16 flex items-center justify-between px-4 border-b border-gray-700/50 bg-gray-900/50 backdrop-blur shrink-0">
+            <span class="text-xl font-gamer font-bold text-white">LMC</span>
+            <div id="mob-header-auth">
+                <button onclick="toggleAuthModal(true)" class="text-sm font-bold text-neonBlue border border-neonBlue px-3 py-1 rounded">ВХОД</button>
+            </div>
+        </header>
 
-        <!-- VIEW: АНКЕТЫ -->
-        <div id="view-profiles" class="view-section h-full flex flex-col">
-            <div class="p-4 md:p-6 pb-2">
-                <h2 class="text-2xl font-gamer font-bold text-white">База <span class="text-neonOrange">Миссий</span></h2>
-            </div>
-            <div id="profiles-container" class="flex-1 overflow-y-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-2 gap-4 pb-20 custom-scrollbar">
-                <div class="text-center text-gray-500 mt-10">Загрузка базы данных...</div>
-            </div>
-        </div>
+        <!-- VIEW: АНКЕТЫ -->
+        <div id="view-profiles" class="view-section h-full flex flex-col">
+            <div class="p-4 md:p-6 pb-2">
+                <h2 class="text-2xl font-gamer font-bold text-white">База <span class="text-neonOrange">Миссий</span></h2>
+            </div>
+            <div id="profiles-container" class="flex-1 overflow-y-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-2 gap-4 pb-20 custom-scrollbar">
+                <div class="text-center text-gray-500 mt-10">Загрузка базы данных...</div>
+            </div>
+        </div>
 
-        <!-- VIEW: ЧАТ -->
-        <div id="view-chat" class="view-section h-full flex flex-col hidden">
-            <div class="p-4 border-b border-gray-700/50 bg-gray-900/30 flex justify-between items-center shrink-0">
-                <h2 class="text-2xl font-gamer font-bold text-white">Чат</h2>
-                <div id="chat-status-dot" class="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e] status-dot success"></div>
-            </div>
-            <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar pb-20">
-                <div class="text-center text-gray-600 mt-10">Нет сообщений</div>
-            </div>
-            <div class="p-3 bg-gray-900 border-t border-gray-700 flex gap-2 absolute bottom-[60px] md:bottom-0 left-0 right-0 md:relative z-20">
-                <input type="text" id="chat-input" class="flex-1 bg-gray-800 text-white rounded px-4 py-3 border border-gray-600 focus:border-neonBlue outline-none" placeholder="Сообщение..." disabled>
-                <button id="send-msg-btn" class="bg-neonBlue text-black font-bold px-4 py-3 rounded opacity-50" disabled>></button>
-            </div>
-        </div>
+        <!-- VIEW: ЧАТ -->
+        <div id="view-chat" class="view-section h-full flex flex-col hidden">
+            <div class="p-4 border-b border-gray-700/50 bg-gray-900/30 flex justify-between items-center shrink-0">
+                <h2 class="text-2xl font-gamer font-bold text-white">Чат</h2>
+                <div id="chat-status-dot" class="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e] status-dot success"></div>
+            </div>
+            <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar pb-20">
+                <div class="text-center text-gray-600 mt-10">Нет сообщений</div>
+            </div>
+            <div class="p-3 bg-gray-900 border-t border-gray-700 flex gap-2 absolute bottom-[60px] md:bottom-0 left-0 right-0 md:relative z-20">
+                <input type="text" id="chat-input" class="flex-1 bg-gray-800 text-white rounded px-4 py-3 border border-gray-600 focus:border-neonBlue outline-none" placeholder="Сообщение..." disabled>
+                <button id="send-msg-btn" class="bg-neonBlue text-black font-bold px-4 py-3 rounded opacity-50" disabled>&gt;</button>
+            </div>
+        </div>
 
-        <!-- VIEW: СОЗДАТЬ -->
-        <div id="view-create" class="view-section h-full overflow-y-auto p-4 hidden custom-scrollbar pb-24">
-            <div class="max-w-xl mx-auto bg-gray-900/80 p-6 rounded-xl border border-gray-700 mt-4 md:mt-10">
-                <h2 class="text-2xl font-gamer font-bold text-white mb-6 text-center">Новая Анкета</h2>
-                <form id="create-form" class="space-y-4">
-                    <input type="text" id="f-title" class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" required placeholder="Название проекта / Цель">
-                    <input type="text" id="f-role" class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" required placeholder="Кого ищете (Роль)">
-                    <textarea id="f-desc" rows="4" class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" required placeholder="Описание задачи..."></textarea>
-                    <input type="text" id="f-contact" maxlength="25" class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" required placeholder="Ваш контакт (@tg / ds)">
-                    <button type="submit" id="create-btn" class="w-full bg-gradient-to-r from-orange-600 to-neonOrange text-black font-bold py-3 rounded mt-2 opacity-50 cursor-not-allowed" disabled>ОПУБЛИКОВАТЬ</button>
-                    <p class="text-xs text-gray-500 text-center mt-2" id="create-status">Авторизуйтесь, чтобы создать анкету</p>
-                </form>
-            </div>
-        </div>
-    </main>
+        <!-- VIEW: СОЗДАТЬ -->
+        <div id="view-create" class="view-section h-full overflow-y-auto p-4 hidden custom-scrollbar pb-24">
+            <div class="max-w-xl mx-auto bg-gray-900/80 p-6 rounded-xl border border-gray-700 mt-4 md:mt-10">
+                <h2 class="text-2xl font-gamer font-bold text-white mb-6 text-center">Новая Анкета</h2>
+                <form id="create-form" class="space-y-4">
+                    <input type="text" id="f-title" class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" required placeholder="Название проекта / Цель">
+                    <input type="text" id="f-role" class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" required placeholder="Кого ищете (Роль)">
+                    <textarea id="f-desc" rows="4" class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" required placeholder="Описание задачи..."></textarea>
+                    <input type="text" id="f-contact" maxlength="25" class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" required placeholder="Ваш контакт (@tg / ds)">
+                    <button type="submit" id="create-btn" class="w-full bg-gradient-to-r from-orange-600 to-neonOrange text-black font-bold py-3 rounded mt-2 opacity-50 cursor-not-allowed" disabled>ОПУБЛИКОВАТЬ</button>
+                    <p class="text-xs text-gray-500 text-center mt-2" id="create-status">Авторизуйтесь, чтобы создать анкету</p>
+                </form>
+            </div>
+        </div>
+    </main>
 
-    <!-- МОБИЛЬНАЯ НАВИГАЦИЯ -->
-    <nav class="md:hidden fixed bottom-0 left-0 w-full h-16 bg-gray-900/95 backdrop-blur border-t border-gray-700 flex justify-around items-center z-50 pb-safe">
-        <button class="nav-item active flex flex-col items-center justify-center w-full h-full text-gray-500" onclick="app.setView('profiles')" data-view="profiles">
-            <span class="text-xl mb-1">📄</span> <span class="text-[10px] font-bold">АНКЕТЫ</span>
-        </button>
-        <button class="nav-item flex flex-col items-center justify-center w-full h-full text-gray-500" onclick="app.setView('create')" data-view="create">
-            <span class="text-2xl font-bold text-neonOrange mb-1">+</span> <span class="text-[10px] font-bold text-neonOrange">СОЗДАТЬ</span>
-        </button>
-        <button class="nav-item flex flex-col items-center justify-center w-full h-full text-gray-500" onclick="app.setView('chat')" data-view="chat">
-            <span class="text-xl mb-1">💬</span> <span class="text-[10px] font-bold">ЧАТ</span>
-        </button>
-    </nav>
+    <!-- МОБИЛЬНАЯ НАВИГАЦИЯ -->
+    <nav class="md:hidden fixed bottom-0 left-0 w-full h-16 bg-gray-900/95 backdrop-blur border-t border-gray-700 flex justify-around items-center z-50">
+        <button class="nav-item active flex flex-col items-center justify-center w-full h-full text-gray-500" onclick="app.setView('profiles')" data-view="profiles">
+            <span class="text-xl mb-1 nav-btn active">📄</span> <span class="text-[10px] font-bold nav-btn active">АНКЕТЫ</span>
+        </button>
+        <button class="nav-item flex flex-col items-center justify-center w-full h-full text-gray-500" onclick="app.setView('create')" data-view="create">
+            <span class="text-2xl font-bold text-neonOrange mb-1 nav-btn">+</span> <span class="text-[10px] font-bold text-neonOrange nav-btn">СОЗДАТЬ</span>
+        </button>
+        <button class="nav-item flex flex-col items-center justify-center w-full h-full text-gray-500" onclick="app.setView('chat')" data-view="chat">
+            <span class="text-xl mb-1 nav-btn">💬</span> <span class="text-[10px] font-bold nav-btn">ЧАТ</span>
+        </button>
+    </nav>
 
-    <!-- СКРИПТ ПРИЛОЖЕНИЯ -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, updateProfile, signOut, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    <!-- СКРИПТ ПРИЛОЖЕНИЯ -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, updateProfile, signOut, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, deleteDoc, doc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyA7EumEru2qfYcAyxAWLL4TY_dWfcU3Dfg",
-            authDomain: "linkmeetcraft.firebaseapp.com",
-            projectId: "linkmeetcraft",
-            storageBucket: "linkmeetcraft.firebasestorage.app",
-            messagingSenderId: "373052253470",
-            appId: "1:373052253470:web:a66afc67876f76dc1a550f",
-            measurementId: "G-WSZL0NRHCQ"
-        };
-        const appId = "linkmeetcraft";
+        // Глобальные переменные окружения (ОБЯЗАТЕЛЬНО для Canvas)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'linkmeetcraft';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        let auth, db, currentUser;
-        let listenersStarted = false;
-        let unsubscribeListeners = [];
+        let auth, db, currentUser;
+        let listenersStarted = false;
+        let unsubscribeListeners = [];
 
-        // UI HELPERS
-        function getAuthButton(id) { return document.getElementById(id); }
+        // UI HELPERS
+        function getAuthButton(id) { return document.getElementById(id); }
 
-        function setAuthLoading(isLoading) {
-            const loginBtn = getAuthButton('login-btn');
-            if (loginBtn) { loginBtn.disabled = isLoading; loginBtn.innerText = isLoading ? 'Загрузка...' : 'ВОЙТИ'; }
-            const regBtn = getAuthButton('register-btn');
-            if (regBtn) { regBtn.disabled = isLoading; regBtn.innerText = isLoading ? 'Загрузка...' : 'СОЗДАТЬ АККАУНТ'; }
-        }
+        function setAuthLoading(isLoading) {
+            const loginBtn = getAuthButton('login-btn');
+            if (loginBtn) { loginBtn.disabled = isLoading; loginBtn.innerText = isLoading ? 'Загрузка...' : 'ВОЙТИ'; }
+            const regBtn = getAuthButton('register-btn');
+            if (regBtn) { regBtn.disabled = isLoading; regBtn.innerText = isLoading ? 'Загрузка...' : 'СОЗДАТЬ АККАУНТ'; }
+        }
 
-        function displayAuthError(message) {
-            const errEl = document.getElementById('auth-error');
-            errEl.innerText = message;
-            errEl.classList.remove('hidden');
-        }
-        
-        function setLoader(text) {
-            const l = document.getElementById('global-loader');
-            const statusEl = document.getElementById('loader-status');
-            
-            if (text === false) { 
-                l.classList.add('opacity-0', 'pointer-events-none');
-                setTimeout(() => l.style.display = 'none', 500);
+        function displayAuthError(message) {
+            const errEl = document.getElementById('auth-error');
+            errEl.innerText = message;
+            errEl.classList.remove('hidden');
+        }
+        
+        function setLoader(text) {
+            const l = document.getElementById('global-loader');
+            const statusEl = document.getElementById('loader-status');
+            
+            if (text === false) { 
+                l.classList.add('opacity-0', 'pointer-events-none');
+                setTimeout(() => l.style.display = 'none', 500);
+                return;
+            }
+            l.style.display = 'flex';
+            l.classList.remove('opacity-0', 'pointer-events-none');
+            if (typeof text === 'string') statusEl.innerText = text;
+        }
+
+        function showLoaderError(msg) {
+             const errEl = document.getElementById('loader-error');
+             document.getElementById('loader-status').innerText = "ОШИБКА";
+             errEl.innerText = msg;
+             errEl.classList.remove('hidden');
+             // Обновляем статус точки на ошибку
+             const chatDot = document.getElementById('chat-status-dot');
+             if (chatDot) {
+                chatDot.classList.remove('success', 'bg-green-500');
+                chatDot.classList.add('error', 'bg-red-500');
+             }
+        }
+
+        window.toggleAuthModal = (show) => {
+            document.getElementById('auth-modal').classList.toggle('hidden', !show);
+            document.getElementById('auth-error').classList.add('hidden');
+        };
+        
+        window.switchAuthTab = (tab) => {
+            const loginForm = document.getElementById('form-login');
+            const regForm = document.getElementById('form-register');
+            const tabLogin = document.getElementById('tab-login');
+            const tabReg = document.getElementById('tab-register');
+            const authInfoText = document.getElementById('auth-info-text');
+
+            if (tab === 'login') {
+                loginForm.classList.remove('hidden');
+                regForm.classList.add('hidden');
+                tabLogin.classList.add('border-neonBlue', 'text-neonBlue');
+                tabLogin.classList.remove('text-gray-500', 'border-neonOrange');
+                tabReg.classList.remove('border-neonOrange', 'text-neonOrange');
+                tabReg.classList.add('text-gray-500', 'border-neonBlue/0');
+                authInfoText.innerText = "Войдите, чтобы восстановить свой постоянный аккаунт.";
+            } else {
+                loginForm.classList.add('hidden');
+                regForm.classList.remove('hidden');
+                tabReg.classList.add('border-neonOrange', 'text-neonOrange');
+                tabReg.classList.remove('text-gray-500', 'border-neonBlue');
+                tabLogin.classList.remove('border-neonBlue', 'text-neonBlue');
+                tabLogin.classList.add('text-gray-500', 'border-neonOrange/0');
+                authInfoText.innerText = "Создайте постоянный аккаунт, чтобы сохранить свой прогресс.";
+            }
+        };
+
+        function showToast(title, msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-message').innerText = msg;
+            t.style.transform = 'translateX(0)';
+            setTimeout(() => t.style.transform = 'translateX(150%)', 4000);
+        }
+
+        window.app = {
+            setView: (view) => {
+                document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+                document.getElementById(`view-${view}`).classList.remove('hidden');
+                
+                // Обновление стилей для мобильной навигации
+                document.querySelectorAll('.nav-item').forEach(b => {
+                    const icon = b.querySelector('.nav-btn');
+                    b.classList.remove('text-neonBlue', 'text-neonOrange', 'active');
+                    b.classList.add('text-gray-500');
+                    if(icon) icon.classList.remove('active', 'text-neonBlue', 'text-neonOrange');
+
+                    if(b.dataset.view === view) {
+                        b.classList.add('active', view === 'create' ? 'text-neonOrange' : 'text-neonBlue');
+                        if(icon) icon.classList.add('active', view === 'create' ? 'text-neonOrange' : 'text-neonBlue');
+                    }
+                });
+                
+                // Обновление стилей для десктопной навигации
+                document.querySelectorAll('.desktop-nav-btn').forEach(b => {
+                    b.classList.remove('active', 'text-white', 'border-l-3', 'border-neonBlue');
+                    b.classList.add('text-gray-400');
+                    if(b.dataset.view === view) {
+                        b.classList.add('active', 'text-white');
+                    }
+                });
+
+                // Прокрутка чата вниз
+                if(view === 'chat') setTimeout(() => {
+                    const cont = document.getElementById('chat-container');
+                    cont.scrollTop = cont.scrollHeight;
+                }, 100);
+            }
+        };
+
+        // FIREBASE LOGIC
+        async function init() {
+            setLogLevel('Debug'); // Включаем логирование Firestore
+            setLoader("Инициализация Firebase...");
+
+            try {
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                // Аутентификация: сначала пробуем кастомный токен, затем анонимный вход
+                setLoader("Аутентификация пользователя...");
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        currentUser = user;
+                        updateUIState();
+                        if (!listenersStarted) {
+                            setupDataListeners();
+                            listenersStarted = true;
+                        }
+                        setLoader(false);
+                    } else {
+                        currentUser = null;
+                        updateUIState();
+                        setLoader(false);
+                    }
+                });
+                
+            } catch (e) {
+                console.error("Init error:", e);
+                showLoaderError("Критическая ошибка инициализации: " + e.message);
+            }
+        }
+
+        function updateUIState() {
+            const isAuth = !!currentUser;
+            const isAnonymous = currentUser?.isAnonymous; 
+            const displayName = currentUser?.displayName || 'Гость';
+            const userId = currentUser?.uid || '';
+            
+            const dGuest = document.getElementById('desk-guest-info');
+            const dUser = document.getElementById('desk-user-info');
+
+            if(isAuth) {
+                dGuest.classList.add('hidden');
+                dUser.classList.remove('hidden');
+                const userText = isAnonymous ? `${displayName} (Гость)` : displayName;
+                // Обновление: показ полного UID для авторизованных пользователей
+                document.getElementById('desk-username').innerHTML = userText;
+                if (!isAnonymous) {
+                    // Обязательно показываем полный userId для многопользовательских приложений
+                    document.getElementById('desk-username').innerHTML += `<div class="text-[10px] text-gray-500 mt-1 break-all select-all font-mono">${userId}</div>`;
+                }
+                document.getElementById('desk-avatar').innerText = displayName[0]?.toUpperCase() || 'G';
+            } else {
+                dGuest.classList.remove('hidden');
+                dUser.classList.add('hidden');
+            }
+
+            const mAuth = document.getElementById('mob-header-auth');
+            if(isAuth && !isAnonymous) {
+                mAuth.innerHTML = `<div class="w-8 h-8 rounded-full bg-gradient-to-br from-neonBlue to-purple-600 flex items-center justify-center text-white font-bold text-sm cursor-pointer" onclick="doLogout()">${displayName[0]?.toUpperCase() || 'G'}</div>`;
+            } else {
+                mAuth.innerHTML = `<button onclick="toggleAuthModal(true)" class="text-sm font-bold text-neonBlue border border-neonBlue px-3 py-1 rounded">ВХОД</button>`;
+            }
+
+            // Разрешаем/запрещаем постинг в зависимости от статуса
+            const canPost = isAuth && !isAnonymous; 
+            
+            document.getElementById('chat-input').disabled = !canPost;
+            document.getElementById('send-msg-btn').disabled = !canPost;
+            document.getElementById('send-msg-btn').classList.toggle('opacity-50', !canPost);
+            
+            const createBtn = document.getElementById('create-btn');
+            createBtn.disabled = !canPost;
+            createBtn.classList.toggle('opacity-50', !canPost);
+            document.getElementById('create-status').innerText = canPost ? 'Готово к публикации' : 'Войдите в аккаунт, чтобы создать анкету';
+        }
+
+        // AUTH FUNCTIONS
+        document.getElementById('form-login').onsubmit = async (e) => {
+            e.preventDefault();
+            setAuthLoading(true);
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-pass').value;
+            document.getElementById('auth-error').classList.add('hidden');
+
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+                toggleAuthModal(false);
+                showToast('Успех', 'Вход выполнен!');
+            } catch (err) {
+                let msg = "Ошибка входа.";
+                if(err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+                    msg = "Неверный Email или Пароль.";
+                } else {
+                    msg = err.message;
+                }
+                displayAuthError(msg);
+            } finally {
+                setAuthLoading(false);
+            }
+        };
+
+        document.getElementById('form-register').onsubmit = async (e) => {
+            e.preventDefault();
+            setAuthLoading(true);
+            const nick = document.getElementById('reg-nick').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const pass = document.getElementById('reg-pass').value;
+            document.getElementById('auth-error').classList.add('hidden');
+
+            if (!nick) {
+                 displayAuthError("Пожалуйста, введите никнейм.");
+                 setAuthLoading(false);
+                 return;
+            }
+
+            try {
+                const cred = await createUserWithEmailAndPassword(auth, email, pass);
+                await updateProfile(cred.user, { displayName: nick });
+                // Принудительно обновляем currentUser
+                currentUser = { ...cred.user, displayName: nick };
+                updateUIState();
+                
+                toggleAuthModal(false);
+                showToast('Регистрация', `Аккаунт ${nick} успешно создан!`);
+            } catch (err) {
+                let msg = "Ошибка регистрации.";
+                if(err.code === 'auth/email-already-in-use') msg = "Этот Email уже занят.";
+                if(err.code === 'auth/weak-password') msg = "Пароль слишком простой (минимум 6 символов).";
+                if(err.code === 'auth/invalid-email') msg = "Некорректный формат Email.";
+                displayAuthError(msg);
+            } finally {
+                setAuthLoading(false);
+            }
+        };
+
+        window.doLogout = async () => {
+            try {
+                // Отписка от слушателей перед выходом
+                unsubscribeListeners.forEach(unsub => { if (typeof unsub === 'function') unsub(); });
+                unsubscribeListeners = [];
+                listenersStarted = false;
+                
+                await signOut(auth);
+                showToast('Выход', 'Вы вышли из системы. Переход в гостевой режим...');
+                toggleAuthModal(true);
+            } catch(e) {
+                console.error("Logout error:", e);
+            }
+        };
+
+        // DATA LISTENERS
+        function setupDataListeners() {
+            // Chat Listener
+            const qChat = query(collection(db, `artifacts/${appId}/public/data/chat`), orderBy('createdAt', 'desc'), limit(50));
+            const unsubChat = onSnapshot(qChat, (snap) => {
+                const cont = document.getElementById('chat-container');
+                // Сохраняем текущую позицию скролла, чтобы скроллить только при получении новых сообщений
+                const shouldScroll = cont.scrollHeight - cont.clientHeight <= cont.scrollTop + 100;
+
+                cont.innerHTML = '';
+                const msgs = [];
+                snap.forEach(d => msgs.push(d.data()));
+                msgs.reverse(); 
+
+                if(msgs.length === 0) cont.innerHTML = '<div class="text-center text-gray-600 mt-10">Нет сообщений</div>';
+
+                msgs.forEach(m => {
+                    const isMe = currentUser && m.uid === currentUser.uid;
+                    const el = document.createElement('div');
+                    el.className = `flex ${isMe ? 'justify-end' : 'justify-start'}`;
+                    el.innerHTML = `
+                        <div class="${isMe ? 'bg-neonBlue/20 text-white' : 'bg-gray-800 text-gray-200'} px-3 py-2 rounded-lg max-w-[85%] text-sm break-words shadow-md">
+                            <div class="text-[10px] font-bold opacity-70 mb-0.5 ${isMe ? 'text-neonBlue' : 'text-neonOrange'}">${m.author || 'Гость'}</div>
+                            ${m.text}
+                        </div>
+                    `;
+                    cont.appendChild(el);
+                });
+                
+                if (shouldScroll) {
+                    cont.scrollTop = cont.scrollHeight;
+                }
+            }, (error) => {
+                 console.error("Chat listener error:", error);
+            });
+            unsubscribeListeners.push(unsubChat);
+
+            // Profiles Listener
+            const qProf = query(collection(db, `artifacts/${appId}/public/data/profiles`), orderBy('createdAt', 'desc'), limit(50));
+            const unsubProf = onSnapshot(qProf, (snap) => {
+                const cont = document.getElementById('profiles-container');
+                cont.innerHTML = '';
+                if(snap.empty) {
+                    cont.innerHTML = '<div class="col-span-full text-center text-gray-500">Нет активных анкет</div>';
+                    return;
+                }
+                
+                snap.forEach(d => {
+                    const p = d.data();
+                    const isMine = currentUser && p.uid === currentUser.uid;
+                    const el = document.createElement('div');
+                    el.id = `profile-${d.id}`;
+                    el.className = `glass-panel bg-gray-900/80 border ${isMine ? 'border-neonOrange shadow-xl' : 'border-gray-700'} p-4 rounded-xl shadow-lg hover:shadow-neon transition-shadow duration-300`;
+                    el.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-bold text-white text-xl">${p.title}</h3>
+                            ${isMine ? `<button onclick="deleteProfile('${d.id}')" class="text-red-500 hover:text-red-300 transition" title="Удалить анкету">✕</button>` : ''}
+                        </div>
+                        <div class="text-neonBlue text-sm font-bold uppercase mb-2">${p.role}</div>
+                        <p class="text-gray-400 text-sm mb-3 line-clamp-3">${p.desc}</p>
+                        <div class="flex justify-between items-center border-t border-gray-700 pt-2 mt-2">
+                            <span class="text-xs text-gray-500">${p.author || 'Гость'}</span>
+                            <span class="text-white text-xs bg-gray-700/50 px-2 py-1 rounded select-all font-mono hover:bg-neonOrange transition">${p.contact}</span>
+                        </div>
+                    `;
+                    cont.appendChild(el);
+                });
+            }, (error) => {
+                 console.error("Profiles listener error:", error);
+            });
+            unsubscribeListeners.push(unsubProf);
+        }
+
+        // === КОНЕЦ: НОВЫЕ ОБРАБОТЧИКИ (ЗАПОЛНЕНИЕ ЛОГИКИ) ===
+
+        // 1. Отправка сообщений в чат
+        document.getElementById('send-msg-btn').onclick = async () => {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+
+            if (!text) return;
+
+            if (!currentUser || currentUser.isAnonymous) {
+                showToast('Ошибка', 'Необходимо войти в аккаунт для отправки сообщений.');
                 return;
             }
-            l.style.display = 'flex';
-            l.classList.remove('opacity-0', 'pointer-events-none');
-            if (typeof text === 'string') statusEl.innerText = text;
-        }
 
-        function showLoaderError(msg) {
-             const errEl = document.getElementById('loader-error');
-             document.getElementById('loader-status').innerText = "ОШИБКА";
-             errEl.innerText = msg;
-             errEl.classList.remove('hidden');
-             document.getElementById('chat-status-dot').classList.remove('bg-green-500', 'status-dot');
-             document.getElementById('chat-status-dot').classList.add('bg-red-500');
-        }
-
-        window.toggleAuthModal = (show) => {
-            document.getElementById('auth-modal').classList.toggle('hidden', !show);
-            document.getElementById('auth-error').classList.add('hidden');
-        };
-        
-        window.switchAuthTab = (tab) => {
-            const loginForm = document.getElementById('form-login');
-            const regForm = document.getElementById('form-register');
-            const tabLogin = document.getElementById('tab-login');
-            const tabReg = document.getElementById('tab-register');
-            const authInfoText = document.getElementById('auth-info-text');
-
-            if (tab === 'login') {
-                loginForm.classList.remove('hidden');
-                regForm.classList.add('hidden');
-                tabLogin.classList.add('border-neonBlue', 'text-neonBlue');
-                tabLogin.classList.remove('text-gray-500', 'border-neonOrange');
-                tabReg.classList.remove('border-neonOrange', 'text-neonOrange');
-                tabReg.classList.add('text-gray-500', 'border-neonBlue/0');
-                authInfoText.innerText = "Войдите, чтобы восстановить свой постоянный аккаунт.";
-            } else {
-                loginForm.classList.add('hidden');
-                regForm.classList.remove('hidden');
-                tabReg.classList.add('border-neonOrange', 'text-neonOrange');
-                tabReg.classList.remove('text-gray-500', 'border-neonBlue');
-                tabLogin.classList.remove('border-neonBlue', 'text-neonBlue');
-                tabLogin.classList.add('text-gray-500', 'border-neonOrange/0');
-                authInfoText.innerText = "Создайте постоянный аккаунт, чтобы сохранить свой прогресс.";
-            }
-        };
-
-        function showToast(title, msg) {
-            const t = document.getElementById('toast');
-            document.getElementById('toast-title').innerText = title;
-            document.getElementById('toast-message').innerText = msg;
-            t.style.transform = 'translateX(0)';
-            setTimeout(() => t.style.transform = 'translateX(150%)', 4000);
-        }
-
-        window.app = {
-            setView: (view) => {
-                document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-                document.getElementById(`view-${view}`).classList.remove('hidden');
-                document.querySelectorAll('.nav-btn, .nav-item').forEach(b => {
-                    b.classList.remove('active', 'text-neonBlue', 'text-neonOrange');
-                    if(b.dataset.view === view) b.classList.add('active', view === 'create' ? 'text-neonOrange' : 'text-neonBlue');
-                });
-                if(view === 'chat') setTimeout(() => {
-                    const cont = document.getElementById('chat-container');
-                    cont.scrollTop = cont.scrollHeight;
-                }, 100);
-            }
-        };
-
-        // FIREBASE LOGIC
-        async function init() {
-            setLoader("Подключение к серверу...");
             try {
-                const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
+                input.disabled = true;
+                document.getElementById('send-msg-btn').disabled = true;
 
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        setLoader(false);
-                        currentUser = user;
-                        updateUIState();
-                        if (!listenersStarted) {
-                            setupDataListeners();
-                            listenersStarted = true;
-                        }
-                    } else {
-                        // Попытка анонимного входа, если нет пользователя
-                        setLoader("Вход в гостевой режим...");
-                        signInAnonymously(auth)
-                            .then(() => { /* onAuthStateChanged сработает снова */ })
-                            .catch((error) => {
-                                console.error("Anonymous auth failed:", error);
-                                showLoaderError("Ошибка входа: " + error.message);
-                            });
-                    }
+                await addDoc(collection(db, `artifacts/${appId}/public/data/chat`), {
+                    text: text,
+                    createdAt: serverTimestamp(),
+                    uid: currentUser.uid,
+                    author: currentUser.displayName || 'Пользователь',
                 });
+                input.value = '';
                 
             } catch (e) {
-                console.error("Init error:", e);
-                showLoaderError("Критическая ошибка инициализации: " + e.message);
-            }
-        }
-
-        function updateUIState() {
-            const isAuth = !!currentUser;
-            const isAnonymous = currentUser?.isAnonymous; 
-            const displayName = currentUser?.displayName || 'Гость';
-            
-            const dGuest = document.getElementById('desk-guest-info');
-            const dUser = document.getElementById('desk-user-info');
-
-            if(isAuth) {
-                dGuest.classList.add('hidden');
-                dUser.classList.remove('hidden');
-                const userText = isAnonymous ? `${displayName} (Гость)` : displayName;
-                document.getElementById('desk-username').innerText = userText;
-                document.getElementById('desk-avatar').innerText = displayName[0]?.toUpperCase() || 'G';
-            } else {
-                dGuest.classList.remove('hidden');
-                dUser.classList.add('hidden');
-            }
-
-            const mAuth = document.getElementById('mob-header-auth');
-            if(isAuth && !isAnonymous) {
-                mAuth.innerHTML = `<div class="w-8 h-8 rounded-full bg-gradient-to-br from-neonBlue to-purple-600 flex items-center justify-center text-white font-bold text-sm cursor-pointer" onclick="doLogout()">${displayName[0]?.toUpperCase() || 'G'}</div>`;
-            } else {
-                mAuth.innerHTML = `<button onclick="toggleAuthModal(true)" class="text-sm font-bold text-neonBlue border border-neonBlue px-3 py-1 rounded">ВХОД</button>`;
-            }
-
-            const canPost = isAuth; 
-            
-            document.getElementById('chat-input').disabled = !canPost;
-            document.getElementById('send-msg-btn').disabled = !canPost;
-            document.getElementById('send-msg-btn').classList.toggle('opacity-50', !canPost);
-            
-            const createBtn = document.getElementById('create-btn');
-            createBtn.disabled = !canPost;
-            createBtn.classList.toggle('opacity-50', !canPost);
-            document.getElementById('create-status').innerText = canPost ? 'Готово к публикации' : 'Загрузка...';
-        }
-
-        // AUTH FUNCTIONS
-        document.getElementById('form-login').onsubmit = async (e) => {
-            e.preventDefault();
-            setAuthLoading(true);
-            const email = document.getElementById('login-email').value;
-            const pass = document.getElementById('login-pass').value;
-            document.getElementById('auth-error').classList.add('hidden');
-
-            try {
-                await signInWithEmailAndPassword(auth, email, pass);
-                toggleAuthModal(false);
-                showToast('Успех', 'Вход выполнен!');
-            } catch (err) {
-                let msg = "Ошибка входа.";
-                if(err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-                    msg = "Неверный Email или Пароль.";
-                } else {
-                    msg = err.message;
-                }
-                displayAuthError(msg);
+                console.error("Error sending message:", e);
+                showToast('Ошибка', 'Не удалось отправить сообщение.');
             } finally {
-                setAuthLoading(false);
+                input.disabled = false;
+                document.getElementById('send-msg-btn').disabled = false;
+                input.focus();
             }
         };
-
-        document.getElementById('form-register').onsubmit = async (e) => {
-            e.preventDefault();
-            setAuthLoading(true);
-            const nick = document.getElementById('reg-nick').value.trim();
-            const email = document.getElementById('reg-email').value.trim();
-            const pass = document.getElementById('reg-pass').value;
-            document.getElementById('auth-error').classList.add('hidden');
-
-            if (!nick) {
-                 displayAuthError("Пожалуйста, введите никнейм.");
-                 setAuthLoading(false);
-                 return;
+        
+        // Добавляем обработчик нажатия Enter для чата
+        document.getElementById('chat-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('send-msg-btn').click();
             }
+        });
 
-            try {
-                const cred = await createUserWithEmailAndPassword(auth, email, pass);
-                await updateProfile(cred.user, { displayName: nick });
-                // Принудительно обновляем currentUser, так как onAuthStateChanged может сработать до updateProfile
-                currentUser = { ...cred.user, displayName: nick };
-                updateUIState();
-                
-                toggleAuthModal(false);
-                showToast('Регистрация', `Аккаунт ${nick} успешно создан!`);
-            } catch (err) {
-                let msg = "Ошибка регистрации.";
-                if(err.code === 'auth/email-already-in-use') msg = "Этот Email уже занят.";
-                if(err.code === 'auth/weak-password') msg = "Пароль слишком простой (минимум 6 символов).";
-                if(err.code === 'auth/invalid-email') msg = "Некорректный формат Email.";
-                displayAuthError(msg);
-            } finally {
-                setAuthLoading(false);
-            }
-        };
-
-        window.doLogout = async () => {
-            try {
-                // ВАЖНОЕ ИСПРАВЛЕНИЕ: ОТПИСКА ПЕРЕД ВЫХОДОМ
-                // Это предотвращает ошибку "insufficient permissions", так как мы перестаем слушать данные ДО потери прав
-                unsubscribeListeners.forEach(unsub => { if (typeof unsub === 'function') unsub(); });
-                unsubscribeListeners = [];
-                listenersStarted = false; // Сбрасываем флаг, чтобы слушатели пересоздались при новом входе
-                
-                await signOut(auth);
-                showToast('Выход', 'Вы вышли из системы. Переход в гостевой режим...');
-                toggleAuthModal(true); // Открываем окно входа для удобства смены аккаунта
-            } catch(e) {
-                console.error("Logout error:", e);
-            }
-        };
-
-        // DATA LISTENERS
-        function setupDataListeners() {
-            // Chat
-            const qChat = query(collection(db, `artifacts/${appId}/public/data/chat`), orderBy('createdAt', 'desc'), limit(50));
-            const unsubChat = onSnapshot(qChat, (snap) => {
-                const cont = document.getElementById('chat-container');
-                cont.innerHTML = '';
-                const msgs = [];
-                snap.forEach(d => msgs.push(d.data()));
-                msgs.reverse(); 
-
-                if(msgs.length === 0) cont.innerHTML = '<div class="text-center text-gray-500 mt-4">Нет сообщений</div>';
-
-                msgs.forEach(m => {
-                    const isMe = currentUser && m.uid === currentUser.uid;
-                    const el = document.createElement('div');
-                    el.className = `flex ${isMe ? 'justify-end' : 'justify-start'}`;
-                    el.innerHTML = `
-                        <div class="${isMe ? 'bg-neonBlue/20 text-white' : 'bg-gray-800 text-gray-200'} px-3 py-2 rounded-lg max-w-[85%] text-sm break-words">
-                            <div class="text-[10px] font-bold opacity-70 mb-0.5 ${isMe ? 'text-neonBlue' : 'text-neonOrange'}">${m.author || 'Гость'}</div>
-                            ${m.text}
-                        </div>
-                    `;
-                    cont.appendChild(el);
-                });
-                
-                if (!document.getElementById('view-chat').classList.contains('hidden')) {
-                    cont.scrollTop = cont.scrollHeight;
-                }
-            }, (error) => {
-                 console.error("Chat listener error:", error);
-            });
-            unsubscribeListeners.push(unsubChat);
-
-            // Profiles
-            const qProf = query(collection(db, `artifacts/${appId}/public/data/profiles`), orderBy('createdAt', 'desc'), limit(50));
-            const unsubProf = onSnapshot(qProf, (snap) => {
-                const cont = document.getElementById('profiles-container');
-                cont.innerHTML = '';
-                if(snap.empty) {
-                    cont.innerHTML = '<div class="col-span-full text-center text-gray-500">Нет активных анкет</div>';
-                    return;
-                }
-                
-                snap.forEach(d => {
-                    const p = d.data();
-                    const isMine = currentUser && p.uid === currentUser.uid;
-                    const el = document.createElement('div');
-                    el.className = `bg-gray-800/80 border ${isMine ? 'border-neonOrange' : 'border-gray-700'} p-4 rounded-xl shadow-lg`;
-                    el.innerHTML = `
-                        <div class="flex justify-between items-start mb-2">
-                            <h3 class="font-bold text-white text-lg">${p.title}</h3>
-                            ${isMine ? `<button onclick="deleteProfile('${d.id}')" class="text-red-500 hover:text-red-300">✕</button>` : ''}
-                        </div>
-                        <div class="text-neonBlue text-sm font-bold uppercase mb-2">${p.role}</div>
-                        <p class="text-gray-400 text-sm mb-3 line-clamp-3">${p.desc}</p>
-                        <div class="flex justify-between items-center border-t border-gray-700 pt-2">
-                            <span class="text-xs text-gray-500">${p.author || 'Гость'}</span>
-                            <span class="text-white text-xs bg-gray-700 px-2 py-1 rounded select-all">${p.contact}</span>
-                        </div>
-                    `;
-                    cont.appendChild(el);
-                });
-            }, (error) => {
-                 console.error("Profiles listener error:", error);
-            });
-            unsubscribeListeners.push(unsubProf);
-        }
-
-        // ACTIONS
-        document.getElementById('send-msg-btn').onclick = async () => {
-            const inp = document.getElementById('chat-input');
-            const txt = inp.value.trim();
-            if(!txt || !currentUser) return;
-            inp.value = '';
-            
-            try {
-                await addDoc(collection(db, `artifacts/${appId}/public/data/chat`), {
-                    text: txt, author: currentUser.displayName || 'Гость', uid: currentUser.uid, createdAt: serverTimestamp()
-                });
-            } catch(e) { showToast('Ошибка', e.message); }
-        };
-
+        // 2. Публикация новой анкеты
         document.getElementById('create-form').onsubmit = async (e) => {
             e.preventDefault();
+            const title = document.getElementById('f-title').value.trim();
+            const role = document.getElementById('f-role').value.trim();
+            const desc = document.getElementById('f-desc').value.trim();
+            const contact = document.getElementById('f-contact').value.trim();
             const createBtn = document.getElementById('create-btn');
+
+            if (!currentUser || currentUser.isAnonymous) {
+                showToast('Публикация', 'Войдите в аккаунт, чтобы опубликовать анкету.');
+                return;
+            }
+
             createBtn.disabled = true;
-            createBtn.innerText = 'Публикация...';
+            createBtn.innerText = 'ПУБЛИКАЦИЯ...';
             
-            const data = {
-                title: document.getElementById('f-title').value,
-                role: document.getElementById('f-role').value,
-                desc: document.getElementById('f-desc').value,
-                contact: document.getElementById('f-contact').value,
-                author: currentUser.displayName || 'Гость', uid: currentUser.uid, createdAt: serverTimestamp()
-            };
             try {
-                await addDoc(collection(db, `artifacts/${appId}/public/data/profiles`), data);
-                showToast('Успех', 'Анкета опубликована!');
+                await addDoc(collection(db, `artifacts/${appId}/public/data/profiles`), {
+                    title,
+                    role,
+                    desc,
+                    contact,
+                    createdAt: serverTimestamp(),
+                    uid: currentUser.uid,
+                    author: currentUser.displayName || 'Пользователь',
+                });
+
+                showToast('Успех', 'Анкета успешно опубликована!');
                 document.getElementById('create-form').reset();
-                window.app.setView('profiles');
-            } catch(e) { 
-                showToast('Ошибка', e.message); 
+                app.setView('profiles'); // Переключаемся на просмотр анкет
+
+            } catch (e) {
+                console.error("Error creating profile:", e);
+                showToast('Ошибка', 'Не удалось опубликовать анкету.');
             } finally {
                 createBtn.disabled = false;
                 createBtn.innerText = 'ОПУБЛИКОВАТЬ';
             }
         };
 
-        window.deleteProfile = async (id) => {
-            if(confirm('Удалить анкету?')) {
-                try {
-                    await deleteDoc(doc(db, `artifacts/${appId}/public/data/profiles`, id));
-                    showToast('Удалено', 'Анкета удалена.');
-                } catch (e) {
-                    showToast('Ошибка', 'Не удалось удалить анкету.');
-                }
+        // 3. Удаление анкеты
+        window.deleteProfile = async (profileId) => {
+            if (!currentUser || currentUser.isAnonymous) {
+                showToast('Ошибка', 'Необходимо войти для удаления.');
+                return;
+            }
+            
+            // Визуальное удаление элемента перед операцией (для ощущения скорости)
+            const elToDelete = document.getElementById(`profile-${profileId}`);
+            if (elToDelete) elToDelete.style.opacity = '0.5';
+
+            try {
+                await deleteDoc(doc(db, `artifacts/${appId}/public/data/profiles`, profileId));
+                showToast('Удаление', 'Анкета успешно удалена.');
+                // onSnapshot обновит UI, так что не нужно вручную удалять элемент
+            } catch (e) {
+                console.error("Error deleting profile:", e);
+                if (elToDelete) elToDelete.style.opacity = '1';
+                showToast('Ошибка', 'Не удалось удалить анкету. Проверьте права доступа.');
             }
         };
+        
+        // === КОНЕЦ: НОВЫЕ ОБРАБОТЧИКИ ===
 
-        // Start
-        init();
-    </script>
+        init();
+    </script>
 </body>
 </html>
