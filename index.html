@@ -11,7 +11,7 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght{400;600;700}&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
     
     <script>
         tailwind.config = {
@@ -28,7 +28,6 @@
     <style>
         body {
             background-color: #0b0d17;
-            /* Используем изображение для бэкграунда, чтобы сделать дизайн более геймерским */
             background-image: linear-gradient(rgba(11, 13, 23, 0.9), rgba(11, 13, 23, 0.95)), url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=60&w=1080&auto=format&fit=crop');
             background-size: cover;
             background-attachment: fixed;
@@ -69,7 +68,7 @@
         <div class="bg-gray-900 border border-gray-700 w-full max-w-md p-8 rounded-2xl shadow-2xl relative">
             <button onclick="toggleAuthModal(false)" class="absolute top-4 right-4 text-gray-500 hover:text-white">✕</button>
             
-            <h2 class="text-2xl font-gamer text-neonBlue mb-6 text-center">Создать Аккаунт</h2>
+            <h2 class="text-2xl font-gamer text-neonBlue mb-6 text-center">Аккаунт</h2>
 
             <!-- Табы: Вход / Регистрация -->
             <div class="flex mb-6 border-b border-gray-700">
@@ -78,7 +77,7 @@
             </div>
             
             <p class="text-xs text-gray-400 mb-4 text-center" id="auth-info-text">
-                Создайте постоянный аккаунт, чтобы сохранить свой прогресс.
+                Войдите или создайте постоянный аккаунт.
             </p>
 
             <!-- Форма Входа -->
@@ -124,12 +123,12 @@
         <!-- Профиль Десктоп -->
         <div id="desk-profile" class="mb-8 p-4 rounded-xl bg-black/30 border border-gray-700/50 text-center">
             <div id="desk-user-info" class="hidden">
-                <div class="w-16 h-16 bg-gradient-to-br from-neonBlue to-purple-600 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-bold" id="desk-avatar">G</div>
-                <div class="font-bold text-lg text-white" id="desk-username">Гость</div>
+                <div class="w-16 h-16 bg-gradient-to-br from-neonBlue to-purple-600 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-bold" id="desk-avatar">L</div>
+                <div class="font-bold text-lg text-white" id="desk-username">Loading...</div>
                 <button onclick="doLogout()" class="text-xs text-red-400 mt-2 hover:underline">Выйти</button>
             </div>
             <div id="desk-guest-info" class="hidden">
-                <p class="text-sm text-gray-400 mb-3">Вы не вошли</p>
+                <p class="text-sm text-gray-400 mb-3">Гостевой режим</p>
                 <button onclick="toggleAuthModal(true)" class="w-full bg-neonBlue/10 border border-neonBlue text-neonBlue py-2 rounded hover:bg-neonBlue/20 transition">ВОЙТИ</button>
             </div>
         </div>
@@ -185,11 +184,11 @@
                 <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]"></div>
             </div>
             <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar pb-20">
-                <div class="text-center text-gray-600 mt-10">Сообщений нет</div>
+                <div class="text-center text-gray-600 mt-10">Нет сообщений</div>
             </div>
             <div class="p-3 bg-gray-900 border-t border-gray-700 flex gap-2 absolute bottom-[60px] md:bottom-0 left-0 right-0 md:relative z-20">
                 <input type="text" id="chat-input" class="flex-1 bg-gray-800 text-white rounded px-4 py-3 border border-gray-600 focus:border-neonBlue outline-none" placeholder="Сообщение..." disabled>
-                <button id="send-msg-btn" class="bg-neonBlue text-black font-bold px-4 rounded opacity-50" disabled>></button>
+                <button id="send-msg-btn" class="bg-neonBlue text-black font-bold px-4 py-3 rounded opacity-50" disabled>></button>
             </div>
         </div>
 
@@ -224,23 +223,17 @@
 
     <!-- СКРИПТ ПРИЛОЖЕНИЯ -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        // Добавил signInAnonymously для автоматической регистрации
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, updateProfile, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, updateProfile, signOut, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // КОНФИГУРАЦИЯ FIREBASE
-        const firebaseConfig = {
-            apiKey: "AIzaSyA7EumEru2qfYcAyxAWLL4TY_dWfcU3Dfg",
-            authDomain: "linkmeetcraft.firebaseapp.com",
-            projectId: "linkmeetcraft",
-            storageBucket: "linkmeetcraft.firebasestorage.app",
-            messagingSenderId: "373052253470",
-            appId: "1:373052253470:web:a66afc67876f76dc1a550f",
-            measurementId: "G-WSZL0NRHCQ"
-        };
-        const appId = "linkmeetcraft";
-
+        // === ИСПОЛЬЗОВАНИЕ ГЛОБАЛЬНЫХ ПЕРЕМЕННЫХ CANVAS ===
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        // Конфигурация Firebase берется из глобальной переменной или используется заглушка
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { projectId: appId };
+        // Токен для автоматического входа
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
         let auth, db, currentUser;
         let listenersStarted = false;
 
@@ -323,51 +316,55 @@
                 auth = getAuth(app);
                 db = getFirestore(app);
 
+                // === 1. ПОПЫТКА ВХОДА С CUSOM-ТОКЕНОМ ИЛИ АНОНИМНОГО ВХОДА ===
+                let signedIn = false;
+                if (initialAuthToken) {
+                    try {
+                        // Если токен есть, пытаемся войти с ним
+                        await signInWithCustomToken(auth, initialAuthToken);
+                        signedIn = true;
+                    } catch (e) {
+                        console.warn("Ошибка входа с CustomToken, попытка анонимного входа:", e.code);
+                    }
+                }
+                
+                if (!signedIn) {
+                    // Если токена нет или он не сработал, входим анонимно
+                    await signInAnonymously(auth);
+                }
+
+                // === 2. СЛУШАТЕЛЬ СОСТОЯНИЯ АУТЕНТИФИКАЦИИ ===
                 onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        currentUser = user;
-                        updateUIState();
-                        if (!listenersStarted) {
-                            setupDataListeners();
-                            listenersStarted = true;
-                        }
-                    } else {
-                        // === АВТОМАТИЧЕСКАЯ РЕГИСТРАЦИЯ (АННОНИМНЫЙ ВХОД) ===
-                        signInAnonymously(auth).then(anonUser => {
-                            currentUser = anonUser.user;
-                            updateUIState();
-                            if (!listenersStarted) {
-                                setupDataListeners();
-                                listenersStarted = true;
-                            }
-                        }).catch(e => {
-                            console.error("Anonymous Sign-in failed:", e);
-                            document.getElementById('desk-guest-info').innerHTML = '<p class="text-sm text-red-500">Ошибка входа. Проверьте консоль.</p>';
-                        });
+                    currentUser = user;
+                    updateUIState();
+                    if (user && !listenersStarted) {
+                        setupDataListeners();
+                        listenersStarted = true;
                     }
                 });
                 
             } catch (e) {
-                console.error(e);
-                alert("Ошибка подключения к Firebase: " + e.message);
+                console.error("Ошибка инициализации Firebase:", e);
+                showToast("Критическая ошибка", "Не удалось подключиться к базе данных.");
             }
         }
 
         function updateUIState() {
             const isAuth = !!currentUser;
-            // Проверяем, является ли пользователь анонимным
             const isAnonymous = currentUser?.isAnonymous; 
             const displayName = currentUser?.displayName || 'Гость';
             
             // Desk Profile
             const dGuest = document.getElementById('desk-guest-info');
             const dUser = document.getElementById('desk-user-info');
+
             if(isAuth) {
                 dGuest.classList.add('hidden');
                 dUser.classList.remove('hidden');
-                // Добавляем пометку "(Гость)" если это анонимный пользователь
-                document.getElementById('desk-username').innerText = displayName + (isAnonymous ? ' (Гость)' : '');
-                document.getElementById('desk-avatar').innerText = displayName[0].toUpperCase();
+                
+                const userText = isAnonymous ? `${displayName} (Гость)` : displayName;
+                document.getElementById('desk-username').innerText = userText;
+                document.getElementById('desk-avatar').innerText = displayName[0]?.toUpperCase() || 'G';
             } else {
                 dGuest.classList.remove('hidden');
                 dUser.classList.add('hidden');
@@ -376,21 +373,22 @@
             // Mobile Header Auth
             const mAuth = document.getElementById('mob-header-auth');
             if(isAuth && !isAnonymous) {
-                mAuth.innerHTML = `<div class="w-8 h-8 rounded-full bg-gradient-to-br from-neonBlue to-purple-600 flex items-center justify-center text-white font-bold text-sm" onclick="doLogout()">${displayName[0].toUpperCase()}</div>`;
+                mAuth.innerHTML = `<div class="w-8 h-8 rounded-full bg-gradient-to-br from-neonBlue to-purple-600 flex items-center justify-center text-white font-bold text-sm" onclick="doLogout()">${displayName[0]?.toUpperCase() || 'G'}</div>`;
             } else {
-                // Кнопка "Вход" для Гостей и неавторизованных
                 mAuth.innerHTML = `<button onclick="toggleAuthModal(true)" class="text-sm font-bold text-neonBlue border border-neonBlue px-3 py-1 rounded">ВХОД</button>`;
             }
 
             // Enable/Disable Inputs for Chat and Create
-            document.getElementById('chat-input').disabled = !isAuth;
-            document.getElementById('send-msg-btn').disabled = !isAuth;
-            document.getElementById('send-msg-btn').classList.toggle('opacity-50', !isAuth);
+            const canPost = isAuth && (currentUser.displayName || !isAnonymous); // Разрешаем постить, только если есть имя или это анонимный пользователь (для старта)
+            
+            document.getElementById('chat-input').disabled = !canPost;
+            document.getElementById('send-msg-btn').disabled = !canPost;
+            document.getElementById('send-msg-btn').classList.toggle('opacity-50', !canPost);
             
             const createBtn = document.getElementById('create-btn');
-            createBtn.disabled = !isAuth;
-            createBtn.classList.toggle('opacity-50', !isAuth);
-            document.getElementById('create-status').innerText = isAuth ? 'Готово к публикации' : 'Авторизуйтесь, чтобы создать анкету';
+            createBtn.disabled = !canPost;
+            createBtn.classList.toggle('opacity-50', !canPost);
+            document.getElementById('create-status').innerText = canPost ? 'Готово к публикации' : 'Войдите или создайте аккаунт для публикации';
         }
 
         // AUTH FUNCTIONS
@@ -403,7 +401,8 @@
 
             try {
                 await signInWithEmailAndPassword(auth, email, pass);
-                // Toast будет показан в onAuthStateChanged
+                toggleAuthModal(false);
+                showToast('Успех', 'Вход выполнен!');
             } catch (err) {
                 let msg = "Ошибка входа. Проверьте Email и Пароль.";
                 if(err.code === 'auth/invalid-credential') msg = "Неверный Email или Пароль.";
@@ -432,9 +431,7 @@
             try {
                 const cred = await createUserWithEmailAndPassword(auth, email, pass);
                 await updateProfile(cred.user, { displayName: nick });
-                // Обновляем текущего пользователя, чтобы UI сразу отобразил никнейм
-                currentUser = { ...cred.user, displayName: nick }; 
-                updateUIState();
+                // Смена пользователя произойдет через onAuthStateChanged
                 toggleAuthModal(false);
                 showToast('Регистрация', `Аккаунт ${nick} успешно создан!`);
             } catch (err) {
@@ -442,7 +439,6 @@
                 if(err.code === 'auth/email-already-in-use') msg = "Этот Email уже занят. Попробуйте войти.";
                 if(err.code === 'auth/weak-password') msg = "Пароль слишком простой (минимум 6 символов).";
                 if(err.code === 'auth/invalid-email') msg = "Некорректный формат Email.";
-                // Исправлено: если Firebase сообщает, что Email занят, это не ошибка кода, а логическое исключение.
                 displayAuthError(msg);
             } finally {
                 setAuthLoading(false);
@@ -450,9 +446,17 @@
         };
 
         window.doLogout = async () => {
-            await signOut(auth);
-            showToast('Выход', 'Вы вышли из системы');
-            // onAuthStateChanged снова сработает и выполнит анонимный вход.
+            // === ИСПРАВЛЕННАЯ ЛОГИКА ВЫХОДА/ПЕРЕХОДА В ГОСТЕВОЙ РЕЖИМ ===
+            try {
+                await signOut(auth);
+                showToast('Выход', 'Вы вышли из системы. Вход как Гость...');
+                // Сразу же запускаем анонимный вход.
+                // onAuthStateChanged сработает, когда пользователь станет null, а затем сработает снова, когда анонимный вход завершится.
+                await signInAnonymously(auth);
+            } catch(e) {
+                console.error("Ошибка выхода или повторного входа:", e);
+                showToast('Ошибка', 'Не удалось переключиться на гостевой режим. Попробуйте обновить страницу.');
+            }
         };
 
         // DATA LISTENERS
@@ -470,11 +474,15 @@
 
                 msgs.forEach(m => {
                     const isMe = currentUser && m.uid === currentUser.uid;
+                    const isGuest = m.author === 'Гость';
+                    const authorName = m.author || 'Гость';
+                    const authorColor = isMe ? 'text-neonBlue' : (isGuest ? 'text-gray-400' : 'text-neonOrange');
+
                     const el = document.createElement('div');
                     el.className = `flex ${isMe ? 'justify-end' : 'justify-start'}`;
                     el.innerHTML = `
                         <div class="${isMe ? 'bg-neonBlue/20 text-white' : 'bg-gray-800 text-gray-200'} px-3 py-2 rounded-lg max-w-[85%] text-sm break-words">
-                            <div class="text-[10px] font-bold opacity-70 mb-0.5 ${isMe ? 'text-neonBlue' : 'text-neonOrange'}">${m.author || 'Гость'}</div>
+                            <div class="text-[10px] font-bold opacity-70 mb-0.5 ${authorColor}">${authorName}</div>
                             ${m.text}
                         </div>
                     `;
@@ -531,6 +539,15 @@
                 });
             } catch(e) { showToast('Ошибка', e.message); }
         };
+        
+        // Ensure send button reacts to Enter key press
+        document.getElementById('chat-input').addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevents newline in input field
+                document.getElementById('send-msg-btn').click();
+            }
+        });
+
 
         document.getElementById('create-form').onsubmit = async (e) => {
             e.preventDefault();
@@ -560,7 +577,7 @@
 
         window.deleteProfile = async (id) => {
             try {
-                // Прямое удаление без подтверждения (для избежания блокирующего alert)
+                // Прямое удаление без блокирующего окна подтверждения
                 await deleteDoc(doc(db, `artifacts/${appId}/public/data/profiles`, id));
                 showToast('Удалено', 'Анкета удалена.');
             } catch (e) {
