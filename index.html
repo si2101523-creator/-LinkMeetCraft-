@@ -7,7 +7,18 @@
     
     <!-- SEO -->
     <meta name="description" content="Поиск тиммейтов для Minecraft, CS2, Dota 2.">
-    
+    <meta name="google-site-verification" content="F3-qIwKF7rrBELT89F9YjqvQFiSNPg66pjBTJVJjsoM" />
+    <meta name="yandex-verification" content="b631ed6c682d5bd3" />
+
+    <!-- Yandex.Metrika -->
+    <script type="text/javascript">
+        (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+        m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+        (window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=105532663', 'ym');
+        ym(105532663, 'init', {ssr:true, webvisor:true, clickmap:true, trackLinks:true, accurateTrackBounce:true});
+    </script>
+    <noscript><div><img src="https://mc.yandex.ru/watch/105532663" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Fonts -->
@@ -45,7 +56,6 @@
         .nav-btn.active { color: #00f3ff; border-bottom: 2px solid #00f3ff; text-shadow: 0 0 8px rgba(0, 243, 255, 0.5); }
         .desktop-nav-btn.active { background: rgba(0, 243, 255, 0.1); border-bottom: none; border-left: 3px solid #00f3ff; }
 
-        /* Кастомный скролл */
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
         
@@ -81,9 +91,8 @@
             
             <h2 class="text-2xl font-gamer text-neonBlue mb-6 text-center">Аккаунт</h2>
 
-            <!-- Табы: Вход / Регистрация -->
             <div class="flex mb-6 border-b border-gray-700">
-                <button onclick="switchAuthTab('login')" id="tab-login" class="flex-1 pb-3 text-center text-neonBlue border-b-2 border-neonBlue font-bold transition">ВОЙТИ</button>
+                <button onclick="switchAuthTab('login')" id="tab-login" class="flex-1 pb-3 text-center text-neonBlue border-b-2 border-neonBlue font-bold transition">ВХОД</button>
                 <button onclick="switchAuthTab('register')" id="tab-register" class="flex-1 pb-3 text-center text-gray-500 hover:text-white transition">РЕГИСТРАЦИЯ</button>
             </div>
             
@@ -91,7 +100,6 @@
                 Войдите или создайте постоянный аккаунт.
             </p>
 
-            <!-- Форма Входа -->
             <form id="form-login" class="space-y-4">
                 <div>
                     <label class="text-xs text-gray-400 uppercase">Email</label>
@@ -104,7 +112,6 @@
                 <button type="submit" id="login-btn" class="w-full bg-neonBlue text-black font-bold py-3 rounded hover:bg-cyan-400 transition shadow-neon mt-2">ВОЙТИ</button>
             </form>
 
-            <!-- Форма Регистрации -->
             <form id="form-register" class="space-y-4 hidden">
                 <div>
                     <label class="text-xs text-gray-400 uppercase">Никнейм</label>
@@ -131,12 +138,11 @@
             LMC<span class="text-neonBlue">.HUB</span>
         </h1>
         
-        <!-- Профиль Десктоп -->
         <div id="desk-profile" class="mb-8 p-4 rounded-xl bg-black/30 border border-gray-700/50 text-center">
             <div id="desk-user-info" class="hidden">
                 <div class="w-16 h-16 bg-gradient-to-br from-neonBlue to-purple-600 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-bold" id="desk-avatar">L</div>
                 <div class="font-bold text-lg text-white" id="desk-username">Loading...</div>
-                <button onclick="doLogout()" class="text-xs text-red-400 mt-2 hover:underline">Выйти</button>
+                <button onclick="doLogout()" class="text-xs text-red-400 mt-2 hover:underline cursor-pointer relative z-50">Выйти / Сменить</button>
             </div>
             <div id="desk-guest-info" class="hidden">
                 <p class="text-sm text-gray-400 mb-3">Гостевой режим</p>
@@ -156,7 +162,6 @@
             </button>
         </nav>
         
-        <!-- Ссылки -->
         <div class="space-y-2 text-sm mt-4 border-t border-gray-700 pt-4">
             <a href="https://t.me/LinkMeetCraft" target="_blank" class="flex items-center text-blue-400 hover:text-blue-300">
                 <span class="mr-2">✈️</span> Telegram
@@ -170,7 +175,6 @@
     <!-- === ОСНОВНОЙ КОНТЕНТ === -->
     <main class="flex-1 relative overflow-hidden flex flex-col h-full bg-black/40 backdrop-blur-md">
         
-        <!-- Мобильный Header -->
         <header class="md:hidden h-16 flex items-center justify-between px-4 border-b border-gray-700/50 bg-gray-900/50 backdrop-blur shrink-0">
             <span class="text-xl font-gamer font-bold text-white">LMC</span>
             <div id="mob-header-auth">
@@ -238,7 +242,6 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, updateProfile, signOut, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // КОНФИГУРАЦИЯ FIREBASE (ВАШИ КЛЮЧИ)
         const firebaseConfig = {
             apiKey: "AIzaSyA7EumEru2qfYcAyxAWLL4TY_dWfcU3Dfg",
             authDomain: "linkmeetcraft.firebaseapp.com",
@@ -252,23 +255,16 @@
 
         let auth, db, currentUser;
         let listenersStarted = false;
+        let unsubscribeListeners = [];
 
         // UI HELPERS
-        function getAuthButton(id) {
-            return document.getElementById(id);
-        }
+        function getAuthButton(id) { return document.getElementById(id); }
 
         function setAuthLoading(isLoading) {
             const loginBtn = getAuthButton('login-btn');
-            if (loginBtn) {
-                loginBtn.disabled = isLoading;
-                loginBtn.innerText = isLoading ? 'Загрузка...' : 'ВОЙТИ';
-            }
+            if (loginBtn) { loginBtn.disabled = isLoading; loginBtn.innerText = isLoading ? 'Загрузка...' : 'ВОЙТИ'; }
             const regBtn = getAuthButton('register-btn');
-            if (regBtn) {
-                regBtn.disabled = isLoading;
-                regBtn.innerText = isLoading ? 'Загрузка...' : 'СОЗДАТЬ АККАУНТ';
-            }
+            if (regBtn) { regBtn.disabled = isLoading; regBtn.innerText = isLoading ? 'Загрузка...' : 'СОЗДАТЬ АККАУНТ'; }
         }
 
         function displayAuthError(message) {
@@ -279,37 +275,25 @@
         
         function setLoader(text) {
             const l = document.getElementById('global-loader');
-            const errEl = document.getElementById('loader-error');
             const statusEl = document.getElementById('loader-status');
             
-            if (text === false) { // Скрыть лоадер
+            if (text === false) { 
                 l.classList.add('opacity-0', 'pointer-events-none');
                 setTimeout(() => l.style.display = 'none', 500);
                 return;
             }
-            
-            // Показать/Обновить текст
             l.style.display = 'flex';
             l.classList.remove('opacity-0', 'pointer-events-none');
-            if (typeof text === 'string') {
-                statusEl.innerText = text;
-                errEl.classList.add('hidden');
-            }
+            if (typeof text === 'string') statusEl.innerText = text;
         }
 
         function showLoaderError(msg) {
-             const l = document.getElementById('global-loader');
              const errEl = document.getElementById('loader-error');
              document.getElementById('loader-status').innerText = "ОШИБКА";
-             l.style.display = 'flex';
-             l.classList.remove('opacity-0', 'pointer-events-none');
-             
              errEl.innerText = msg;
              errEl.classList.remove('hidden');
-             
-             // Меняем цвет индикатора статуса на красный
-             document.getElementById('chat-status-dot').classList.remove('bg-green-500', 'status-dot', 'success');
-             document.getElementById('chat-status-dot').classList.add('bg-red-500', 'error');
+             document.getElementById('chat-status-dot').classList.remove('bg-green-500', 'status-dot');
+             document.getElementById('chat-status-dot').classList.add('bg-red-500');
         }
 
         window.toggleAuthModal = (show) => {
@@ -376,7 +360,6 @@
 
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
-                        // Пользователь найден (анонимный или постоянный)
                         setLoader(false);
                         currentUser = user;
                         updateUIState();
@@ -385,23 +368,13 @@
                             listenersStarted = true;
                         }
                     } else {
-                        // Нет пользователя -> Пытаемся войти Анонимно
+                        // Попытка анонимного входа, если нет пользователя
                         setLoader("Вход в гостевой режим...");
                         signInAnonymously(auth)
-                            .then(() => {
-                                // Успех, onAuthStateChanged сработает снова
-                            })
+                            .then(() => { /* onAuthStateChanged сработает снова */ })
                             .catch((error) => {
                                 console.error("Anonymous auth failed:", error);
-                                let msg = "Ошибка входа.";
-                                if (error.code === 'auth/operation-not-allowed') {
-                                    msg = "Ошибка: Анонимный вход отключен в консоли Firebase.";
-                                } else if (error.code === 'auth/api-key-not-valid') {
-                                    msg = "Ошибка: Неверный API ключ.";
-                                } else {
-                                    msg = `Ошибка подключения: ${error.message}`;
-                                }
-                                showLoaderError(msg);
+                                showLoaderError("Ошибка входа: " + error.message);
                             });
                     }
                 });
@@ -417,14 +390,12 @@
             const isAnonymous = currentUser?.isAnonymous; 
             const displayName = currentUser?.displayName || 'Гость';
             
-            // Desk Profile
             const dGuest = document.getElementById('desk-guest-info');
             const dUser = document.getElementById('desk-user-info');
 
             if(isAuth) {
                 dGuest.classList.add('hidden');
                 dUser.classList.remove('hidden');
-                
                 const userText = isAnonymous ? `${displayName} (Гость)` : displayName;
                 document.getElementById('desk-username').innerText = userText;
                 document.getElementById('desk-avatar').innerText = displayName[0]?.toUpperCase() || 'G';
@@ -433,16 +404,13 @@
                 dUser.classList.add('hidden');
             }
 
-            // Mobile Header Auth
             const mAuth = document.getElementById('mob-header-auth');
             if(isAuth && !isAnonymous) {
-                mAuth.innerHTML = `<div class="w-8 h-8 rounded-full bg-gradient-to-br from-neonBlue to-purple-600 flex items-center justify-center text-white font-bold text-sm" onclick="doLogout()">${displayName[0]?.toUpperCase() || 'G'}</div>`;
+                mAuth.innerHTML = `<div class="w-8 h-8 rounded-full bg-gradient-to-br from-neonBlue to-purple-600 flex items-center justify-center text-white font-bold text-sm cursor-pointer" onclick="doLogout()">${displayName[0]?.toUpperCase() || 'G'}</div>`;
             } else {
                 mAuth.innerHTML = `<button onclick="toggleAuthModal(true)" class="text-sm font-bold text-neonBlue border border-neonBlue px-3 py-1 rounded">ВХОД</button>`;
             }
 
-            // Enable/Disable Inputs for Chat and Create
-            // Разрешаем постить анонимам (если правила позволяют) или авторизованным
             const canPost = isAuth; 
             
             document.getElementById('chat-input').disabled = !canPost;
@@ -497,7 +465,10 @@
             try {
                 const cred = await createUserWithEmailAndPassword(auth, email, pass);
                 await updateProfile(cred.user, { displayName: nick });
-                // Смена пользователя произойдет через onAuthStateChanged
+                // Принудительно обновляем currentUser, так как onAuthStateChanged может сработать до updateProfile
+                currentUser = { ...cred.user, displayName: nick };
+                updateUIState();
+                
                 toggleAuthModal(false);
                 showToast('Регистрация', `Аккаунт ${nick} успешно создан!`);
             } catch (err) {
@@ -513,9 +484,15 @@
 
         window.doLogout = async () => {
             try {
+                // ВАЖНОЕ ИСПРАВЛЕНИЕ: ОТПИСКА ПЕРЕД ВЫХОДОМ
+                // Это предотвращает ошибку "insufficient permissions", так как мы перестаем слушать данные ДО потери прав
+                unsubscribeListeners.forEach(unsub => { if (typeof unsub === 'function') unsub(); });
+                unsubscribeListeners = [];
+                listenersStarted = false; // Сбрасываем флаг, чтобы слушатели пересоздались при новом входе
+                
                 await signOut(auth);
-                showToast('Выход', 'Вы вышли из системы.');
-                // onAuthStateChanged сработает и снова залогинит анонимно
+                showToast('Выход', 'Вы вышли из системы. Переход в гостевой режим...');
+                toggleAuthModal(true); // Открываем окно входа для удобства смены аккаунта
             } catch(e) {
                 console.error("Logout error:", e);
             }
@@ -525,12 +502,12 @@
         function setupDataListeners() {
             // Chat
             const qChat = query(collection(db, `artifacts/${appId}/public/data/chat`), orderBy('createdAt', 'desc'), limit(50));
-            onSnapshot(qChat, (snap) => {
+            const unsubChat = onSnapshot(qChat, (snap) => {
                 const cont = document.getElementById('chat-container');
                 cont.innerHTML = '';
                 const msgs = [];
                 snap.forEach(d => msgs.push(d.data()));
-                msgs.reverse(); // Show oldest first for chat flow
+                msgs.reverse(); 
 
                 if(msgs.length === 0) cont.innerHTML = '<div class="text-center text-gray-500 mt-4">Нет сообщений</div>';
 
@@ -546,20 +523,18 @@
                     `;
                     cont.appendChild(el);
                 });
-                // Auto scroll to bottom only if the chat view is active
+                
                 if (!document.getElementById('view-chat').classList.contains('hidden')) {
                     cont.scrollTop = cont.scrollHeight;
                 }
             }, (error) => {
                  console.error("Chat listener error:", error);
-                 if (error.code === 'permission-denied') {
-                     showLoaderError("Нет прав доступа. Проверьте правила Firestore.");
-                 }
             });
+            unsubscribeListeners.push(unsubChat);
 
             // Profiles
             const qProf = query(collection(db, `artifacts/${appId}/public/data/profiles`), orderBy('createdAt', 'desc'), limit(50));
-            onSnapshot(qProf, (snap) => {
+            const unsubProf = onSnapshot(qProf, (snap) => {
                 const cont = document.getElementById('profiles-container');
                 cont.innerHTML = '';
                 if(snap.empty) {
@@ -586,7 +561,10 @@
                     `;
                     cont.appendChild(el);
                 });
+            }, (error) => {
+                 console.error("Profiles listener error:", error);
             });
+            unsubscribeListeners.push(unsubProf);
         }
 
         // ACTIONS
