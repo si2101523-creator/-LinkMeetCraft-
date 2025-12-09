@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini Firebase Starter</title>
-    <!-- Load Tailwind CSS -->
+    <title>Стартовое приложение Firebase</title>
+    <!-- Загрузка Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom scrollbar for message list */
+        /* Пользовательская полоса прокрутки для списка сообщений */
         .message-list::-webkit-scrollbar {
             width: 8px;
         }
@@ -27,29 +27,29 @@
 <body class="bg-gray-50 min-h-screen flex items-center justify-center p-4 font-sans">
 
     <div id="app-container" class="w-full max-w-xl bg-white shadow-2xl rounded-xl p-6 md:p-8 space-y-6">
-        <h1 class="text-3xl font-bold text-center text-indigo-700">Real-Time Firestore Demo</h1>
+        <h1 class="text-3xl font-bold text-center text-indigo-700">Демонстрация Firestore в реальном времени</h1>
         
         <div class="space-y-2 text-sm md:text-base">
-            <p id="status" class="font-medium text-center text-sm text-yellow-600 bg-yellow-100 p-2 rounded-lg">Initializing Firebase...</p>
-            <p id="user-id" class="text-center break-all text-gray-500">Awaiting Authentication...</p>
+            <p id="status" class="font-medium text-center text-sm text-yellow-600 bg-yellow-100 p-2 rounded-lg">Инициализация Firebase...</p>
+            <p id="user-id" class="text-center break-all text-gray-500">Ожидание аутентификации...</p>
         </div>
 
-        <!-- Message Input -->
+        <!-- Поле ввода сообщения -->
         <div class="flex flex-col space-y-3">
-            <input type="text" id="message-input" placeholder="Type a public message..."
+            <input type="text" id="message-input" placeholder="Введите публичное сообщение..."
                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
             <button id="send-button" onclick="sendMessage()" disabled
                     class="bg-indigo-600 text-white font-semibold py-3 rounded-lg shadow-md hover:bg-indigo-700 transition duration-150 disabled:bg-indigo-300">
-                Save Message to Firestore
+                Сохранить сообщение в Firestore
             </button>
         </div>
 
-        <!-- Message List -->
+        <!-- Список сообщений -->
         <div class="space-y-3">
-            <h2 class="text-xl font-semibold text-gray-700 border-b pb-2">Public Messages (Real-Time)</h2>
+            <h2 class="text-xl font-semibold text-gray-700 border-b pb-2">Публичные сообщения (в реальном времени)</h2>
             <div id="messages-list" class="message-list h-64 overflow-y-auto bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
-                <!-- Messages will be injected here -->
-                <p class="text-gray-400 text-center py-4">Loading messages...</p>
+                <!-- Сообщения будут внедрены здесь -->
+                <p class="text-gray-400 text-center py-4">Загрузка сообщений...</p>
             </div>
         </div>
     </div>
@@ -58,12 +58,25 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, addDoc, onSnapshot, collection, query, orderBy, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, setDoc, addDoc, onSnapshot, collection, query, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- GLOBAL VARIABLES & FIREBASE SETUP ---
-        // MANDATORY: Use environment variables
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        // --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ И НАСТРОЙКА FIREBASE ---
+        
+        // ЖЕСТКО ПРОПИСАННАЯ КОНФИГУРАЦИЯ (для исправления ошибки)
+        const userFirebaseConfig = {
+            apiKey: "AIzaSyA7EumEru2qfYcAyxAWLL4TY_dWfcU3Dfg",
+            authDomain: "linkmeetcraft.firebaseapp.com",
+            projectId: "linkmeetcraft",
+            storageBucket: "linkmeetcraft.firebasestorage.app",
+            messagingSenderId: "373052253470",
+            appId: "1:373052253470:web:a66afc67876f76dc1a550f",
+            measurementId: "G-WSZL0NRHCQ"
+        };
+
+        // Используем глобальные переменные среды, если они доступны,
+        // но приоритет отдаем жестко прописанной конфигурации, если среда не предоставила ее корректно.
+        const appId = typeof __app_id !== 'undefined' ? __app_id : userFirebaseConfig.projectId || 'default-app-id';
+        const firebaseConfig = userFirebaseConfig; // Используем жестко прописанную
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         let app;
@@ -72,7 +85,7 @@
         let userId = null;
         let isAuthReady = false;
 
-        // Expose functions to the global scope so they can be called from HTML
+        // Выставляем функции в глобальную область видимости для доступа из HTML
         window.sendMessage = sendMessage;
 
         const getCollectionPath = () => `/artifacts/${appId}/public/data/messages`;
@@ -82,62 +95,62 @@
             const userIdEl = document.getElementById('user-id');
             const sendButton = document.getElementById('send-button');
 
-            if (Object.keys(firebaseConfig).length === 0) {
-                statusEl.textContent = 'Error: Firebase config missing.';
-                console.error("Firebase configuration is missing.");
-                return;
-            }
-
             try {
-                // 1. Initialize Firebase Services
+                // 1. Инициализация сервисов Firebase
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
-                setLogLevel('Debug'); // Enable logging for debugging
+                setLogLevel('Debug'); // Включаем логирование для отладки
 
-                // 2. Authentication
+                // 2. Аутентификация
                 await setPersistence(auth, browserSessionPersistence);
                 
                 if (initialAuthToken) {
                     await signInWithCustomToken(auth, initialAuthToken);
+                    statusEl.textContent = 'Статус: Аутентификация с токеном...';
                 } else {
                     await signInAnonymously(auth);
+                    statusEl.textContent = 'Статус: Анонимная аутентификация...';
                 }
 
-                // 3. Auth State Listener
+                // 3. Слушатель состояния аутентификации
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         userId = user.uid;
-                        userIdEl.textContent = `Current User ID: ${userId}`;
-                        statusEl.textContent = 'Status: Authenticated & Ready';
+                        userIdEl.textContent = `Текущий ID Пользователя: ${userId}`;
+                        statusEl.textContent = 'Статус: Аутентифицирован и готов';
                         sendButton.disabled = false;
                         isAuthReady = true;
                         
-                        // Start listening to data once authenticated
+                        // Начинаем слушать данные после аутентификации
                         listenForMessages();
                     } else {
-                        // Fallback/Safety in case auth state is unexpected
+                        // Резервный вариант, если аутентификация не удалась
                         userId = crypto.randomUUID(); 
-                        userIdEl.textContent = `Anon ID (Unauthenticated Fallback): ${userId}`;
-                        statusEl.textContent = 'Status: Unauthenticated';
+                        userIdEl.textContent = `ID (Резервный анонимный): ${userId}`;
+                        statusEl.textContent = 'Статус: Не аутентифицирован (Анонимный режим)';
                         sendButton.disabled = true;
                         isAuthReady = false;
                     }
                 });
 
             } catch (error) {
-                console.error("Firebase Initialization or Authentication failed:", error);
-                statusEl.textContent = `Auth Error: ${error.message}`;
+                console.error("Сбой инициализации или аутентификации Firebase:", error);
+                statusEl.textContent = `Ошибка Auth: ${error.message}`;
+                // Если сбой, показываем, что конфигурация, возможно, неверна
+                if (error.code === 'auth/invalid-api-key') {
+                    statusEl.textContent = 'КРИТИЧЕСКАЯ ОШИБКА: Неверный API-ключ. Проверьте конфигурацию!';
+                }
             }
         };
 
-        // --- FIRESTORE FUNCTIONS ---
+        // --- ФУНКЦИИ FIRESTORE ---
 
-        // Function to send a message
+        // Функция отправки сообщения
         async function sendMessage() {
             if (!isAuthReady || !userId || !db) {
-                console.error("Firebase is not ready or user is not authenticated.");
-                document.getElementById('status').textContent = 'Error: Not ready to send data.';
+                console.error("Firebase не готов или пользователь не аутентифицирован.");
+                document.getElementById('status').textContent = 'Ошибка: Не готов к отправке данных.';
                 return;
             }
 
@@ -151,38 +164,36 @@
 
             const newMessage = {
                 text: messageText,
-                userId: userId, // Store the authenticated user's ID
-                timestamp: serverTimestamp() // Firestore server timestamp
+                userId: userId, // ID аутентифицированного пользователя
+                timestamp: serverTimestamp() // Временная метка сервера Firestore
             };
 
             try {
-                // Add the new message to the public collection
+                // Добавляем новое сообщение в публичную коллекцию
                 await addDoc(collection(db, getCollectionPath()), newMessage);
-                messageInput.value = ''; // Clear input on success
-                console.log("Document successfully written!");
+                messageInput.value = ''; // Очищаем поле ввода при успехе
+                console.log("Документ успешно записан!");
 
             } catch (e) {
-                console.error("Error adding document: ", e);
-                document.getElementById('status').textContent = `Save Error: ${e.message}`;
+                console.error("Ошибка при добавлении документа: ", e);
+                document.getElementById('status').textContent = `Ошибка сохранения: ${e.message}`;
             }
         }
 
-        // Function to listen for real-time changes
+        // Функция для прослушивания изменений в реальном времени
         function listenForMessages() {
             if (!isAuthReady || !db) {
-                console.error("Cannot listen for messages: DB or Auth not ready.");
+                console.error("Невозможно прослушивать сообщения: DB или Auth не готовы.");
                 return;
             }
 
             const messagesList = document.getElementById('messages-list');
             const q = collection(db, getCollectionPath());
             
-            // NOTE: orderBy is commented out to comply with the instruction to avoid index issues.
-            // You can uncomment orderBy if you are sure about creating Firestore indexes.
-            // const messagesQuery = query(q, orderBy("timestamp", "desc"));
+            // Используем только запрос коллекции. Сортировку выполняем в памяти
             const messagesQuery = query(q);
 
-            // Set up the real-time listener
+            // Настройка слушателя в реальном времени
             onSnapshot(messagesQuery, (snapshot) => {
                 let messages = [];
                 snapshot.forEach((doc) => {
@@ -190,21 +201,21 @@
                     messages.push({ ...data, id: doc.id });
                 });
                 
-                // Manually sort in memory since orderBy is often disabled
+                // Сортируем вручную по времени (от нового к старому)
                 messages.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
 
                 renderMessages(messages, messagesList);
             }, (error) => {
-                console.error("Error listening to messages:", error);
-                messagesList.innerHTML = `<p class="text-red-500 text-center py-4">Error loading messages: ${error.message}</p>`;
+                console.error("Ошибка прослушивания сообщений:", error);
+                messagesList.innerHTML = `<p class="text-red-500 text-center py-4">Ошибка загрузки сообщений: ${error.message}</p>`;
             });
         }
 
-        // Function to render messages to the UI
+        // Функция для рендеринга сообщений в UI
         function renderMessages(messages, container) {
             container.innerHTML = '';
             if (messages.length === 0) {
-                container.innerHTML = `<p class="text-gray-400 text-center py-4">No messages yet. Be the first to post!</p>`;
+                container.innerHTML = `<p class="text-gray-400 text-center py-4">Сообщений пока нет. Будьте первым!</p>`;
                 return;
             }
 
@@ -212,10 +223,10 @@
                 const messageDiv = document.createElement('div');
                 const isUser = msg.userId === userId;
                 
-                // Format timestamp
-                let time = 'Saving...';
+                // Форматирование временной метки
+                let time = 'Сохранение...';
                 if (msg.timestamp && msg.timestamp.toDate) {
-                    time = msg.timestamp.toDate().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    time = msg.timestamp.toDate().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
                 }
 
                 messageDiv.className = `p-3 rounded-xl shadow-sm max-w-[90%] ${isUser ? 'bg-indigo-100 self-end ml-auto' : 'bg-white border border-gray-200 mr-auto'}`;
@@ -223,17 +234,17 @@
                 messageDiv.innerHTML = `
                     <p class="text-gray-800 break-words">${msg.text}</p>
                     <div class="mt-1 text-xs ${isUser ? 'text-indigo-600' : 'text-gray-500'} flex justify-between">
-                        <span class="font-semibold">${isUser ? 'You' : `User: ${msg.userId.substring(0, 8)}...`}</span>
+                        <span class="font-semibold">${isUser ? 'Вы' : `Пользователь: ${msg.userId.substring(0, 8)}...`}</span>
                         <span class="ml-2">${time}</span>
                     </div>
                 `;
                 container.appendChild(messageDiv);
             });
-            // Scroll to bottom to show latest message
+            // Прокрутка вниз, чтобы показать последнее сообщение
             container.scrollTop = container.scrollHeight;
         }
 
-        // Start the application setup
+        // Запуск настройки приложения
         window.addEventListener('load', setupFirebase);
     </script>
 </body>
