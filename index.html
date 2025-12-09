@@ -3,133 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Диагностика Окружения (No Firebase)</title>
+    <title>Локальный Менеджер Задач</title>
     <!-- Подключаем Tailwind CSS для стилизации интерфейса -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Общие стили для чистого отображения логов */
-        #log-output {
-            min-height: 150px;
-            max-height: 350px;
-            overflow-y: auto;
-            border: 2px solid #374151;
-            background-color: #1f2937;
-            color: #d1d5db;
-            font-family: monospace;
-            padding: 1rem;
-            border-radius: 0.75rem;
-            margin-top: 1rem;
+        .task-done {
+            text-decoration: line-through;
+            color: #6b7280; /* gray-500 */
         }
-        .log-success { color: #4ade80; }
-        .log-error { color: #f87171; }
-        .log-info { color: #60a5fa; }
     </style>
 </head>
-<body class="bg-gray-900 min-h-screen flex items-start justify-center p-6">
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen p-4 sm:p-8 font-sans">
 
-    <div class="w-full max-w-xl bg-white dark:bg-gray-800 shadow-2xl rounded-xl p-8 mt-10">
-        <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white mb-4 border-b border-gray-700 pb-2">
-            Статус Диагностики Окружения
+    <div class="max-w-xl mx-auto bg-white dark:bg-gray-800 shadow-2xl rounded-xl p-6 sm:p-8">
+        <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white mb-6 border-b border-gray-200 dark:border-gray-700 pb-3">
+            Список Задач (Локальное Хранилище)
         </h1>
-
-        <div id="log-output" class="text-sm">Начало проверки...</div>
-
-        <div class="mt-6">
-            <p class="text-gray-600 dark:text-gray-400 font-bold mb-2">
-                <span class="text-lg block mb-1">ID Приложения:</span>
-                <span id="app-id-display" class="font-mono text-base text-yellow-500 dark:text-yellow-400 p-2 bg-gray-100 dark:bg-gray-700 rounded-lg break-all">
-                    N/A
-                </span>
-            </p>
-            <p class="text-gray-600 dark:text-gray-400 font-bold mb-2">
-                <span class="text-lg block mb-1">Токен Аутентификации:</span>
-                <span id="token-status" class="font-mono text-base text-white p-2 rounded-lg break-all">
-                    N/A
-                </span>
-            </p>
-            <p class="text-gray-600 dark:text-gray-400 font-bold">
-                <span class="text-lg block mb-1">Конфигурация Firebase:</span>
-                <span id="config-status" class="font-mono text-base text-white p-2 rounded-lg break-all">
-                    N/A
-                </span>
-            </p>
-        </div>
         
+        <!-- Форма добавления задачи -->
+        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 mb-6">
+            <input type="text" id="taskInput" placeholder="Введите новую задачу..." 
+                   class="flex-grow p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white placeholder-gray-400">
+            <button id="addTaskButton" 
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300 active:scale-95">
+                Добавить
+            </button>
+        </div>
+
+        <!-- Контейнер для списка задач -->
+        <ul id="taskList" class="space-y-3">
+            <!-- Задачи будут добавлены сюда JavaScript'ом -->
+        </ul>
+
+        <!-- Индикатор пустого списка -->
+        <p id="emptyMessage" class="text-center text-gray-500 dark:text-gray-400 mt-8 hidden">
+            Ваш список задач пуст. Отличная работа!
+        </p>
     </div>
 
-    <script type="module">
-        // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
-
-        /** Добавляет сообщение в консоль и на экран. */
-        const log = (message, type = 'info') => {
-            const logOutput = document.getElementById('log-output');
-            let className = 'log-info';
-            switch (type) {
-                case 'success': className = 'log-success'; break;
-                case 'error': className = 'log-error'; break;
-                case 'warn': className = 'text-yellow-400'; break;
-            }
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const taskInput = document.getElementById('taskInput');
+            const addTaskButton = document.getElementById('addTaskButton');
+            const taskList = document.getElementById('taskList');
+            const emptyMessage = document.getElementById('emptyMessage');
             
-            const timestamp = new Date().toLocaleTimeString();
-            logOutput.innerHTML += `<div class="${className} mb-1">[${timestamp}] ${message}</div>`;
-            logOutput.scrollTop = logOutput.scrollHeight;
-            console.log(`[${type.toUpperCase()}] ${message}`);
-        };
-
-        const updateDisplay = (elementId, text, bgColor) => {
-            const element = document.getElementById(elementId);
-            element.textContent = text;
-            element.className = `font-mono text-base text-white p-2 rounded-lg break-all ${bgColor}`;
-        };
-
-
-        // --- ГЛАВНАЯ ЛОГИКА ДИАГНОСТИКИ ---
-
-        function runDiagnostic() {
-            log('Начало диагностики глобальных переменных среды Canvas...', 'info');
-
-            // 1. Проверка __app_id
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-            document.getElementById('app-id-display').textContent = appId;
-            log(`Переменная __app_id: Обнаружена ('${appId}')`, 'success');
-
-            // 2. Проверка __initial_auth_token
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                updateDisplay('token-status', 'ОБНАРУЖЕН! (Готов к использованию)', 'bg-green-600');
-                log('Переменная __initial_auth_token: Обнаружен токен.', 'success');
-            } else {
-                updateDisplay('token-status', 'ОТСУТСТВУЕТ (требуется для аутентификации)', 'bg-red-600');
-                log('Переменная __initial_auth_token: НЕ ОБНАРУЖЕНА.', 'error');
-            }
-
-            // 3. Проверка __firebase_config
-            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-                let isValid = false;
+            // --- ФУНКЦИИ ХРАНЕНИЯ ---
+            
+            /** Загружает задачи из localStorage. */
+            const loadTasks = () => {
                 try {
-                    JSON.parse(__firebase_config);
-                    isValid = true;
+                    const tasks = localStorage.getItem('tasks');
+                    return tasks ? JSON.parse(tasks) : [];
                 } catch (e) {
-                    // Произошла ошибка парсинга JSON
+                    console.error("Ошибка чтения localStorage:", e);
+                    return [];
                 }
+            };
 
-                if (isValid) {
-                    updateDisplay('config-status', 'ОБНАРУЖЕН и валиден (Готов к использованию)', 'bg-green-600');
-                    log('Переменная __firebase_config: Обнаружена и является валидным JSON.', 'success');
-                } else {
-                    updateDisplay('config-status', 'ОБНАРУЖЕН, но не является валидным JSON', 'bg-yellow-600');
-                    log('Переменная __firebase_config: Обнаружена, но не является валидным JSON.', 'warn');
+            /** Сохраняет задачи в localStorage. */
+            const saveTasks = (tasks) => {
+                try {
+                    localStorage.setItem('tasks', JSON.stringify(tasks));
+                } catch (e) {
+                    console.error("Ошибка записи localStorage:", e);
                 }
+                updateEmptyMessage();
+            };
 
-            } else {
-                updateDisplay('config-status', 'ОТСУТСТВУЕТ (требуется для инициализации)', 'bg-red-600');
-                log('Переменная __firebase_config: НЕ ОБНАРУЖЕНА. Это основная причина сбоя.', 'error');
-            }
+            // --- РЕНДЕРИНГ И ЛОГИКА ---
 
-            log('Диагностика завершена. Сверьте результаты с ожидаемыми значениями.', 'info');
-        }
+            /** Обновляет сообщение, если список пуст. */
+            const updateEmptyMessage = () => {
+                const tasks = loadTasks();
+                emptyMessage.classList.toggle('hidden', tasks.length > 0);
+            };
 
-        // Запускаем процесс
-        window.onload = runDiagnostic;
+            /** Рендерит список задач. */
+            const renderTasks = () => {
+                const tasks = loadTasks();
+                taskList.innerHTML = ''; // Очистка списка
+                
+                tasks.forEach(task => {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-sm transition duration-150 ease-in-out hover:shadow-md';
+                    
+                    // Контент задачи
+                    const taskTextSpan = document.createElement('span');
+                    taskTextSpan.textContent = task.text;
+                    taskTextSpan.className = `flex-grow mr-4 text-gray-900 dark:text-white ${task.done ? 'task-done' : ''}`;
+                    
+                    // Контейнер для кнопок
+                    const buttonContainer = document.createElement('div');
+                    buttonContainer.className = 'flex space-x-2';
+
+                    // Кнопка "Готово"
+                    const doneButton = document.createElement('button');
+                    doneButton.innerHTML = task.done ? '&#10003;' : '&#x2713;'; // Tick or Checkmark
+                    doneButton.className = `w-8 h-8 flex items-center justify-center text-white rounded-full transition duration-300 active:scale-90 ${task.done ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-500 hover:bg-yellow-600'}`;
+                    doneButton.title = task.done ? 'Отменить' : 'Завершить';
+                    doneButton.addEventListener('click', () => toggleTaskDone(task.id));
+
+                    // Кнопка "Удалить"
+                    const deleteButton = document.createElement('button');
+                    deleteButton.innerHTML = '&times;';
+                    deleteButton.className = 'w-8 h-8 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white rounded-full transition duration-300 active:scale-90';
+                    deleteButton.title = 'Удалить задачу';
+                    deleteButton.addEventListener('click', () => deleteTask(task.id));
+
+                    buttonContainer.appendChild(doneButton);
+                    buttonContainer.appendChild(deleteButton);
+
+                    listItem.appendChild(taskTextSpan);
+                    listItem.appendChild(buttonContainer);
+                    taskList.appendChild(listItem);
+                });
+
+                updateEmptyMessage();
+            };
+
+            /** Добавляет новую задачу. */
+            const addTask = () => {
+                const text = taskInput.value.trim();
+                if (text === "") return;
+
+                const tasks = loadTasks();
+                const newTask = {
+                    id: Date.now(), // Простой уникальный ID
+                    text: text,
+                    done: false
+                };
+                tasks.push(newTask);
+                saveTasks(tasks);
+                taskInput.value = '';
+                renderTasks();
+            };
+
+            /** Переключает статус 'done' задачи. */
+            const toggleTaskDone = (id) => {
+                let tasks = loadTasks();
+                tasks = tasks.map(task => 
+                    task.id === id ? { ...task, done: !task.done } : task
+                );
+                saveTasks(tasks);
+                renderTasks();
+            };
+
+            /** Удаляет задачу. */
+            const deleteTask = (id) => {
+                let tasks = loadTasks();
+                tasks = tasks.filter(task => task.id !== id);
+                saveTasks(tasks);
+                renderTasks();
+            };
+
+            // --- ОБРАБОТЧИКИ СОБЫТИЙ ---
+
+            addTaskButton.addEventListener('click', addTask);
+            
+            taskInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addTask();
+                }
+            });
+
+            // Инициализация при загрузке
+            renderTasks();
+        });
     </script>
 </body>
 </html>
