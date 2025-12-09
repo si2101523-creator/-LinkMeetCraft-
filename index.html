@@ -2,828 +2,181 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LinkMeetCraft - Gamer Hub</title>
-    
-    <!-- SEO -->
-    <meta name="description" content="Поиск тиммейтов для Minecraft, CS2, Dota 2.">
-    <meta name="google-site-verification" content="F3-qIwKF7rrBELT89F9YjqvQFiSNPg66pjBTJVJjsoM" />
-    <meta name="yandex-verification" content="b631ed6c682d5bd3" />
-
-    <!-- Tailwind CSS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Рабочий Firebase App</title>
+    <!-- Подключаем Tailwind CSS для стилизации интерфейса -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
-    
-    <script>
-        // Настройка кастомных цветов и шрифтов для Tailwind
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { 'gamer': ['Orbitron', 'sans-serif'], 'ui': ['Rajdhani', 'sans-serif'] },
-                    colors: { neonBlue: '#00f3ff', neonOrange: '#ff6600', darkBg: '#0b0d17' },
-                    boxShadow: { 'neon': '0 0 15px rgba(0, 243, 255, 0.4)' }
-                }
-            }
-        }
-    </script>
-
     <style>
-        /* Общие стили и фон */
-        body {
-            background-color: #0b0d17;
-            /* Убран хардкод изображения для фона, используем placeholder */
-            background-image: linear-gradient(rgba(11, 13, 23, 0.9), rgba(11, 13, 23, 0.95)), url('https://placehold.co/1080x720/0a0c14/4a4d5e?text=GAMER+BACKGROUND');
-            background-size: cover;
-            background-attachment: fixed;
-            color: #e6edf3;
-            overflow: hidden;
+        /* Общие стили для чистого отображения логов */
+        #log-output {
+            min-height: 150px;
+            max-height: 350px;
+            overflow-y: auto;
+            border: 2px solid #374151;
+            background-color: #1f2937;
+            color: #d1d5db;
+            font-family: monospace;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            margin-top: 1rem;
         }
-        
-        /* Эффект матового стекла */
-        .glass-panel {
-            background: rgba(20, 24, 36, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        /* Анимация кнопок навигации */
-        .nav-btn { transition: all 0.2s; }
-        .nav-btn.active { color: #00f3ff; border-bottom: 2px solid #00f3ff; text-shadow: 0 0 8px rgba(0, 243, 255, 0.5); }
-        .desktop-nav-btn.active { background: rgba(0, 243, 255, 0.1); border-bottom: none; border-left: 3px solid #00f3ff; }
-
-        /* Кастомный скроллбар */
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #1a1c24; }
-        
-        /* Лоадер */
-        .loader {
-            border: 3px solid rgba(255,255,255,0.1); border-top-color: #00f3ff; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        
-        /* Точки статуса */
-        .status-dot.error { background-color: #ef4444; box-shadow: 0 0 8px #ef4444; }
-        .status-dot.success { background-color: #22c55e; box-shadow: 0 0 8px #22c55e; }
-
-        /* Фикс для мобильного чата: инпут должен быть внизу, а не посередине */
-        @media (max-width: 767px) {
-            #view-chat .chat-input-area {
-                position: fixed;
-                bottom: 64px; /* Учитываем высоту мобильной навигации */
-                left: 0;
-                right: 0;
-            }
-            #chat-container {
-                padding-bottom: 7rem !important; /* Увеличиваем паддинг, чтобы было видно последнее сообщение над инпутом */
-            }
-        }
-        /* Стили для кнопки удаления анкеты */
-        .delete-profile:hover {
-            opacity: 0.8;
-            transform: scale(1.05);
-        }
+        .log-success { color: #4ade80; }
+        .log-error { color: #f87171; }
+        .log-info { color: #60a5fa; }
     </style>
 </head>
-<body class="font-ui text-lg h-[100dvh] flex flex-col md:flex-row">
+<body class="bg-gray-900 min-h-screen flex items-start justify-center p-6">
 
-    <!-- ЭКРАН ЗАГРУЗКИ -->
-    <div id="global-loader" class="fixed inset-0 z-[100] bg-[#0b0d17] flex flex-col items-center justify-center transition-opacity duration-500">
-        <div class="loader mb-4"></div>
-        <h2 class="text-xl font-gamer text-white tracking-widest">CONNECTING...</h2>
-        <p class="text-xs text-gray-500 mt-2" id="loader-status">Подключение к базе данных...</p>
-        <p class="text-xs text-red-500 mt-4 hidden text-center px-4" id="loader-error"></p>
-    </div>
-
-    <!-- ТОСТ УВЕДОМЛЕНИЯ (вместо alert) -->
-    <div id="toast" class="absolute top-5 right-5 z-[100] bg-gray-900 border-l-4 border-neonBlue px-6 py-4 rounded shadow-2xl transform translate-x-[150%] transition-transform duration-300 max-w-sm text-sm">
-        <div class="font-bold text-neonBlue mb-1" id="toast-title">Info</div>
-        <div id="toast-message">...</div>
-    </div>
-
-    <!-- МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ (вместо confirm) -->
-    <div id="confirm-modal" class="fixed inset-0 z-[90] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-        <div class="bg-gray-900 border border-gray-700 w-full max-w-sm p-6 rounded-xl shadow-2xl">
-            <h3 class="text-xl font-gamer text-neonOrange mb-4" id="confirm-title">Подтверждение</h3>
-            <p class="text-gray-300 mb-6" id="confirm-message">Вы уверены?</p>
-            <div class="flex justify-end gap-3">
-                <button id="confirm-cancel" class="bg-gray-700 text-white font-bold py-2 px-4 rounded hover:bg-gray-600 transition">Отмена</button>
-                <button id="confirm-ok" class="bg-neonOrange text-black font-bold py-2 px-4 rounded hover:bg-orange-500 transition">Подтвердить</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ -->
-    <div id="auth-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-        <div class="bg-gray-900 border border-gray-700 w-full max-w-md p-8 rounded-2xl shadow-2xl relative">
-            <button onclick="toggleAuthModal(false)" class="absolute top-4 right-4 text-gray-500 hover:text-white">✕</button>
-            
-            <h2 class="text-2xl font-gamer text-neonBlue mb-6 text-center">Аккаунт</h2>
-
-            <div class="flex mb-6 border-b border-gray-700">
-                <button onclick="switchAuthTab('login')" id="tab-login" class="flex-1 pb-3 text-center text-neonBlue border-b-2 border-neonBlue font-bold transition">ВХОД</button>
-                <button onclick="switchAuthTab('register')" id="tab-register" class="flex-1 pb-3 text-center text-gray-500 hover:text-white transition">РЕГИСТРАЦИЯ</button>
-            </div>
-            
-            <p class="text-xs text-gray-400 mb-4 text-center" id="auth-info-text">
-                Войдите или создайте постоянный аккаунт.
-            </p>
-
-            <form id="form-login" class="space-y-4">
-                <div>
-                    <label class="text-xs text-gray-400 uppercase">Email</label>
-                    <input type="email" id="login-email" class="w-full bg-black/40 border border-gray-600 rounded p-3 text-white focus:border-neonBlue outline-none" required>
-                </div>
-                <div>
-                    <label class="text-xs text-gray-400 uppercase">Пароль</label>
-                    <input type="password" id="login-pass" class="w-full bg-black/40 border border-gray-600 rounded p-3 text-white focus:border-neonBlue outline-none" required>
-                </div>
-                <button type="submit" id="login-btn" class="w-full bg-neonBlue text-black font-bold py-3 rounded hover:bg-cyan-400 transition shadow-neon mt-2">ВОЙТИ</button>
-            </form>
-
-            <form id="form-register" class="space-y-4 hidden">
-                <div>
-                    <label class="text-xs text-gray-400 uppercase">Никнейм</label>
-                    <input type="text" id="reg-nick" class="w-full bg-black/40 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" maxlength="15" required>
-                </div>
-                <div>
-                    <label class="text-xs text-gray-400 uppercase">Email</label>
-                    <input type="email" id="reg-email" class="w-full bg-black/40 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" required>
-                </div>
-                <div>
-                    <label class="text-xs text-gray-400 uppercase">Пароль (мин. 6 символов)</label>
-                    <input type="password" id="reg-pass" class="w-full bg-black/40 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" minlength="6" required>
-                </div>
-                <button type="submit" id="register-btn" class="w-full bg-neonOrange text-black font-bold py-3 rounded hover:bg-orange-500 transition shadow-neon mt-2">СОЗДАТЬ АККАУНТ</button>
-            </form>
-            
-            <p id="auth-error" class="text-red-500 text-sm mt-4 text-center hidden"></p>
-        </div>
-    </div>
-
-    <!-- === ДЕСКТОП САЙДБАР === -->
-    <aside class="hidden md:flex w-72 glass-panel flex-col p-6 z-20">
-        <h1 class="text-2xl font-gamer font-bold text-white mb-10 tracking-widest text-center">
-            LMC<span class="text-neonBlue">.HUB</span>
+    <div class="w-full max-w-xl bg-white dark:bg-gray-800 shadow-2xl rounded-xl p-8 mt-10">
+        <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white mb-4 border-b border-gray-700 pb-2">
+            Статус Аутентификации и Firestore
         </h1>
-        
-        <div id="desk-profile" class="mb-8 p-4 rounded-xl bg-black/30 border border-gray-700/50 text-center">
-            <div id="desk-user-info" class="hidden">
-                <div class="w-16 h-16 bg-gradient-to-br from-neonBlue to-purple-600 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-bold" id="desk-avatar">L</div>
-                <!-- Здесь будет никнейм и UID -->
-                <div class="font-bold text-lg text-white" id="desk-username">Loading...</div>
-                <button onclick="doLogout()" class="text-xs text-red-400 mt-2 hover:underline cursor-pointer relative z-50">Выйти / Сменить</button>
-            </div>
-            <div id="desk-guest-info" class="hidden">
-                <p class="text-sm text-gray-400 mb-3">Гостевой режим</p>
-                <button onclick="toggleAuthModal(true)" class="w-full bg-neonBlue/10 border border-neonBlue text-neonBlue py-2 rounded hover:bg-neonBlue/20 transition">ВОЙТИ</button>
-            </div>
-        </div>
 
-        <nav class="space-y-2 flex-1">
-            <button onclick="app.setView('profiles')" class="desktop-nav-btn active w-full text-left p-3 rounded text-gray-400 hover:text-white flex items-center gap-3 transition" data-view="profiles">
-                <span>📄</span> Анкеты
-            </button>
-            <button onclick="app.setView('chat')" class="desktop-nav-btn w-full text-left p-3 rounded text-gray-400 hover:text-white flex items-center gap-3 transition" data-view="chat">
-                <span>💬</span> Чат
-            </button>
-            <button onclick="app.setView('create')" class="desktop-nav-btn w-full text-left p-3 rounded text-gray-400 hover:text-white flex items-center gap-3 transition" data-view="create">
-                <span>➕</span> Создать
-            </button>
-        </nav>
-        
-        <div class="space-y-2 text-sm mt-4 border-t border-gray-700 pt-4">
-            <a href="https://t.me/LinkMeetCraft" target="_blank" class="flex items-center text-blue-400 hover:text-blue-300">
-                <span class="mr-2">✈️</span> Telegram
-            </a>
-            <a href="https://www.youtube.com/@папгмобаил-д3э" target="_blank" class="flex items-center text-red-400 hover:text-red-300">
-                <span class="mr-2">▶️</span> YouTube
-            </a>
-        </div>
-    </aside>
+        <div id="log-output" class="text-sm">Ожидание инициализации...</div>
 
-    <!-- === ОСНОВНОЙ КОНТЕНТ === -->
-    <main class="flex-1 relative overflow-hidden flex flex-col h-full bg-black/40 backdrop-blur-md">
-        
-        <header class="md:hidden h-16 flex items-center justify-between px-4 border-b border-gray-700/50 bg-gray-900/50 backdrop-blur shrink-0">
-            <span class="text-xl font-gamer font-bold text-white">LMC</span>
-            <div id="mob-header-auth">
-                <button onclick="toggleAuthModal(true)" class="text-sm font-bold text-neonBlue border border-neonBlue px-3 py-1 rounded">ВХОД</button>
-            </div>
-        </header>
+        <p class="mt-6 text-gray-600 dark:text-gray-400">
+            <span class="font-bold text-lg block mb-1">Текущий Пользователь (UID):</span>
+            <span id="user-id" class="font-mono text-sm text-blue-500 dark:text-blue-400 p-2 bg-gray-100 dark:bg-gray-700 rounded-lg break-all">
+                N/A (Ожидание входа...)
+            </span>
+        </p>
 
-        <!-- VIEW: АНКЕТЫ -->
-        <div id="view-profiles" class="view-section h-full flex flex-col">
-            <div class="p-4 md:p-6 pb-2 shrink-0">
-                <h2 class="text-2xl font-gamer font-bold text-white">База <span class="text-neonOrange">Миссий</span></h2>
-            </div>
-            <div id="profiles-container" class="flex-1 overflow-y-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-2 gap-4 pb-20 custom-scrollbar">
-                <div class="text-center text-gray-500 mt-10 col-span-full">Загрузка базы данных...</div>
-            </div>
-        </div>
+        <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">
+            <span class="font-bold text-lg block mb-1">ID Приложения:</span>
+            <span id="app-id-display" class="font-mono text-sm text-yellow-500 dark:text-yellow-400 p-2 bg-gray-100 dark:bg-gray-700 rounded-lg break-all">
+                N/A
+            </span>
+        </p>
+    </div>
 
-        <!-- VIEW: ЧАТ -->
-        <div id="view-chat" class="view-section h-full flex flex-col hidden">
-            <div class="p-4 border-b border-gray-700/50 bg-gray-900/30 flex justify-between items-center shrink-0">
-                <h2 class="text-2xl font-gamer font-bold text-white">Чат</h2>
-                <div id="chat-status-dot" class="w-3 h-3 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e] status-dot success"></div>
-            </div>
-            <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar pb-20">
-                <div class="text-center text-gray-600 mt-10">Нет сообщений</div>
-            </div>
-            <div class="chat-input-area p-3 bg-gray-900 border-t border-gray-700 flex gap-2 shrink-0 md:relative z-20">
-                <input type="text" id="chat-input" class="flex-1 bg-gray-800 text-white rounded px-4 py-3 border border-gray-600 focus:border-neonBlue outline-none text-sm md:text-base" placeholder="Сообщение..." disabled>
-                <button id="send-msg-btn" class="bg-neonBlue text-black font-bold px-4 py-3 rounded transition hover:bg-cyan-400 disabled:opacity-50" disabled>&gt;</button>
-            </div>
-        </div>
-
-        <!-- VIEW: СОЗДАТЬ -->
-        <div id="view-create" class="view-section h-full overflow-y-auto p-4 hidden custom-scrollbar pb-24">
-            <div class="max-w-xl mx-auto glass-panel p-6 rounded-xl border border-gray-700 mt-4 md:mt-10">
-                <h2 class="text-2xl font-gamer font-bold text-white mb-6 text-center">Новая Анкета (Миссия)</h2>
-                <form id="create-form" class="space-y-4">
-                    <input type="text" id="f-title" class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" required placeholder="Название проекта / Цель (Например: Ищу напарника для CS2 Premier)">
-                    <input type="text" id="f-role" class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" required placeholder="Кого ищете (Роль/Требования: Опытный саппорт / 18+ / 10K Elo)">
-                    <textarea id="f-desc" rows="4" class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" required placeholder="Подробное описание задачи..."></textarea>
-                    <input type="text" id="f-contact" maxlength="25" class="w-full bg-black/50 border border-gray-600 rounded p-3 text-white focus:border-neonOrange outline-none" required placeholder="Ваш контакт (@telegram / Discord#tag)">
-                    <button type="submit" id="create-btn" class="w-full bg-gradient-to-r from-orange-600 to-neonOrange text-black font-bold py-3 rounded mt-2 transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed" disabled>ОПУБЛИКОВАТЬ</button>
-                    <p class="text-xs text-gray-500 text-center mt-2" id="create-status">Авторизуйтесь, чтобы создать анкету</p>
-                </form>
-            </div>
-        </div>
-    </main>
-
-    <!-- МОБИЛЬНАЯ НАВИГАЦИЯ -->
-    <nav class="md:hidden fixed bottom-0 left-0 w-full h-16 bg-gray-900/95 backdrop-blur border-t border-gray-700 flex justify-around items-center z-50">
-        <button class="nav-item active flex flex-col items-center justify-center w-full h-full text-gray-500" onclick="app.setView('profiles')" data-view="profiles">
-            <span class="text-xl mb-1 nav-btn active">📄</span> <span class="text-[10px] font-bold nav-btn active">АНКЕТЫ</span>
-        </button>
-        <button class="nav-item flex flex-col items-center justify-center w-full h-full text-gray-500" onclick="app.setView('create')" data-view="create">
-            <span class="text-2xl font-bold text-neonOrange mb-1 nav-btn">+</span> <span class="text-[10px] font-bold text-neonOrange nav-btn">СОЗДАТЬ</span>
-        </button>
-        <button class="nav-item flex flex-col items-center justify-center w-full h-full text-gray-500" onclick="app.setView('chat')" data-view="chat">
-            <span class="text-xl mb-1 nav-btn">💬</span> <span class="text-[10px] font-bold nav-btn">ЧАТ</span>
-        </button>
-    </nav>
-
-    <!-- СКРИПТ ПРИЛОЖЕНИЯ -->
     <script type="module">
+        // --- ИМПОРТЫ FIREBASE ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, updateProfile, signOut, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, deleteDoc, doc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, query, setDoc, doc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Глобальные переменные окружения (ОБЯЗАТЕЛЬНО для Canvas)
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'linkmeetcraft';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        let auth, db, currentUser;
-        let listenersStarted = false;
-        let unsubscribeListeners = [];
+        // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
 
-        // UI HELPERS
-        function getAuthButton(id) { return document.getElementById(id); }
+        /** Добавляет сообщение в консоль и на экран. */
+        const log = (message, type = 'info') => {
+            const logOutput = document.getElementById('log-output');
+            let className = 'log-info';
 
-        function setAuthLoading(isLoading) {
-            const loginBtn = getAuthButton('login-btn');
-            if (loginBtn) { loginBtn.disabled = isLoading; loginBtn.innerText = isLoading ? 'Загрузка...' : 'ВОЙТИ'; }
-            const regBtn = getAuthButton('register-btn');
-            if (regBtn) { regBtn.disabled = isLoading; regBtn.innerText = isLoading ? 'Загрузка...' : 'СОЗДАТЬ АККАУНТ'; }
-        }
-
-        function displayAuthError(message) {
-            const errEl = document.getElementById('auth-error');
-            errEl.innerText = message;
-            errEl.classList.remove('hidden');
-        }
-        
-        function setLoader(text) {
-            const l = document.getElementById('global-loader');
-            const statusEl = document.getElementById('loader-status');
-            
-            if (text === false) { 
-                l.classList.add('opacity-0', 'pointer-events-none');
-                setTimeout(() => l.style.display = 'none', 500);
-                return;
+            switch (type) {
+                case 'success': className = 'log-success'; break;
+                case 'error': className = 'log-error'; break;
             }
-            l.style.display = 'flex';
-            l.classList.remove('opacity-0', 'pointer-events-none');
-            if (typeof text === 'string') statusEl.innerText = text;
-        }
+            
+            const timestamp = new Date().toLocaleTimeString();
+            logOutput.innerHTML += `<div class="${className} mb-1">[${timestamp}] ${message}</div>`;
+            logOutput.scrollTop = logOutput.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        };
 
-        function showLoaderError(msg) {
-             const errEl = document.getElementById('loader-error');
-             document.getElementById('loader-status').innerText = "ОШИБКА";
-             errEl.innerText = msg;
-             errEl.classList.remove('hidden');
-             // Обновляем статус точки на ошибку
-             const chatDot = document.getElementById('chat-status-dot');
-             if (chatDot) {
-                chatDot.classList.remove('success', 'bg-green-500');
-                chatDot.classList.add('error', 'bg-red-500');
-             }
-        }
-
-        window.toggleAuthModal = (show) => {
-            document.getElementById('auth-modal').classList.toggle('hidden', !show);
-            document.getElementById('auth-error').classList.add('hidden');
+        const updateUserIdDisplay = (uid) => {
+            document.getElementById('user-id').textContent = uid || 'Не аутентифицирован';
         };
         
-        window.switchAuthTab = (tab) => {
-            const loginForm = document.getElementById('form-login');
-            const regForm = document.getElementById('form-register');
-            const tabLogin = document.getElementById('tab-login');
-            const tabReg = document.getElementById('tab-register');
-            const authInfoText = document.getElementById('auth-info-text');
-
-            if (tab === 'login') {
-                loginForm.classList.remove('hidden');
-                regForm.classList.add('hidden');
-                tabLogin.classList.add('border-neonBlue', 'text-neonBlue');
-                tabLogin.classList.remove('text-gray-500', 'border-neonOrange');
-                tabReg.classList.remove('border-neonOrange', 'text-neonOrange');
-                tabReg.classList.add('text-gray-500', 'border-neonBlue/0');
-                authInfoText.innerText = "Войдите, чтобы восстановить свой постоянный аккаунт.";
-            } else {
-                loginForm.classList.add('hidden');
-                regForm.classList.remove('hidden');
-                tabReg.classList.add('border-neonOrange', 'text-neonOrange');
-                tabReg.classList.remove('text-gray-500', 'border-neonBlue');
-                tabLogin.classList.remove('border-neonBlue', 'text-neonBlue');
-                tabLogin.classList.add('text-gray-500', 'border-neonOrange/0');
-                authInfoText.innerText = "Создайте постоянный аккаунт, чтобы сохранить свой прогресс.";
-            }
+        const updateAppIdDisplay = (appId) => {
+            document.getElementById('app-id-display').textContent = appId;
         };
 
-        function showToast(title, msg) {
-            const t = document.getElementById('toast');
-            document.getElementById('toast-title').innerText = title;
-            document.getElementById('toast-message').innerText = msg;
-            t.style.transform = 'translateX(0)';
-            setTimeout(() => t.style.transform = 'translateX(150%)', 4000);
-        }
 
-        /**
-         * Кастомное модальное окно подтверждения (вместо window.confirm())
-         * @param {string} title
-         * @param {string} message
-         * @returns {Promise<boolean>}
-         */
-        function showConfirm(title, message) {
-            return new Promise(resolve => {
-                const modal = document.getElementById('confirm-modal');
-                document.getElementById('confirm-title').innerText = title;
-                document.getElementById('confirm-message').innerText = message;
-                modal.classList.remove('hidden');
+        // --- ГЛАВНАЯ ЛОГИКА ИНИЦИАЛИЗАЦИИ ---
 
-                const okBtn = document.getElementById('confirm-ok');
-                const cancelBtn = document.getElementById('confirm-cancel');
+        async function initFirebase() {
+            log('Начало инициализации Firebase. Установка уровня логирования в Debug.', 'info');
+            setLogLevel('Debug'); // Полезно для отладки
 
-                const cleanup = () => {
-                    okBtn.onclick = null;
-                    cancelBtn.onclick = null;
-                    modal.classList.add('hidden');
-                };
-
-                okBtn.onclick = () => {
-                    cleanup();
-                    resolve(true);
-                };
-
-                cancelBtn.onclick = () => {
-                    cleanup();
-                    resolve(false);
-                };
-            });
-        }
-
-        window.app = {
-            setView: (view) => {
-                document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-                document.getElementById(`view-${view}`).classList.remove('hidden');
-                
-                // Обновление стилей для мобильной навигации
-                document.querySelectorAll('.nav-item').forEach(b => {
-                    const icon = b.querySelector('.nav-btn');
-                    const isCreate = b.dataset.view === 'create';
-                    
-                    // Сброс
-                    b.classList.remove('text-neonBlue', 'text-neonOrange', 'active');
-                    b.classList.add('text-gray-500');
-                    if(icon) icon.classList.remove('active', 'text-neonBlue', 'text-neonOrange');
-
-                    if(b.dataset.view === view) {
-                        b.classList.add('active', isCreate ? 'text-neonOrange' : 'text-neonBlue');
-                        if(icon) icon.classList.add('active', isCreate ? 'text-neonOrange' : 'text-neonBlue');
-                    }
-                });
-                
-                // Обновление стилей для десктопной навигации
-                document.querySelectorAll('.desktop-nav-btn').forEach(b => {
-                    b.classList.remove('active', 'text-white');
-                    b.classList.add('text-gray-400');
-                    if(b.dataset.view === view) {
-                        b.classList.add('active', 'text-white');
-                    }
-                });
-
-                // Прокрутка чата вниз
-                if(view === 'chat') {
-                    // Используем задержку, чтобы убедиться, что контейнер отобразился и его высота рассчитана
-                    setTimeout(() => {
-                        const cont = document.getElementById('chat-container');
-                        cont.scrollTop = cont.scrollHeight;
-                    }, 50);
-                }
-            }
-        };
-
-        // FIREBASE LOGIC
-        async function init() {
-            setLogLevel('Debug'); // Включаем логирование Firestore
-            setLoader("Инициализация Firebase...");
+            // 1. Получение конфигурации и ID приложения (КРИТИЧЕСКИЙ ШАГ)
+            let firebaseConfig;
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            updateAppIdDisplay(appId);
 
             try {
-                const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-
-                // Аутентификация: сначала пробуем кастомный токен, затем анонимный вход
-                setLoader("Аутентификация пользователя...");
-                try {
-                    if (initialAuthToken) {
-                        await signInWithCustomToken(auth, initialAuthToken);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                } catch(e) {
-                    // Ошибка при аутентификации - продолжаем как аноним, но с ошибкой в консоли
-                    console.error("Custom token/Anonymous sign-in failed. Falling back to anonymous if not already signed in.", e);
-                    if (!auth.currentUser) {
-                        await signInAnonymously(auth);
-                    }
-                }
-
-
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        currentUser = user;
-                        updateUIState();
-                        if (!listenersStarted) {
-                            // Начинаем слушать данные только после первой успешной авторизации
-                            setupDataListeners();
-                            listenersStarted = true;
-                        }
-                        setLoader(false);
-                    } else {
-                        currentUser = null;
-                        updateUIState();
-                        setLoader(false);
-                    }
-                });
-                
-            } catch (e) {
-                console.error("Init error:", e);
-                showLoaderError("Критическая ошибка инициализации: " + e.message);
-            }
-        }
-
-        function updateUIState() {
-            const isAuth = !!currentUser;
-            const isAnonymous = currentUser?.isAnonymous; 
-            const displayName = currentUser?.displayName || 'Гость';
-            const userId = currentUser?.uid || '';
-            
-            const dGuest = document.getElementById('desk-guest-info');
-            const dUser = document.getElementById('desk-user-info');
-
-            if(isAuth) {
-                dGuest.classList.add('hidden');
-                dUser.classList.remove('hidden');
-                const userText = isAnonymous ? `${displayName} (Гость)` : displayName;
-                // Обновление: показ полного UID для авторизованных пользователей
-                document.getElementById('desk-username').innerHTML = userText;
-                // Обязательно показываем полный userId для многопользовательских приложений
-                document.getElementById('desk-username').innerHTML += `<div class="text-[10px] text-gray-500 mt-1 break-all select-all font-mono">${userId}</div>`;
-                
-                document.getElementById('desk-avatar').innerText = displayName[0]?.toUpperCase() || 'G';
-            } else {
-                dGuest.classList.remove('hidden');
-                dUser.classList.add('hidden');
-            }
-
-            const mAuth = document.getElementById('mob-header-auth');
-            if(isAuth && !isAnonymous) {
-                // Если авторизован (не аноним), показываем аватар
-                mAuth.innerHTML = `<div class="w-8 h-8 rounded-full bg-gradient-to-br from-neonBlue to-purple-600 flex items-center justify-center text-white font-bold text-sm cursor-pointer" onclick="doLogout()">${displayName[0]?.toUpperCase() || 'G'}</div>`;
-            } else {
-                 // Если аноним или нет пользователя, показываем кнопку "ВХОД"
-                mAuth.innerHTML = `<button onclick="toggleAuthModal(true)" class="text-sm font-bold text-neonBlue border border-neonBlue px-3 py-1 rounded">ВХОД</button>`;
-            }
-
-            // Разрешаем/запрещаем постинг в зависимости от статуса (только для зарегистрированных)
-            const canPost = isAuth && !isAnonymous; 
-            
-            document.getElementById('chat-input').disabled = !canPost;
-            document.getElementById('send-msg-btn').disabled = !canPost;
-            document.getElementById('send-msg-btn').classList.toggle('opacity-50', !canPost);
-            
-            const createBtn = document.getElementById('create-btn');
-            createBtn.disabled = !canPost;
-            createBtn.classList.toggle('opacity-50', !canPost);
-            document.getElementById('create-status').innerText = canPost ? 'Готово к публикации' : 'Войдите в аккаунт, чтобы создать анкету';
-        }
-
-        // AUTH FUNCTIONS
-        document.getElementById('form-login').onsubmit = async (e) => {
-            e.preventDefault();
-            setAuthLoading(true);
-            const email = document.getElementById('login-email').value;
-            const pass = document.getElementById('login-pass').value;
-            document.getElementById('auth-error').classList.add('hidden');
-
-            try {
-                await signInWithEmailAndPassword(auth, email, pass);
-                toggleAuthModal(false);
-                showToast('Успех', 'Вход выполнен!');
-            } catch (err) {
-                let msg = "Ошибка входа. Проверьте консоль для деталей.";
-                if(err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-                    msg = "Неверный Email или Пароль.";
-                } else if (err.message) {
-                    msg = err.message;
-                }
-                console.error("Login Error:", err);
-                displayAuthError(msg);
-            } finally {
-                setAuthLoading(false);
-            }
-        };
-
-        document.getElementById('form-register').onsubmit = async (e) => {
-            e.preventDefault();
-            setAuthLoading(true);
-            const nick = document.getElementById('reg-nick').value.trim();
-            const email = document.getElementById('reg-email').value.trim();
-            const pass = document.getElementById('reg-pass').value;
-            document.getElementById('auth-error').classList.add('hidden');
-
-            if (!nick) {
-                 displayAuthError("Пожалуйста, введите никнейм.");
-                 setAuthLoading(false);
-                 return;
-            }
-
-            try {
-                const cred = await createUserWithEmailAndPassword(auth, email, pass);
-                await updateProfile(cred.user, { displayName: nick });
-                // Принудительно обновляем currentUser
-                currentUser = { ...cred.user, displayName: nick };
-                updateUIState();
-                
-                toggleAuthModal(false);
-                showToast('Регистрация', `Аккаунт ${nick} успешно создан!`);
-            } catch (err) {
-                let msg = "Ошибка регистрации. Проверьте консоль для деталей.";
-                if(err.code === 'auth/email-already-in-use') msg = "Этот Email уже занят.";
-                if(err.code === 'auth/weak-password') msg = "Пароль слишком простой (минимум 6 символов).";
-                if(err.code === 'auth/invalid-email') msg = "Некорректный формат Email.";
-                console.error("Registration Error:", err);
-                displayAuthError(msg);
-            } finally {
-                setAuthLoading(false);
-            }
-        };
-
-        window.doLogout = async () => {
-             // Используем showConfirm вместо window.confirm()
-            const confirmed = await showConfirm('Выход', 'Вы уверены, что хотите выйти из аккаунта? Вы перейдете в гостевой режим.');
-            if (!confirmed) return;
-
-            try {
-                // Отписка от слушателей перед выходом
-                unsubscribeListeners.forEach(unsub => { if (typeof unsub === 'function') unsub(); });
-                unsubscribeListeners = [];
-                listenersStarted = false;
-                
-                await signOut(auth);
-                showToast('Выход', 'Вы вышли из системы. Переход в гостевой режим...');
-            } catch(e) {
-                console.error("Logout error:", e);
-                showToast('Ошибка', 'Не удалось выйти из системы: ' + e.message);
-            }
-        };
-
-        // PROFILE DATA FUNCTIONS
-
-        /**
-         * Генерирует HTML-карточку анкеты
-         */
-        function renderProfileCard(profile) {
-            const isOwner = currentUser && profile.uid === currentUser.uid;
-            const card = document.createElement('div');
-            card.className = "glass-panel p-5 rounded-xl flex flex-col justify-between shadow-neon transition hover:shadow-cyan-400/50";
-            card.innerHTML = `
-                <div>
-                    <div class="flex justify-between items-start mb-3">
-                        <h3 class="text-xl font-gamer text-neonBlue break-words">${profile.title}</h3>
-                        ${isOwner ? '<button class="text-red-400 hover:text-red-300 transition text-xs delete-profile" data-id="${profile.id}">[Удалить]</button>' : ''}
-                    </div>
-                    <p class="text-sm font-bold text-neonOrange mb-2">${profile.role}</p>
-                    <p class="text-gray-300 text-sm mb-4 whitespace-pre-wrap">${profile.description}</p>
-                    <div class="text-xs text-gray-500">
-                        <span class="font-bold">Автор:</span> ${profile.author}
-                    </div>
-                    <div class="text-xs text-gray-500 mt-1 break-all">
-                        <span class="font-bold">UID:</span> ${profile.uid}
-                    </div>
-                </div>
-                <div class="mt-4 border-t border-gray-700/50 pt-3">
-                    <p class="text-sm font-bold text-white">Контакт:</p>
-                    <p class="text-neonBlue text-lg font-bold break-words">${profile.contact}</p>
-                </div>
-            `;
-            // Привязываем слушатель удаления
-            if (isOwner) {
-                card.querySelector('.delete-profile').onclick = (e) => deleteProfile(e.target.dataset.id, profile.title);
-            }
-            return card;
-        }
-
-        /**
-         * Удаляет анкету
-         * @param {string} docId 
-         * @param {string} title 
-         */
-        async function deleteProfile(docId, title) {
-            const confirmed = await showConfirm('Удаление анкеты', `Вы уверены, что хотите удалить миссию: "${title}"?`);
-            if (!confirmed) return;
-
-            try {
-                await deleteDoc(doc(db, `artifacts/${appId}/public/data/profiles`, docId));
-                showToast('Успех', `Миссия "${title}" удалена.`);
-            } catch(e) {
-                console.error("Error deleting document: ", e);
-                showToast('Ошибка', 'Не удалось удалить анкету.');
-            }
-        }
-
-        // Обработчик формы создания анкеты
-        document.getElementById('create-form').onsubmit = async (e) => {
-            e.preventDefault();
-            
-            if (!currentUser || currentUser.isAnonymous) {
-                showToast('Ошибка', 'Для создания анкеты необходимо войти в аккаунт.');
-                return;
-            }
-
-            const title = document.getElementById('f-title').value.trim();
-            const role = document.getElementById('f-role').value.trim();
-            const desc = document.getElementById('f-desc').value.trim();
-            const contact = document.getElementById('f-contact').value.trim();
-            
-            const btn = document.getElementById('create-btn');
-            btn.disabled = true;
-            btn.innerText = 'Публикация...';
-
-            try {
-                await addDoc(collection(db, `artifacts/${appId}/public/data/profiles`), {
-                    uid: currentUser.uid,
-                    author: currentUser.displayName || 'Пользователь',
-                    title: title,
-                    role: role,
-                    description: desc,
-                    contact: contact,
-                    createdAt: serverTimestamp()
-                });
-
-                showToast('Успех', 'Анкета успешно опубликована!');
-                document.getElementById('create-form').reset();
-            } catch (e) {
-                console.error("Error adding document: ", e);
-                showToast('Ошибка', 'Не удалось опубликовать анкету: ' + e.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerText = 'ОПУБЛИКОВАТЬ';
-            }
-        };
-
-        // CHAT DATA FUNCTIONS
-
-        /**
-         * Отправляет сообщение в чат
-         */
-        async function sendMessage() {
-            const input = document.getElementById('chat-input');
-            const msgText = input.value.trim();
-            if (!msgText) return;
-
-            if (!currentUser || currentUser.isAnonymous) {
-                showToast('Ошибка', 'Для отправки сообщений необходимо войти в аккаунт.');
-                input.value = '';
-                return;
-            }
-            
-            const btn = document.getElementById('send-msg-btn');
-            btn.disabled = true; // Защита от двойного клика
-
-            try {
-                await addDoc(collection(db, `artifacts/${appId}/public/data/chat`), {
-                    uid: currentUser.uid,
-                    author: currentUser.displayName || 'Пользователь',
-                    text: msgText,
-                    createdAt: serverTimestamp()
-                });
-                input.value = '';
-            } catch (e) {
-                console.error("Error sending message: ", e);
-                showToast('Ошибка', 'Не удалось отправить сообщение: ' + e.message);
-            } finally {
-                btn.disabled = false;
-            }
-        }
-
-        // Привязка отправки сообщения к кнопке и Enter
-        document.getElementById('send-msg-btn').onclick = sendMessage;
-        document.getElementById('chat-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
-
-
-        // DATA LISTENERS
-        function setupDataListeners() {
-            // Chat Listener
-            // Используем только limit(50) и сортировку в JS, чтобы избежать необходимости в индексах
-            const qChat = query(collection(db, `artifacts/${appId}/public/data/chat`), limit(50));
-            const unsubChat = onSnapshot(qChat, (snap) => {
-                const cont = document.getElementById('chat-container');
-                
-                // Сохраняем текущую позицию скролла, чтобы скроллить только при получении новых сообщений
-                const isNearBottom = cont.scrollHeight - cont.clientHeight <= cont.scrollTop + 100;
-
-                cont.innerHTML = '';
-                let msgs = [];
-                snap.forEach(d => msgs.push(d.data()));
-
-                // Сортировка по времени создания, т.к. orderBy('createdAt', 'desc') может требовать индекс
-                msgs.sort((a, b) => (a.createdAt?.toMillis() || 0) - (b.createdAt?.toMillis() || 0)); 
-                
-                if(msgs.length === 0) cont.innerHTML = '<div class="text-center text-gray-600 mt-10">Нет сообщений</div>';
-
-                msgs.forEach(m => {
-                    const isMe = currentUser && m.uid === currentUser.uid;
-                    const el = document.createElement('div');
-                    el.className = `flex ${isMe ? 'justify-end' : 'justify-start'}`;
-                    el.innerHTML = `
-                        <div class="${isMe ? 'bg-neonBlue/20 text-white' : 'bg-gray-800 text-gray-200'} px-3 py-2 rounded-xl max-w-[85%] text-sm md:text-base break-words shadow-md transition hover:scale-[1.01]">
-                            <div class="text-[10px] font-bold opacity-80 mb-0.5 ${isMe ? 'text-neonBlue' : 'text-neonOrange'}">${m.author || 'Гость'}</div>
-                            ${m.text}
-                        </div>
-                    `;
-                    cont.appendChild(el);
-                });
-                
-                if (isNearBottom) {
-                    cont.scrollTop = cont.scrollHeight;
-                }
-            }, (error) => {
-                console.error("Firestore Chat Listen Error:", error);
-                showToast('Ошибка', 'Не удалось загрузить чат.');
-            });
-            unsubscribeListeners.push(unsubChat);
-            
-            // Profile Listener
-            // Используем только limit(10) и сортировку в JS, чтобы избежать необходимости в индексах
-            const qProfiles = query(collection(db, `artifacts/${appId}/public/data/profiles`), limit(10));
-            const unsubProfiles = onSnapshot(qProfiles, (snap) => {
-                const cont = document.getElementById('profiles-container');
-                cont.innerHTML = '';
-                let profiles = [];
-                snap.forEach(d => profiles.push({ id: d.id, ...d.data() }));
-
-                // Сортировка по времени создания (новые сверху)
-                profiles.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
-
-                if (profiles.length === 0) {
-                    cont.innerHTML = '<div class="text-center text-gray-500 mt-10 col-span-full">Пока нет активных миссий. Создайте первую!</div>';
+                // Используем глобальную переменную, а не жестко закодированный ключ
+                if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                    firebaseConfig = JSON.parse(__firebase_config);
+                    log('Конфигурация успешно загружена из __firebase_config.', 'success');
                 } else {
-                    profiles.forEach(p => {
-                        const card = renderProfileCard(p);
-                        cont.appendChild(card);
-                    });
+                    throw new Error('Глобальная переменная __firebase_config не найдена.');
                 }
-            }, (error) => {
-                console.error("Firestore Profiles Listen Error:", error);
-                showToast('Ошибка', 'Не удалось загрузить анкеты.');
+            } catch (e) {
+                log(`КРИТИЧЕСКАЯ ОШИБКА: Не удалось получить конфигурацию. ${e.message}`, 'error');
+                return;
+            }
+
+
+            // 2. Инициализация приложения и служб
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
+
+            // 3. Аутентификация
+            try {
+                log('Попытка входа с помощью предоставленного токена...');
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    // Используем предоставленный Canvas токен
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    // Резервный вариант: анонимный вход
+                    await signInAnonymously(auth);
+                }
+                log('Успешный вход в систему.', 'success');
+            } catch (error) {
+                // Если вход не удался, отображаем ошибку
+                log(`Ошибка аутентификации: ${error.message}`, 'error');
+                return;
+            }
+
+            // 4. Установка слушателя состояния аутентификации
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    const userId = user.uid;
+                    updateUserIdDisplay(userId);
+                    
+                    log(`Пользователь аутентифицирован. UID: ${userId}`, 'success');
+                    
+                    // --- ТЕСТОВАЯ ОПЕРАЦИЯ FIRESTORE ---
+                    // Путь для публичных данных: /artifacts/{appId}/public/data/status_checks/{docId}
+                    const docPath = `artifacts/${appId}/public/data/status_checks/${userId}`;
+                    
+                    const testDocRef = doc(db, docPath);
+
+                    setDoc(testDocRef, { 
+                        last_check: new Date().toISOString(), 
+                        status: "Firestore доступен",
+                        userId: userId,
+                        appId: appId
+                    }, { merge: true }).then(() => {
+                        log('Firestore: Тестовая запись данных (status_checks) прошла успешно.', 'success');
+                    }).catch(err => {
+                        log(`Firestore: Ошибка записи тестовых данных: ${err.message}`, 'error');
+                    });
+                    
+                    // --- СЛУШАТЕЛЬ FIRESTORE (Для примера чтения) ---
+                    const q = doc(db, docPath);
+                    onSnapshot(q, (docSnapshot) => {
+                        if (docSnapshot.exists()) {
+                            const data = docSnapshot.data();
+                            log(`Firestore: Данные успешно прочитаны. Последнее обновление: ${data.last_check.split('T')[1].substring(0, 8)}`, 'info');
+                        }
+                    }, (error) => {
+                        log(`Ошибка чтения данных Firestore: ${error.message}`, 'error');
+                    });
+
+
+                } else {
+                    updateUserIdDisplay(null);
+                    log('Пользователь вышел из системы или не аутентифицирован.', 'error');
+                }
             });
-            unsubscribeListeners.push(unsubProfiles);
         }
 
-        // Запуск приложения
-        window.onload = init;
+        // Запускаем процесс
+        window.onload = initFirebase;
+
     </script>
 </body>
 </html>
