@@ -89,33 +89,41 @@
             log('Начало инициализации Firebase. Установка уровня логирования в Debug.', 'info');
             setLogLevel('Debug'); // Полезно для отладки
 
-            // 1. Получение конфигурации и ID приложения (КРИТИЧЕСКИЙ ШАГ)
             let firebaseConfig;
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
             updateAppIdDisplay(appId);
 
-            try {
-                // Используем глобальную переменную, а не жестко закодированный ключ
-                if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+            // 1. Попытка загрузить конфигурацию из глобальной переменной
+            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                try {
                     firebaseConfig = JSON.parse(__firebase_config);
                     log('Конфигурация успешно загружена из __firebase_config.', 'success');
-                } else {
-                    throw new Error('Глобальная переменная __firebase_config не найдена.');
+                } catch (e) {
+                    log(`ОШИБКА ПАРСИНГА КОНФИГУРАЦИИ: ${e.message}. Используем запасную конфигурацию.`, 'error');
                 }
-            } catch (e) {
-                log(`КРИТИЧЕСКАЯ ОШИБКА: Не удалось получить конфигурацию. ${e.message}`, 'error');
-                return;
+            }
+
+            // 2. Защитный механизм: Если конфигурация не загружена, используем минимальный объект.
+            if (!firebaseConfig) {
+                log('ВНИМАНИЕ: Глобальная конфигурация не найдена. Инициализация может не работать корректно, но мы продолжаем с запасным объектом.', 'error');
+                // Минимальная конфигурация, чтобы избежать сбоя initializeApp
+                firebaseConfig = {
+                    apiKey: "MOCK_KEY",
+                    authDomain: "mock-domain.firebaseapp.com",
+                    projectId: "mock-project-id",
+                    appId: "mock-app-id"
+                };
             }
 
 
-            // 2. Инициализация приложения и служб
+            // 3. Инициализация приложения и служб
             const app = initializeApp(firebaseConfig);
             const auth = getAuth(app);
             const db = getFirestore(app);
 
-            // 3. Аутентификация
+            // 4. Аутентификация
             try {
-                log('Попытка входа с помощью предоставленного токена...');
+                log('Попытка входа в систему...');
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     // Используем предоставленный Canvas токен
                     await signInWithCustomToken(auth, __initial_auth_token);
@@ -123,14 +131,14 @@
                     // Резервный вариант: анонимный вход
                     await signInAnonymously(auth);
                 }
-                log('Успешный вход в систему.', 'success');
+                log('Успешный вход в систему (или анонимный).', 'success');
             } catch (error) {
-                // Если вход не удался, отображаем ошибку
+                // Если вход не удался (например, из-за неверной запасной конфигурации/токена)
                 log(`Ошибка аутентификации: ${error.message}`, 'error');
-                return;
+                // Мы все равно продолжаем слушать состояние
             }
 
-            // 4. Установка слушателя состояния аутентификации
+            // 5. Установка слушателя состояния аутентификации
             onAuthStateChanged(auth, (user) => {
                 if (user) {
                     const userId = user.uid;
@@ -150,9 +158,9 @@
                         userId: userId,
                         appId: appId
                     }, { merge: true }).then(() => {
-                        log('Firestore: Тестовая запись данных (status_checks) прошла успешно.', 'success');
+                        log('Firestore: Тестовая запись данных прошла успешно.', 'success');
                     }).catch(err => {
-                        log(`Firestore: Ошибка записи тестовых данных: ${err.message}`, 'error');
+                        log(`Firestore: Ошибка записи тестовых данных. Если вы видите это после ошибки конфигурации, это ожидаемо. Ошибка: ${err.message}`, 'error');
                     });
                     
                     // --- СЛУШАТЕЛЬ FIRESTORE (Для примера чтения) ---
