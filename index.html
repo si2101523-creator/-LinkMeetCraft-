@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Рабочий Firebase App</title>
+    <title>Диагностика Окружения (No Firebase)</title>
     <!-- Подключаем Tailwind CSS для стилизации интерфейса -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -29,43 +29,45 @@
 
     <div class="w-full max-w-xl bg-white dark:bg-gray-800 shadow-2xl rounded-xl p-8 mt-10">
         <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white mb-4 border-b border-gray-700 pb-2">
-            Статус Аутентификации и Firestore
+            Статус Диагностики Окружения
         </h1>
 
-        <div id="log-output" class="text-sm">Ожидание инициализации...</div>
+        <div id="log-output" class="text-sm">Начало проверки...</div>
 
-        <p class="mt-6 text-gray-600 dark:text-gray-400">
-            <span class="font-bold text-lg block mb-1">Текущий Пользователь (UID):</span>
-            <span id="user-id" class="font-mono text-sm text-blue-500 dark:text-blue-400 p-2 bg-gray-100 dark:bg-gray-700 rounded-lg break-all">
-                N/A (Ожидание входа...)
-            </span>
-        </p>
-
-        <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">
-            <span class="font-bold text-lg block mb-1">ID Приложения:</span>
-            <span id="app-id-display" class="font-mono text-sm text-yellow-500 dark:text-yellow-400 p-2 bg-gray-100 dark:bg-gray-700 rounded-lg break-all">
-                N/A
-            </span>
-        </p>
+        <div class="mt-6">
+            <p class="text-gray-600 dark:text-gray-400 font-bold mb-2">
+                <span class="text-lg block mb-1">ID Приложения:</span>
+                <span id="app-id-display" class="font-mono text-base text-yellow-500 dark:text-yellow-400 p-2 bg-gray-100 dark:bg-gray-700 rounded-lg break-all">
+                    N/A
+                </span>
+            </p>
+            <p class="text-gray-600 dark:text-gray-400 font-bold mb-2">
+                <span class="text-lg block mb-1">Токен Аутентификации:</span>
+                <span id="token-status" class="font-mono text-base text-white p-2 rounded-lg break-all">
+                    N/A
+                </span>
+            </p>
+            <p class="text-gray-600 dark:text-gray-400 font-bold">
+                <span class="text-lg block mb-1">Конфигурация Firebase:</span>
+                <span id="config-status" class="font-mono text-base text-white p-2 rounded-lg break-all">
+                    N/A
+                </span>
+            </p>
+        </div>
+        
     </div>
 
     <script type="module">
-        // --- ИМПОРТЫ FIREBASE ---
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, query, setDoc, doc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-
         // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
 
         /** Добавляет сообщение в консоль и на экран. */
         const log = (message, type = 'info') => {
             const logOutput = document.getElementById('log-output');
             let className = 'log-info';
-
             switch (type) {
                 case 'success': className = 'log-success'; break;
                 case 'error': className = 'log-error'; break;
+                case 'warn': className = 'text-yellow-400'; break;
             }
             
             const timestamp = new Date().toLocaleTimeString();
@@ -74,117 +76,60 @@
             console.log(`[${type.toUpperCase()}] ${message}`);
         };
 
-        const updateUserIdDisplay = (uid) => {
-            document.getElementById('user-id').textContent = uid || 'Не аутентифицирован';
-        };
-        
-        const updateAppIdDisplay = (appId) => {
-            document.getElementById('app-id-display').textContent = appId;
+        const updateDisplay = (elementId, text, bgColor) => {
+            const element = document.getElementById(elementId);
+            element.textContent = text;
+            element.className = `font-mono text-base text-white p-2 rounded-lg break-all ${bgColor}`;
         };
 
 
-        // --- ГЛАВНАЯ ЛОГИКА ИНИЦИАЛИЗАЦИИ ---
+        // --- ГЛАВНАЯ ЛОГИКА ДИАГНОСТИКИ ---
 
-        async function initFirebase() {
-            log('Начало инициализации Firebase. Установка уровня логирования в Debug.', 'info');
-            setLogLevel('Debug'); // Полезно для отладки
+        function runDiagnostic() {
+            log('Начало диагностики глобальных переменных среды Canvas...', 'info');
 
-            let firebaseConfig;
+            // 1. Проверка __app_id
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-            updateAppIdDisplay(appId);
+            document.getElementById('app-id-display').textContent = appId;
+            log(`Переменная __app_id: Обнаружена ('${appId}')`, 'success');
 
-            // 1. Попытка загрузить конфигурацию из глобальной переменной
+            // 2. Проверка __initial_auth_token
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                updateDisplay('token-status', 'ОБНАРУЖЕН! (Готов к использованию)', 'bg-green-600');
+                log('Переменная __initial_auth_token: Обнаружен токен.', 'success');
+            } else {
+                updateDisplay('token-status', 'ОТСУТСТВУЕТ (требуется для аутентификации)', 'bg-red-600');
+                log('Переменная __initial_auth_token: НЕ ОБНАРУЖЕНА.', 'error');
+            }
+
+            // 3. Проверка __firebase_config
             if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                let isValid = false;
                 try {
-                    firebaseConfig = JSON.parse(__firebase_config);
-                    log('Конфигурация успешно загружена из __firebase_config.', 'success');
+                    JSON.parse(__firebase_config);
+                    isValid = true;
                 } catch (e) {
-                    log(`ОШИБКА ПАРСИНГА КОНФИГУРАЦИИ: ${e.message}. Используем запасную конфигурацию.`, 'error');
+                    // Произошла ошибка парсинга JSON
                 }
-            }
 
-            // 2. Защитный механизм: Если конфигурация не загружена, используем минимальный объект.
-            if (!firebaseConfig) {
-                log('ВНИМАНИЕ: Глобальная конфигурация не найдена. Инициализация может не работать корректно, но мы продолжаем с запасным объектом.', 'error');
-                // Минимальная конфигурация, чтобы избежать сбоя initializeApp
-                firebaseConfig = {
-                    apiKey: "MOCK_KEY",
-                    authDomain: "mock-domain.firebaseapp.com",
-                    projectId: "mock-project-id",
-                    appId: "mock-app-id"
-                };
-            }
-
-
-            // 3. Инициализация приложения и служб
-            const app = initializeApp(firebaseConfig);
-            const auth = getAuth(app);
-            const db = getFirestore(app);
-
-            // 4. Аутентификация
-            try {
-                log('Попытка входа в систему...');
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    // Используем предоставленный Canvas токен
-                    await signInWithCustomToken(auth, __initial_auth_token);
+                if (isValid) {
+                    updateDisplay('config-status', 'ОБНАРУЖЕН и валиден (Готов к использованию)', 'bg-green-600');
+                    log('Переменная __firebase_config: Обнаружена и является валидным JSON.', 'success');
                 } else {
-                    // Резервный вариант: анонимный вход
-                    await signInAnonymously(auth);
+                    updateDisplay('config-status', 'ОБНАРУЖЕН, но не является валидным JSON', 'bg-yellow-600');
+                    log('Переменная __firebase_config: Обнаружена, но не является валидным JSON.', 'warn');
                 }
-                log('Успешный вход в систему (или анонимный).', 'success');
-            } catch (error) {
-                // Если вход не удался (например, из-за неверной запасной конфигурации/токена)
-                log(`Ошибка аутентификации: ${error.message}`, 'error');
-                // Мы все равно продолжаем слушать состояние
+
+            } else {
+                updateDisplay('config-status', 'ОТСУТСТВУЕТ (требуется для инициализации)', 'bg-red-600');
+                log('Переменная __firebase_config: НЕ ОБНАРУЖЕНА. Это основная причина сбоя.', 'error');
             }
 
-            // 5. Установка слушателя состояния аутентификации
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    const userId = user.uid;
-                    updateUserIdDisplay(userId);
-                    
-                    log(`Пользователь аутентифицирован. UID: ${userId}`, 'success');
-                    
-                    // --- ТЕСТОВАЯ ОПЕРАЦИЯ FIRESTORE ---
-                    // Путь для публичных данных: /artifacts/{appId}/public/data/status_checks/{docId}
-                    const docPath = `artifacts/${appId}/public/data/status_checks/${userId}`;
-                    
-                    const testDocRef = doc(db, docPath);
-
-                    setDoc(testDocRef, { 
-                        last_check: new Date().toISOString(), 
-                        status: "Firestore доступен",
-                        userId: userId,
-                        appId: appId
-                    }, { merge: true }).then(() => {
-                        log('Firestore: Тестовая запись данных прошла успешно.', 'success');
-                    }).catch(err => {
-                        log(`Firestore: Ошибка записи тестовых данных. Если вы видите это после ошибки конфигурации, это ожидаемо. Ошибка: ${err.message}`, 'error');
-                    });
-                    
-                    // --- СЛУШАТЕЛЬ FIRESTORE (Для примера чтения) ---
-                    const q = doc(db, docPath);
-                    onSnapshot(q, (docSnapshot) => {
-                        if (docSnapshot.exists()) {
-                            const data = docSnapshot.data();
-                            log(`Firestore: Данные успешно прочитаны. Последнее обновление: ${data.last_check.split('T')[1].substring(0, 8)}`, 'info');
-                        }
-                    }, (error) => {
-                        log(`Ошибка чтения данных Firestore: ${error.message}`, 'error');
-                    });
-
-
-                } else {
-                    updateUserIdDisplay(null);
-                    log('Пользователь вышел из системы или не аутентифицирован.', 'error');
-                }
-            });
+            log('Диагностика завершена. Сверьте результаты с ожидаемыми значениями.', 'info');
         }
 
         // Запускаем процесс
-        window.onload = initFirebase;
-
+        window.onload = runDiagnostic;
     </script>
 </body>
 </html>
